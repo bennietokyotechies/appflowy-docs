@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppFlowy Backend - Developer Documentation Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .docs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .doc-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .doc-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .doc-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .doc-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .doc-description {
+            color: #4a5568;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .doc-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        .doc-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-available {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-coming-soon {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+        }
+
+        .github-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .github-link:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 10px;
+            }
+            
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .docs-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .doc-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 AppFlowy Backend</h1>
+            <p>Developer Documentation Hub</p>
+            <p style="font-size: 1rem; margin-top: 10px;">Your central resource for technical and functional documentation</p>
+        </div>
+
+        <div class="docs-grid">
+            <a href="environment-setup.html" class="doc-card">
+                <div class="doc-icon">🔧</div>
+                <div class="doc-title">Environment Setup Guide</div>
+                <div class="doc-description">
+                    Complete guide to setting up your development environment, understanding configuration files, and managing secrets securely.
+                </div>
+                <div class="doc-meta">
+                    <span>Last updated: Today</span>
+                    <span class="doc-status status-available">Available</span>
+                </div>
+            </a>
+
+            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
+                <div class="doc-icon">🏗️</div>
+                <div class="doc-title">Architecture Overview</div>
+                <div class="doc-description">
+                    System architecture, service interactions, database schema, and API design patterns used in AppFlowy Backend.
+                </div>
+                <div class="doc-meta">
+                    <span>Coming soon</span>
+                    <span class="doc-status status-coming-soon">Planned</span>
+                </div>
+            </div>
+
+            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
+                <div class="doc-icon">🔐</div>
+                <div class="doc-title">Authentication & Security</div>
+                <div class="doc-description">
+                    GoTrue integration, JWT handling, OAuth providers setup, and security best practices for the backend services.
+                </div>
+                <div class="doc-meta">
+                    <span>Coming soon</span>
+                    <span class="doc-status status-coming-soon">Planned</span>
+                </div>
+            </div>
+
+            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
+                <div class="doc-icon">🗄️</div>
+                <div class="doc-title">Database Management</div>
+                <div class="doc-description">
+                    PostgreSQL setup, migrations, database schema documentation, and data management best practices.
+                </div>
+                <div class="doc-meta">
+                    <span>Coming soon</span>
+                    <span class="doc-status status-coming-soon">Planned</span>
+                </div>
+            </div>
+
+            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
+                <div class="doc-icon">🔄</div>
+                <div class="doc-title">API Reference</div>
+                <div class="doc-description">
+                    Complete REST API documentation, WebSocket protocols, request/response formats, and integration examples.
+                </div>
+                <div class="doc-meta">
+                    <span>Coming soon</span>
+                    <span class="doc-status status-coming-soon">Planned</span>
+                </div>
+            </div>
+
+            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
+                <div class="doc-icon">🚀</div>
+                <div class="doc-title">Deployment Guide</div>
+                <div class="doc-description">
+                    Production deployment strategies, Docker configurations, cloud provider setup, and monitoring solutions.
+                </div>
+                <div class="doc-meta">
+                    <span>Coming soon</span>
+                    <span class="doc-status status-coming-soon">Planned</span>
+                </div>
+            </div>
+
+            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
+                <div class="doc-icon">🧪</div>
+                <div class="doc-title">Testing Guidelines</div>
+                <div class="doc-description">
+                    Testing strategies, unit test setup, integration testing, and continuous integration workflows.
+                </div>
+                <div class="doc-meta">
+                    <span>Coming soon</span>
+                    <span class="doc-status status-coming-soon">Planned</span>
+                </div>
+            </div>
+
+            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
+                <div class="doc-icon">🐛</div>
+                <div class="doc-title">Troubleshooting</div>
+                <div class="doc-description">
+                    Common issues, debugging tips, performance optimization, and solutions to frequently encountered problems.
+                </div>
+                <div class="doc-meta">
+                    <span>Coming soon</span>
+                    <span class="doc-status status-coming-soon">Planned</span>
+                </div>
+            </div>
+
+            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
+                <div class="doc-icon">🤝</div>
+                <div class="doc-title">Contributing Guidelines</div>
+                <div class="doc-description">
+                    How to contribute to the project, coding standards, pull request process, and development workflows.
+                </div>
+                <div class="doc-meta">
+                    <span>Coming soon</span>
+                    <span class="doc-status status-coming-soon">Planned</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>This documentation hub will grow as we develop and document more aspects of the AppFlowy Backend project.</p>
+            <a href="https://github.com/AppFlowy-IO/AppFlowy-Cloud" class="github-link" target="_blank">
+                <span>📱</span>
+                <span>View on GitHub</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

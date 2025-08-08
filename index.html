@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AppFlowy Backend - Developer Documentation Hub</title>
+    <title>AppFlowy Backend - Developer Wiki</title>
     <style>
         * {
             margin: 0;
@@ -12,282 +12,1016 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.5;
+            color: #24292f;
+            background-color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
+        /* Main Layout Container */
+        .layout-container {
+            display: flex;
+            height: 100vh;
         }
 
-        .header {
+        /* Page Header */
+        .page-header {
+            position: fixed;
+            top: 0;
+            left: 300px;
+            right: 0;
+            height: 60px;
+            background: #ffffff;
+            border-bottom: 1px solid #d0d7de;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            z-index: 50;
+            transition: left 0.2s ease;
+        }
+
+        .page-header.sidebar-collapsed {
+            left: 0;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: #f6f8fa;
+            color: #24292f;
+            overflow-y: auto;
+            border-right: 1px solid #d0d7de;
+            z-index: 100;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            border-right: none;
+        }
+
+        .sidebar-header {
+            padding: 16px 20px;
+            background: #ffffff;
             text-align: center;
-            color: white;
-            margin-bottom: 50px;
+            border-bottom: 1px solid #d0d7de;
         }
 
-        .header h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        .sidebar-header h1 {
+            font-size: 1.25rem;
+            margin-bottom: 4px;
+            font-weight: 600;
+            color: #24292f;
         }
 
-        .header p {
-            font-size: 1.3rem;
-            opacity: 0.9;
-            max-width: 600px;
-            margin: 0 auto;
+        .sidebar-header p {
+            font-size: 0.875rem;
+            color: #656d76;
         }
 
-        .docs-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            margin-top: 40px;
+        .sidebar-nav {
+            padding: 0;
         }
 
-        .doc-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-            display: block;
+        /* Accordion Sections */
+        .nav-section {
+            border-bottom: 1px solid #d0d7de;
         }
 
-        .doc-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            background: rgba(255, 255, 255, 1);
-        }
-
-        .doc-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            display: block;
-        }
-
-        .doc-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: #2d3748;
-        }
-
-        .doc-description {
-            color: #4a5568;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-
-        .doc-meta {
+        .nav-section-header {
+            padding: 12px 16px;
+            background: #f6f8fa;
+            color: #24292f;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-top: 15px;
-            border-top: 1px solid #e2e8f0;
-            font-size: 0.9rem;
-            color: #718096;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: background-color 0.15s ease;
         }
 
-        .doc-status {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.8rem;
+        .nav-section-header:hover {
+            background: #eaeef2;
+        }
+
+        .nav-section-header.active {
+            background: #eaeef2;
+            color: #0969da;
+        }
+
+        .nav-section-icon {
+            font-size: 1rem;
+            margin-right: 8px;
+        }
+
+        .nav-section-chevron {
+            transition: transform 0.15s ease;
+            font-size: 0.75rem;
+            color: #656d76;
+        }
+
+        .nav-section-header.active .nav-section-chevron {
+            transform: rotate(90deg);
+            color: #0969da;
+        }
+
+        .nav-section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease;
+            background: #ffffff;
+        }
+
+        .nav-section-content.active {
+            max-height: 500px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 8px 16px 8px 40px;
+            color: #656d76;
+            text-decoration: none;
+            border-bottom: 1px solid #f6f8fa;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .nav-item:hover {
+            background: #f6f8fa;
+            color: #24292f;
+        }
+
+        .nav-item.active {
+            background: #ddf4ff;
+            color: #0969da;
+            border-left: 3px solid #0969da;
+            font-weight: 500;
+        }
+
+        .nav-item-icon {
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            background: #ffffff;
+            position: relative;
+        }
+
+        /* Header Sidebar Toggle Button */
+        .sidebar-toggle {
+            background: #ffffff;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            padding: 6px 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin-right: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-toggle:hover {
+            background: #f6f8fa;
+            border-color: #8c959f;
+        }
+
+        .sidebar-toggle svg {
+            width: 16px;
+            height: 16px;
+            color: #656d76;
+        }
+
+        /* Page Title in Header */
+        .page-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #24292f;
+            margin: 0;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-top: 60px;
+            overflow: hidden;
+        }
+
+        .content-header {
+            background: #ffffff;
+            color: #24292f;
+            padding: 24px 48px;
+            border-bottom: 1px solid #d0d7de;
+            flex-shrink: 0;
+        }
+
+        .content-header h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #24292f;
+        }
+
+        .content-header p {
+            font-size: 1rem;
+            color: #656d76;
+        }
+
+        .content-body {
+            padding: 32px 48px;
+            max-width: 1200px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Content Cards */
+        .content-card {
+            background: #ffffff;
+            border-radius: 6px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #d0d7de;
+        }
+
+        .content-card h2 {
+            color: #24292f;
+            margin-bottom: 16px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-weight: 600;
         }
 
-        .status-available {
-            background: #c6f6d5;
-            color: #22543d;
+        .content-card h3 {
+            color: #24292f;
+            margin: 24px 0 16px;
+            font-size: 1.25rem;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #d0d7de;
+            font-weight: 600;
         }
 
-        .status-coming-soon {
-            background: #fed7d7;
-            color: #742a2a;
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
         }
 
-        .footer {
+        .feature-card {
+            background: #ffffff;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            padding: 20px;
             text-align: center;
-            margin-top: 60px;
-            color: rgba(255,255,255,0.8);
-            font-size: 0.9rem;
+            transition: all 0.15s ease;
         }
 
-        .github-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255,255,255,0.2);
+        .feature-card:hover {
+            border-color: #8c959f;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+        }
+
+        .feature-card-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .feature-card h4 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: #24292f;
+            font-weight: 600;
+        }
+
+        .feature-card p {
+            color: #656d76;
+            font-size: 0.875rem;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .status-available {
+            background: #ddf4ff;
+            color: #0969da;
+        }
+
+        .status-planned {
+            background: #f6f8fa;
+            color: #656d76;
+        }
+
+        .status-wip {
+            background: #fff8c5;
+            color: #bf8700;
+        }
+
+        /* Mobile Responsive */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            background: #0969da;
             color: white;
-            padding: 12px 20px;
-            border-radius: 25px;
-            text-decoration: none;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        .github-link:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
+            border: none;
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+            z-index: 200;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 20px 10px;
+            .page-header {
+                left: 0 !important;
+                padding: 0 16px;
             }
-            
-            .header h1 {
-                font-size: 2.5rem;
+
+            .sidebar-toggle {
+                display: none;
             }
-            
-            .docs-grid {
+
+            .mobile-toggle {
+                display: block;
+                position: fixed;
+                top: 16px;
+                left: 16px;
+                z-index: 200;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                z-index: 150;
+                transform: translateX(-100%);
+                width: 300px !important;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .sidebar.collapsed {
+                width: 300px !important;
+            }
+
+            .content-area {
+                margin-top: 60px;
+            }
+
+            .content-header {
+                padding: 24px 20px;
+            }
+
+            .content-header h1 {
+                font-size: 1.75rem;
+            }
+
+            .content-body {
+                padding: 24px 20px;
+            }
+
+            .feature-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 12px;
             }
-            
-            .doc-card {
-                padding: 20px;
+        }
+
+        @media (min-width: 769px) {
+            .mobile-toggle {
+                display: none;
             }
+        }
+
+        /* Search Box */
+        .search-box {
+            padding: 16px;
+            background: #ffffff;
+            border-bottom: 1px solid #d0d7de;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #24292f;
+            font-size: 0.875rem;
+        }
+
+        .search-input::placeholder {
+            color: #656d76;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #0969da;
+            box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.3);
+        }
+
+        /* Overlay for mobile */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 140;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* Quick Links */
+        .quick-links {
+            display: flex;
+            gap: 12px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+
+        .quick-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #0969da;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.15s ease;
+            border: 1px solid #0969da;
+        }
+
+        .quick-link:hover {
+            background: #0860ca;
+            border-color: #0860ca;
+            box-shadow: 0 3px 12px rgba(9, 105, 218, 0.4);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📚 AppFlowy Backend</h1>
-            <p>Developer Documentation Hub</p>
-            <p style="font-size: 1rem; margin-top: 10px;">Your central resource for technical and functional documentation</p>
+    <!-- Mobile Toggle Button -->
+    <button class="mobile-toggle" onclick="toggleMobileSidebar()">
+        ☰
+    </button>
+
+    <!-- Overlay for Mobile -->
+    <div class="overlay" onclick="closeSidebar()"></div>
+
+    <!-- Main Layout Container -->
+    <div class="layout-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1>📚 AppFlowy Wiki</h1>
+            <p>Developer Documentation</p>
         </div>
 
-        <div class="docs-grid">
-            <a href="environment-setup.html" class="doc-card">
-                <div class="doc-icon">🔧</div>
-                <div class="doc-title">Environment Setup Guide</div>
-                <div class="doc-description">
-                    Complete guide to setting up your development environment, understanding configuration files, and managing secrets securely.
-                </div>
-                <div class="doc-meta">
-                    <span>Last updated: Today</span>
-                    <span class="doc-status status-available">Available</span>
-                </div>
-            </a>
-
-            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
-                <div class="doc-icon">🏗️</div>
-                <div class="doc-title">Architecture Overview</div>
-                <div class="doc-description">
-                    System architecture, service interactions, database schema, and API design patterns used in AppFlowy Backend.
-                </div>
-                <div class="doc-meta">
-                    <span>Coming soon</span>
-                    <span class="doc-status status-coming-soon">Planned</span>
-                </div>
-            </div>
-
-            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
-                <div class="doc-icon">🔐</div>
-                <div class="doc-title">Authentication & Security</div>
-                <div class="doc-description">
-                    GoTrue integration, JWT handling, OAuth providers setup, and security best practices for the backend services.
-                </div>
-                <div class="doc-meta">
-                    <span>Coming soon</span>
-                    <span class="doc-status status-coming-soon">Planned</span>
-                </div>
-            </div>
-
-            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
-                <div class="doc-icon">🗄️</div>
-                <div class="doc-title">Database Management</div>
-                <div class="doc-description">
-                    PostgreSQL setup, migrations, database schema documentation, and data management best practices.
-                </div>
-                <div class="doc-meta">
-                    <span>Coming soon</span>
-                    <span class="doc-status status-coming-soon">Planned</span>
-                </div>
-            </div>
-
-            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
-                <div class="doc-icon">🔄</div>
-                <div class="doc-title">API Reference</div>
-                <div class="doc-description">
-                    Complete REST API documentation, WebSocket protocols, request/response formats, and integration examples.
-                </div>
-                <div class="doc-meta">
-                    <span>Coming soon</span>
-                    <span class="doc-status status-coming-soon">Planned</span>
-                </div>
-            </div>
-
-            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
-                <div class="doc-icon">🚀</div>
-                <div class="doc-title">Deployment Guide</div>
-                <div class="doc-description">
-                    Production deployment strategies, Docker configurations, cloud provider setup, and monitoring solutions.
-                </div>
-                <div class="doc-meta">
-                    <span>Coming soon</span>
-                    <span class="doc-status status-coming-soon">Planned</span>
-                </div>
-            </div>
-
-            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
-                <div class="doc-icon">🧪</div>
-                <div class="doc-title">Testing Guidelines</div>
-                <div class="doc-description">
-                    Testing strategies, unit test setup, integration testing, and continuous integration workflows.
-                </div>
-                <div class="doc-meta">
-                    <span>Coming soon</span>
-                    <span class="doc-status status-coming-soon">Planned</span>
-                </div>
-            </div>
-
-            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
-                <div class="doc-icon">🐛</div>
-                <div class="doc-title">Troubleshooting</div>
-                <div class="doc-description">
-                    Common issues, debugging tips, performance optimization, and solutions to frequently encountered problems.
-                </div>
-                <div class="doc-meta">
-                    <span>Coming soon</span>
-                    <span class="doc-status status-coming-soon">Planned</span>
-                </div>
-            </div>
-
-            <div class="doc-card" style="opacity: 0.7; cursor: not-allowed;">
-                <div class="doc-icon">🤝</div>
-                <div class="doc-title">Contributing Guidelines</div>
-                <div class="doc-description">
-                    How to contribute to the project, coding standards, pull request process, and development workflows.
-                </div>
-                <div class="doc-meta">
-                    <span>Coming soon</span>
-                    <span class="doc-status status-coming-soon">Planned</span>
-                </div>
-            </div>
+        <div class="search-box">
+            <input type="text" class="search-input" placeholder="Search documentation..." onkeyup="searchDocs(this.value)">
         </div>
 
-        <div class="footer">
-            <p>This documentation hub will grow as we develop and document more aspects of the AppFlowy Backend project.</p>
-            <a href="https://github.com/AppFlowy-IO/AppFlowy-Cloud" class="github-link" target="_blank">
-                <span>📱</span>
-                <span>View on GitHub</span>
-            </a>
-        </div>
+        <nav class="sidebar-nav">
+            <!-- Getting Started Section -->
+            <div class="nav-section">
+                <button class="nav-section-header" onclick="toggleSection(this)">
+                    <span><span class="nav-section-icon">🚀</span>Getting Started</span>
+                    <span class="nav-section-chevron">▶</span>
+                </button>
+                <div class="nav-section-content">
+                    <a href="#overview" class="nav-item active" onclick="showContent('overview')">
+                        <span class="nav-item-icon">📋</span>Overview
+                    </a>
+                    <a href="#quick-start" class="nav-item" onclick="showContent('quick-start')">
+                        <span class="nav-item-icon">⚡</span>Quick Start Guide
+                    </a>
+                    <a href="#environment-setup" class="nav-item" onclick="showContent('environment-setup')">
+                        <span class="nav-item-icon">🔧</span>Environment Setup
+                    </a>
+                </div>
+            </div>
+
+            <!-- Architecture Section -->
+            <div class="nav-section">
+                <button class="nav-section-header" onclick="toggleSection(this)">
+                    <span><span class="nav-section-icon">🏗️</span>Architecture</span>
+                    <span class="nav-section-chevron">▶</span>
+                </button>
+                <div class="nav-section-content">
+                    <a href="#system-overview" class="nav-item" onclick="showContent('system-overview')">
+                        <span class="nav-item-icon">🏛️</span>System Overview
+                    </a>
+                    <a href="#database-schema" class="nav-item" onclick="showContent('database-schema')">
+                        <span class="nav-item-icon">🗄️</span>Database Schema
+                    </a>
+                    <a href="#service-architecture" class="nav-item" onclick="showContent('service-architecture')">
+                        <span class="nav-item-icon">⚙️</span>Service Architecture
+                    </a>
+                </div>
+            </div>
+
+            <!-- Authentication Section -->
+            <div class="nav-section">
+                <button class="nav-section-header" onclick="toggleSection(this)">
+                    <span><span class="nav-section-icon">🔐</span>Authentication</span>
+                    <span class="nav-section-chevron">▶</span>
+                </button>
+                <div class="nav-section-content">
+                    <a href="#gotrue-integration" class="nav-item" onclick="showContent('gotrue-integration')">
+                        <span class="nav-item-icon">🔑</span>GoTrue Integration
+                    </a>
+                    <a href="#jwt-handling" class="nav-item" onclick="showContent('jwt-handling')">
+                        <span class="nav-item-icon">🎟️</span>JWT Handling
+                    </a>
+                    <a href="#oauth-setup" class="nav-item" onclick="showContent('oauth-setup')">
+                        <span class="nav-item-icon">🌐</span>OAuth Setup
+                    </a>
+                    <a href="#security-practices" class="nav-item" onclick="showContent('security-practices')">
+                        <span class="nav-item-icon">🛡️</span>Security Practices
+                    </a>
+                </div>
+            </div>
+
+            <!-- API Documentation Section -->
+            <div class="nav-section">
+                <button class="nav-section-header" onclick="toggleSection(this)">
+                    <span><span class="nav-section-icon">🔄</span>API Reference</span>
+                    <span class="nav-section-chevron">▶</span>
+                </button>
+                <div class="nav-section-content">
+                    <a href="#rest-api" class="nav-item" onclick="showContent('rest-api')">
+                        <span class="nav-item-icon">📡</span>REST API
+                    </a>
+                    <a href="#websocket-api" class="nav-item" onclick="showContent('websocket-api')">
+                        <span class="nav-item-icon">🔌</span>WebSocket API
+                    </a>
+                    <a href="#api-examples" class="nav-item" onclick="showContent('api-examples')">
+                        <span class="nav-item-icon">📝</span>API Examples
+                    </a>
+                </div>
+            </div>
+
+            <!-- Deployment Section -->
+            <div class="nav-section">
+                <button class="nav-section-header" onclick="toggleSection(this)">
+                    <span><span class="nav-section-icon">🚀</span>Deployment</span>
+                    <span class="nav-section-chevron">▶</span>
+                </button>
+                <div class="nav-section-content">
+                    <a href="#docker-deployment" class="nav-item" onclick="showContent('docker-deployment')">
+                        <span class="nav-item-icon">🐳</span>Docker Deployment
+                    </a>
+                    <a href="#cloud-deployment" class="nav-item" onclick="showContent('cloud-deployment')">
+                        <span class="nav-item-icon">☁️</span>Cloud Deployment
+                    </a>
+                    <a href="#monitoring" class="nav-item" onclick="showContent('monitoring')">
+                        <span class="nav-item-icon">📊</span>Monitoring
+                    </a>
+                </div>
+            </div>
+
+            <!-- Troubleshooting Section -->
+            <div class="nav-section">
+                <button class="nav-section-header" onclick="toggleSection(this)">
+                    <span><span class="nav-section-icon">🐛</span>Troubleshooting</span>
+                    <span class="nav-section-chevron">▶</span>
+                </button>
+                <div class="nav-section-content">
+                    <a href="#common-issues" class="nav-item" onclick="showContent('common-issues')">
+                        <span class="nav-item-icon">⚠️</span>Common Issues
+                    </a>
+                    <a href="#debugging" class="nav-item" onclick="showContent('debugging')">
+                        <span class="nav-item-icon">🔍</span>Debugging Guide
+                    </a>
+                    <a href="#performance" class="nav-item" onclick="showContent('performance')">
+                        <span class="nav-item-icon">⚡</span>Performance Tuning
+                    </a>
+                </div>
+            </div>
+
+            <!-- Contributing Section -->
+            <div class="nav-section">
+                <button class="nav-section-header" onclick="toggleSection(this)">
+                    <span><span class="nav-section-icon">🤝</span>Contributing</span>
+                    <span class="nav-section-chevron">▶</span>
+                </button>
+                <div class="nav-section-content">
+                    <a href="#contributing-guide" class="nav-item" onclick="showContent('contributing-guide')">
+                        <span class="nav-item-icon">📖</span>Contributing Guide
+                    </a>
+                    <a href="#coding-standards" class="nav-item" onclick="showContent('coding-standards')">
+                        <span class="nav-item-icon">📏</span>Coding Standards
+                    </a>
+                    <a href="#testing" class="nav-item" onclick="showContent('testing')">
+                        <span class="nav-item-icon">🧪</span>Testing Guidelines
+                    </a>
+                </div>
+            </div>
+        </nav>
+        </aside>
+
+        <!-- Page Header -->
+        <header class="page-header" id="page-header">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z"></path>
+                </svg>
+            </button>
+            <h1 class="page-title" id="page-title">AppFlowy Backend Wiki</h1>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            <div class="content-header">
+                <h1>Welcome to AppFlowy Backend Wiki</h1>
+                <p>Comprehensive documentation for developers working with AppFlowy's backend services</p>
+            </div>
+
+            <div class="content-body">
+            <!-- Overview Content (Default) -->
+            <div id="overview-content" class="content-section">
+                <div class="content-card">
+                    <h2><span>📋</span> Overview</h2>
+                    <p>AppFlowy Backend is a comprehensive cloud solution that powers the AppFlowy ecosystem. Built with Rust and modern technologies, it provides authentication, real-time collaboration, file storage, and AI-powered features.</p>
+                    
+                    <div class="quick-links">
+                        <a href="#quick-start" class="quick-link" onclick="showContent('quick-start')">
+                            <span>⚡</span>Quick Start
+                        </a>
+                        <a href="#environment-setup" class="quick-link" onclick="showContent('environment-setup')">
+                            <span>🔧</span>Setup Guide
+                        </a>
+                        <a href="https://github.com/AppFlowy-IO/AppFlowy-Cloud" class="quick-link" target="_blank">
+                            <span>📱</span>GitHub Repository
+                        </a>
+                    </div>
+
+                    <h3>Key Features</h3>
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <span class="feature-card-icon">🔐</span>
+                            <h4>Authentication System</h4>
+                            <p>GoTrue-based authentication with support for multiple OAuth providers and secure JWT handling.</p>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-card-icon">⚡</span>
+                            <h4>Real-time Collaboration</h4>
+                            <p>WebSocket-based real-time collaboration system with conflict resolution and operational transforms.</p>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-card-icon">🗄️</span>
+                            <h4>Database Management</h4>
+                            <p>PostgreSQL with advanced features including vector embeddings for AI functionality.</p>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-card-icon">📁</span>
+                            <h4>File Storage</h4>
+                            <p>S3-compatible object storage with support for MinIO and cloud providers.</p>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-card-icon">🤖</span>
+                            <h4>AI Integration</h4>
+                            <p>OpenAI integration for chat, completion, and document processing features.</p>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-card-icon">🔄</span>
+                            <h4>RESTful API</h4>
+                            <p>Comprehensive REST API with detailed documentation and examples for integration.</p>
+                        </div>
+                    </div>
+
+                    <h3>Technology Stack</h3>
+                    <ul style="margin: 16px 0; padding-left: 24px; color: #656d76;">
+                        <li><strong>Backend:</strong> Rust with Actix-web framework</li>
+                        <li><strong>Database:</strong> PostgreSQL with pgvector extension</li>
+                        <li><strong>Authentication:</strong> GoTrue (Supabase Auth)</li>
+                        <li><strong>Real-time:</strong> WebSocket with Redis for state management</li>
+                        <li><strong>Storage:</strong> S3-compatible object storage (MinIO/AWS S3)</li>
+                        <li><strong>Deployment:</strong> Docker Compose with multi-service architecture</li>
+                        <li><strong>AI:</strong> OpenAI API integration with custom embedding pipeline</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quick Start Content -->
+            <div id="quick-start-content" class="content-section" style="display: none;">
+                <div class="content-card">
+                    <h2><span>⚡</span> Quick Start Guide</h2>
+                    <p>Get AppFlowy Backend running locally in under 10 minutes with this step-by-step guide.</p>
+
+                    <h3>Prerequisites</h3>
+                    <ul style="margin: 15px 0; padding-left: 25px;">
+                        <li>Docker and Docker Compose installed</li>
+                        <li>Git for cloning the repository</li>
+                        <li>At least 4GB RAM available</li>
+                        <li>Ports 5432, 6379, 9000, 9001, 9999 available</li>
+                    </ul>
+
+                    <h3>Installation Steps</h3>
+                    <div style="background: #f6f8fa; color: #24292f; padding: 16px; border-radius: 6px; margin: 16px 0; font-family: monospace, monospace; border: 1px solid #d0d7de;">
+<span style="color: #0550ae;"># 1. Clone the repository</span>
+git clone https://github.com/AppFlowy-IO/AppFlowy-Cloud.git
+cd AppFlowy-Cloud
+
+<span style="color: #0550ae;"># 2. Generate environment configuration</span>
+./script/generate_env.sh
+
+<span style="color: #0550ae;"># 3. Start all services</span>
+docker-compose -f docker-compose-dev.yml up -d
+
+<span style="color: #0550ae;"># 4. Verify services are running</span>
+docker-compose -f docker-compose-dev.yml ps
+                    </div>
+
+                    <h3>Verification</h3>
+                    <p>Once all services are running, you can verify the installation:</p>
+                    <ul style="margin: 15px 0; padding-left: 25px;">
+                        <li><strong>GoTrue Health:</strong> <a href="http://localhost:9999/health" target="_blank">http://localhost:9999/health</a></li>
+                        <li><strong>MinIO Console:</strong> <a href="http://localhost:9001" target="_blank">http://localhost:9001</a></li>
+                        <li><strong>PostgreSQL:</strong> Connect on port 5432 with credentials from .env</li>
+                        <li><strong>Redis:</strong> Available on port 6379</li>
+                    </ul>
+
+                    <div style="background: #ddf4ff; border-left: 3px solid #0969da; padding: 16px; margin: 16px 0; color: #0550ae; border-radius: 6px;">
+                        <strong>💡 Next Steps:</strong> Once everything is running, check out the <a href="#environment-setup" onclick="showContent('environment-setup')" style="color: #0969da;">Environment Setup</a> guide for detailed configuration options.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Environment Setup Content -->
+            <div id="environment-setup-content" class="content-section" style="display: none;">
+                <div class="content-card">
+                    <h2><span>🔧</span> Environment Setup</h2>
+                    <p>Detailed guide for configuring your development environment with proper secrets management.</p>
+
+                    <div class="quick-links">
+                        <a href="environment-setup.html" class="quick-link" target="_blank">
+                            <span>📖</span>Full Environment Guide
+                        </a>
+                    </div>
+
+                    <h3>Configuration Files Overview</h3>
+                    <div class="feature-grid">
+                        <div class="feature-card" style="border-color: #68d391;">
+                            <h4>dev.env</h4>
+                            <p>Development template with safe defaults. Safe to commit to version control.</p>
+                        </div>
+                        <div class="feature-card" style="border-color: #f6ad55;">
+                            <h4>.env</h4>
+                            <p>Active configuration file used by Docker Compose. Generated automatically.</p>
+                        </div>
+                        <div class="feature-card" style="border-color: #fc8181;">
+                            <h4>.env.dev.secret</h4>
+                            <p>Optional secrets override file. Never commit this to version control.</p>
+                        </div>
+                    </div>
+
+                    <h3>Essential Configuration</h3>
+                    <div style="background: #f6f8fa; color: #24292f; padding: 16px; border-radius: 6px; margin: 16px 0; font-family: monospace, monospace; border: 1px solid #d0d7de;">
+<span style="color: #0550ae;"># Database Configuration</span>
+POSTGRES_PASSWORD=your_secure_password
+DATABASE_URL=postgres://postgres:password@localhost:5432/postgres
+
+<span style="color: #0550ae;"># JWT Secret (IMPORTANT: Change this!)</span>
+GOTRUE_JWT_SECRET=your-super-secret-jwt-key-at-least-32-chars-long
+
+<span style="color: #0550ae;"># Admin Credentials</span>
+GOTRUE_ADMIN_EMAIL=admin@example.com
+GOTRUE_ADMIN_PASSWORD=secure_admin_password
+                    </div>
+
+                    <div style="background: #fff8c5; border-left: 3px solid #bf8700; padding: 16px; margin: 16px 0; color: #9a6700; border-radius: 6px;">
+                        <strong>⚠️ Security Warning:</strong> Always use strong, unique secrets in production. The default values are only safe for local development.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder content for other sections -->
+            <div id="system-overview-content" class="content-section" style="display: none;">
+                <div class="content-card">
+                    <h2><span>🏛️</span> System Overview <span class="status-badge status-planned">Coming Soon</span></h2>
+                    <p>Detailed system architecture documentation will be available here.</p>
+                </div>
+            </div>
+
+            <!-- More placeholder sections... -->
+            <div id="common-issues-content" class="content-section" style="display: none;">
+                <div class="content-card">
+                    <h2><span>⚠️</span> Common Issues <span class="status-badge status-wip">In Progress</span></h2>
+                    <p>Common troubleshooting scenarios and solutions.</p>
+                    
+                    <h3>Authentication Errors</h3>
+                    <p><strong>Problem:</strong> JWT signature validation fails</p>
+                    <p><strong>Solution:</strong> Ensure GOTRUE_JWT_SECRET is consistent across all services</p>
+
+                    <h3>Database Connection Issues</h3>
+                    <p><strong>Problem:</strong> Services can't connect to PostgreSQL</p>
+                    <p><strong>Solution:</strong> Verify .env file exists and database credentials are correct</p>
+
+                    <h3>Port Conflicts</h3>
+                    <p><strong>Problem:</strong> Services fail to start due to port conflicts</p>
+                    <p><strong>Solution:</strong> Check that ports 5432, 6379, 9000, 9001, 9999 are available</p>
+                </div>
+            </div>
+            </div>
+        </main>
     </div>
+
+    <script>
+        // Toggle sidebar section
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const isActive = header.classList.contains('active');
+            
+            // Close all sections
+            document.querySelectorAll('.nav-section-header').forEach(h => {
+                h.classList.remove('active');
+                h.nextElementSibling.classList.remove('active');
+            });
+            
+            // Open clicked section if it wasn't active
+            if (!isActive) {
+                header.classList.add('active');
+                content.classList.add('active');
+            }
+        }
+
+        // Show content section
+        function showContent(contentId) {
+            // Hide all content sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected content
+            const targetContent = document.getElementById(contentId + '-content');
+            if (targetContent) {
+                targetContent.style.display = 'block';
+            }
+            
+            // Update page title in header
+            updatePageTitle(contentId);
+            
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            const activeNavItem = document.querySelector(`[href="#${contentId}"]`);
+            if (activeNavItem) {
+                activeNavItem.classList.add('active');
+                
+                // Ensure parent section is open
+                const parentSection = activeNavItem.closest('.nav-section');
+                if (parentSection) {
+                    const header = parentSection.querySelector('.nav-section-header');
+                    const content = parentSection.querySelector('.nav-section-content');
+                    header.classList.add('active');
+                    content.classList.add('active');
+                }
+            }
+            
+            // Close sidebar on mobile after selection
+            if (window.innerWidth <= 768) {
+                closeSidebar();
+            }
+        }
+
+        // Update page title in header
+        function updatePageTitle(contentId) {
+            const pageTitle = document.getElementById('page-title');
+            const titleMap = {
+                'overview': 'Overview - AppFlowy Wiki',
+                'quick-start': 'Quick Start - AppFlowy Wiki',
+                'environment-setup': 'Environment Setup - AppFlowy Wiki',
+                'system-overview': 'System Overview - AppFlowy Wiki',
+                'common-issues': 'Common Issues - AppFlowy Wiki'
+            };
+            
+            pageTitle.textContent = titleMap[contentId] || 'AppFlowy Backend Wiki';
+        }
+
+        // Desktop sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const pageHeader = document.getElementById('page-header');
+            
+            sidebar.classList.toggle('collapsed');
+            pageHeader.classList.toggle('sidebar-collapsed');
+        }
+
+        // Mobile sidebar toggle
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.overlay');
+            
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.overlay');
+            
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+
+        // Search functionality
+        function searchDocs(query) {
+            const navItems = document.querySelectorAll('.nav-item');
+            const sections = document.querySelectorAll('.nav-section');
+            
+            if (!query.trim()) {
+                // Show all items and sections if search is empty
+                navItems.forEach(item => item.style.display = 'block');
+                sections.forEach(section => section.style.display = 'block');
+                return;
+            }
+            
+            const searchTerm = query.toLowerCase();
+            let hasVisibleItems = false;
+            
+            sections.forEach(section => {
+                const sectionItems = section.querySelectorAll('.nav-item');
+                let sectionHasVisible = false;
+                
+                sectionItems.forEach(item => {
+                    const itemText = item.textContent.toLowerCase();
+                    if (itemText.includes(searchTerm)) {
+                        item.style.display = 'block';
+                        sectionHasVisible = true;
+                        hasVisibleItems = true;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Show/hide entire section based on whether it has visible items
+                section.style.display = sectionHasVisible ? 'block' : 'none';
+                
+                // Auto-expand sections with matches
+                if (sectionHasVisible) {
+                    const header = section.querySelector('.nav-section-header');
+                    const content = section.querySelector('.nav-section-content');
+                    header.classList.add('active');
+                    content.classList.add('active');
+                }
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Open the Getting Started section by default
+            const firstSection = document.querySelector('.nav-section-header');
+            if (firstSection) {
+                firstSection.classList.add('active');
+                firstSection.nextElementSibling.classList.add('active');
+            }
+            
+            // Show overview content by default
+            showContent('overview');
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                closeSidebar();
+            }
+        });
+    </script>
 </body>
 </html>

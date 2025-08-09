@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Extension: Enable/Disable Conversion Strategy</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; border-left: 4px solid #3498db; padding-left: 15px; margin-top: 30px; }
+        h3 { color: #7f8c8d; }
+        .recommendation {
+            background: #e8f5e8;
+            border: 2px solid #27ae60;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .pros, .cons {
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .pros { background: #d4edda; border-left: 4px solid #28a745; }
+        .cons { background: #f8d7da; border-left: 4px solid #dc3545; }
+        .code-block {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+        }
+        .flow-step {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .alert-info { background: #d1ecf1; border-left: 4px solid #17a2b8; }
+        .alert-warning { background: #fff3cd; border-left: 4px solid #ffc107; }
+        .alert-danger { background: #f8d7da; border-left: 4px solid #dc3545; }
+        .alert-success { background: #d4edda; border-left: 4px solid #28a745; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th { background: #f8f9fa; font-weight: 600; }
+        .scenario { background: #f8f9fa; padding: 20px; margin: 15px 0; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Project Extension: Enable/Disable Conversion Strategy</h1>
+        
+        <div class="alert alert-info">
+            <strong>Document Purpose:</strong> This document outlines the product strategy and technical approach for handling data when workspace owners enable/disable the Project Management extension in AppFlowy.
+        </div>
+
+        <h2>Business Problem</h2>
+        <p>When workspace owners disable the Project Management extension, we need to decide what happens to existing project data. The solution must balance data preservation, user experience, and technical feasibility.</p>
+
+        <h2>Recommended Approach</h2>
+        <div class="recommendation">
+            <h3>✅ Convert Projects to Normal Spaces</h3>
+            <p><strong>Core Strategy:</strong> Treat projects as enhanced spaces with metadata, allowing bi-directional conversion while preserving all user data.</p>
+        </div>
+
+        <h2>Rationale Analysis</h2>
+
+        <h3>1. Data Preservation (Critical)</h3>
+        <ul>
+            <li><strong>User expectation:</strong> Users never expect data deletion when disabling features</li>
+            <li><strong>Trust factor:</strong> Permanent deletion severely damages user trust</li>
+            <li><strong>Recovery scenarios:</strong> Users may disable accidentally or want to re-enable later</li>
+        </ul>
+
+        <h3>2. Business Continuity</h3>
+        <ul>
+            <li><strong>Work preservation:</strong> Projects contain important work teams depend on</li>
+            <li><strong>Minimal disruption:</strong> Teams continue accessing project data as regular spaces</li>
+            <li><strong>Graceful degradation:</strong> System continues working without enhanced features</li>
+        </ul>
+
+        <h3>3. User Experience</h3>
+        <ul>
+            <li><strong>Predictable behavior:</strong> Disabling removes features, not data</li>
+            <li><strong>Low friction:</strong> Easy to re-enable if needed</li>
+            <li><strong>No panic moments:</strong> No "where did my projects go?" support tickets</li>
+        </ul>
+
+        <h2>Alternative Options Considered</h2>
+
+        <div class="pros-cons">
+            <div class="cons">
+                <h4>❌ Archive Projects</h4>
+                <strong>Pros:</strong> Recoverable, doesn't clutter workspace<br>
+                <strong>Cons:</strong> Data becomes inaccessible, creates confusion, extra complexity
+            </div>
+            <div class="cons">
+                <h4>❌ Delete Permanently</h4>
+                <strong>Pros:</strong> Clean slate<br>
+                <strong>Cons:</strong> Catastrophic data loss, user outrage, potential legal issues
+            </div>
+        </div>
+
+        <h2>Technical Architecture</h2>
+
+        <h3>Hybrid Data Model</h3>
+        <div class="code-block">
+interface EnhancedSpace {
+  // Standard space properties
+  id: string;
+  name: string;
+  documents: Document[];
+  
+  // Project enhancement metadata
+  project_metadata?: {
+    is_project: boolean;
+    project_config: {
+      default_columns: string[];
+      custom_fields: ProjectField[];
+      project_settings: ProjectSettings;
+    };
+    conversion_history: ConversionEvent[];
+  };
+}
+
+interface ProjectField {
+  id: string;
+  name: string; // "due_date", "assignee", "priority", "status"
+  type: "date" | "user" | "select" | "multiselect";
+  options?: string[];
+}
+        </div>
+
+        <h3>Complex Conversion Scenarios</h3>
+
+        <div class="scenario">
+            <h4>Challenge 1: Nested Documents</h4>
+            <p><strong>Problem:</strong> Users add nested documents to spaces that were originally projects</p>
+            <p><strong>Solution:</strong> Smart compatibility detection with flexible conversion options</p>
+            
+            <div class="code-block">
+interface ReconversionOptions {
+  mode: 'strict' | 'flexible' | 'custom';
+  
+  // Strict: Only convert if structure unchanged
+  strict_requirements: {
+    max_nested_levels: number;
+    allowed_document_types: string[];
+  };
+  
+  // Flexible: Convert what's possible, keep rest as documents
+  flexible_handling: {
+    convert_compatible_documents: boolean;
+    preserve_nested_structure: boolean;
+  };
+  
+  // Custom: User chooses what to convert
+  user_selections: {
+    documents_to_convert: string[];
+    documents_to_keep_as_docs: string[];
+  };
+}
+            </div>
+        </div>
+
+        <div class="scenario">
+            <h4>Challenge 2: Project-Specific Fields</h4>
+            <p><strong>Problem:</strong> Tasks have due dates, assignees, status, priority</p>
+            <p><strong>Solution:</strong> Field preservation system using document metadata</p>
+            
+            <div class="code-block">
+// Store project fields as document metadata
+interface DocumentMetadata {
+  original_project_fields?: {
+    due_date?: string;
+    assignee?: string;
+    priority?: 'high' | 'medium' | 'low';
+    status?: string;
+    custom_fields?: Record&lt;string, any&gt;;
+  };
+  conversion_timestamp: string;
+  original_type: 'project_task' | 'project_document';
+}
+            </div>
+        </div>
+
+        <h2>User Experience Flows</h2>
+
+        <h3>When Plugin is Disabled</h3>
+        <div class="flow-step">
+            <strong>Conversion Dialog:</strong>
+            <ul>
+                <li>Title: "Convert Projects to Spaces"</li>
+                <li>✅ All documents and kanban boards preserved</li>
+                <li>✅ Project-specific data stored safely for restoration</li>
+                <li>✅ Can be converted back when plugin is re-enabled</li>
+                <li>⚠️ Project-specific features will be disabled</li>
+            </ul>
+        </div>
+
+        <h3>When Plugin is Re-enabled</h3>
+        <div class="flow-step">
+            <strong>Restoration Dialog with Smart Detection:</strong>
+            <table>
+                <tr>
+                    <th>Space Name</th>
+                    <th>Status</th>
+                    <th>Recommended Action</th>
+                </tr>
+                <tr>
+                    <td>Marketing Campaign</td>
+                    <td>✅ Can be fully restored</td>
+                    <td>Restore as project</td>
+                </tr>
+                <tr>
+                    <td>Product Roadmap</td>
+                    <td>⚠️ Has new nested documents</td>
+                    <td>Partial restore (keep new docs as documents)</td>
+                </tr>
+                <tr>
+                    <td>Team Wiki</td>
+                    <td>❌ Structure changed significantly</td>
+                    <td>Create new project instead</td>
+                </tr>
+            </table>
+        </div>
+
+        <h2>Implementation Strategy</h2>
+
+        <h3>Phase 1: Conversion Infrastructure</h3>
+        <div class="flow-step">
+            <ol>
+                <li>Create enhanced space data model with project metadata</li>
+                <li>Implement project-to-space conversion logic</li>
+                <li>Build field preservation system</li>
+                <li>Create conversion tracking system</li>
+            </ol>
+        </div>
+
+        <h3>Phase 2: Smart Reconversion</h3>
+        <div class="flow-step">
+            <ol>
+                <li>Build compatibility assessment engine</li>
+                <li>Implement space-to-project restoration</li>
+                <li>Create flexible conversion options</li>
+                <li>Build user selection interfaces</li>
+            </ol>
+        </div>
+
+        <h3>Phase 3: User Experience</h3>
+        <div class="flow-step">
+            <ol>
+                <li>Design conversion confirmation dialogs</li>
+                <li>Implement restoration option screens</li>
+                <li>Add progress indicators and notifications</li>
+                <li>Create fallback hybrid project mode</li>
+            </ol>
+        </div>
+
+        <h2>Technical Implementation Details</h2>
+
+        <h3>Conversion Tracking</h3>
+        <div class="code-block">
+interface ConversionEvent {
+  timestamp: string;
+  type: 'project_to_space' | 'space_to_project';
+  changes_made: {
+    documents_affected: number;
+    fields_preserved: string[];
+    structure_changes: string[];
+  };
+  compatibility_score: number; // 0-100
+}
+        </div>
+
+        <h3>Smart Compatibility Detection</h3>
+        <div class="code-block">
+const assessReconversionCompatibility = (space: Space) =&gt; {
+  const metadata = space.project_metadata;
+  if (!metadata) return { compatible: false, score: 0 };
+  
+  const issues = [];
+  let score = 100;
+  
+  // Check for structural changes
+  if (hasDeepNesting(space.documents)) {
+    issues.push("Deep nesting detected");
+    score -= 20;
+  }
+  
+  // Check for incompatible document types
+  const incompatibleDocs = findIncompatibleDocuments(space.documents);
+  if (incompatibleDocs.length &gt; 0) {
+    issues.push(`${incompatibleDocs.length} incompatible documents`);
+    score -= 30;
+  }
+  
+  return { compatible: score &gt; 50, score, issues };
+};
+        </div>
+
+        <h2>Business Rules</h2>
+
+        <h3>Project → Space Conversion</h3>
+        <div class="alert alert-success">
+            <ol>
+                <li><strong>Always preserve all data</strong> (non-negotiable)</li>
+                <li><strong>Store project metadata</strong> in space properties</li>
+                <li><strong>Convert kanban views</strong> to regular document views</li>
+                <li><strong>Preserve task fields</strong> as document metadata</li>
+                <li><strong>Notify users</strong> about what was preserved</li>
+            </ol>
+        </div>
+
+        <h3>Space → Project Reconversion</h3>
+        <div class="alert alert-info">
+            <ol>
+                <li><strong>Assess compatibility</strong> first</li>
+                <li><strong>Show clear options</strong> based on changes made</li>
+                <li><strong>Allow partial conversion</strong> (some docs stay as docs)</li>
+                <li><strong>Restore preserved fields</strong> where possible</li>
+                <li><strong>Create hybrid projects</strong> when needed</li>
+            </ol>
+        </div>
+
+        <h2>Fallback Strategy</h2>
+        <p>If conversion becomes too complex, implement hybrid project mode:</p>
+        <div class="code-block">
+const hybridProjectMode = {
+  // Allow projects to contain both:
+  project_tasks: Task[], // With project fields
+  regular_documents: Document[], // Regular nested docs
+  
+  // UI shows both in different sections
+  ui_sections: {
+    "Project Tasks": "kanban_view",
+    "Project Documents": "document_tree_view"
+  }
+};
+        </div>
+
+        <h2>Success Metrics</h2>
+        <ul>
+            <li>Zero data loss incidents during conversion</li>
+            <li>High user satisfaction with conversion process</li>
+            <li>Low support ticket volume related to missing data</li>
+            <li>High re-enablement rate after disabling</li>
+            <li>Successful bi-directional conversion rate > 80%</li>
+        </ul>
+
+        <h2>Risk Mitigation</h2>
+        <div class="alert alert-warning">
+            <ul>
+                <li><strong>Data Corruption:</strong> Implement comprehensive backup before any conversion</li>
+                <li><strong>Performance Issues:</strong> Process large projects in batches with progress indicators</li>
+                <li><strong>User Confusion:</strong> Provide clear explanations and preview of changes</li>
+                <li><strong>Compatibility Issues:</strong> Always provide manual override options</li>
+            </ul>
+        </div>
+
+        <div class="alert alert-success">
+            <strong>Conclusion:</strong> This approach ensures data safety while providing maximum flexibility for users to move between project and space modes as their needs evolve. The hybrid data model allows for graceful degradation and intelligent restoration, maintaining user trust and system reliability.
+        </div>
+    </div>
+</body>
+</html>

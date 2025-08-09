@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppFlowy Extensions Architecture</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        
+        h3 {
+            color: #7f8c8d;
+            margin-top: 20px;
+        }
+        
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        code {
+            background-color: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        
+        .architecture-diagram {
+            background-color: #f9f9f9;
+            border: 2px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature-card {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .feature-card h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        .api-endpoint {
+            background-color: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 10px 15px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        
+        .permission-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .permission-table th,
+        .permission-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .permission-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .permission-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+        
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧩 AppFlowy Extensions Architecture</h1>
+        
+        <p>The AppFlowy Extensions system allows workspace owners to enhance their workspace functionality through a secure, modular extension marketplace. This document describes the architecture, implementation, and usage of the Extensions feature.</p>
+        
+        <h2>📋 Table of Contents</h2>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#architecture">System Architecture</a></li>
+            <li><a href="#data-models">Data Models</a></li>
+            <li><a href="#security">Security Model</a></li>
+            <li><a href="#api-endpoints">API Endpoints</a></li>
+            <li><a href="#frontend-components">Frontend Components</a></li>
+            <li><a href="#extension-development">Extension Development</a></li>
+            <li><a href="#deployment">Deployment</a></li>
+        </ul>
+        
+        <h2 id="overview">📖 Overview</h2>
+        
+        <p>Extensions in AppFlowy provide a way to:</p>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>🔧 Extend Functionality</h4>
+                <p>Add new features and capabilities to workspaces without modifying core code</p>
+            </div>
+            <div class="feature-card">
+                <h4>🔗 Integrate Services</h4>
+                <p>Connect with external services like GitHub, Slack, and other productivity tools</p>
+            </div>
+            <div class="feature-card">
+                <h4>🎨 Customize Experience</h4>
+                <p>Tailor the workspace to specific workflows and team needs</p>
+            </div>
+            <div class="feature-card">
+                <h4>🔒 Maintain Security</h4>
+                <p>Granular permissions and sandboxed execution ensure workspace safety</p>
+            </div>
+        </div>
+        
+        <h2 id="architecture">🏗️ System Architecture</h2>
+        
+        <div class="architecture-diagram">
+            <pre>
+┌─────────────────────────────────────────────────────────────┐
+│                     Frontend (React)                        │
+├─────────────────────────────────────────────────────────────┤
+│  Workspace Settings Modal                                   │
+│  └── Extensions Tab (Owner only)                          │
+│      ├── Installed Extensions List                        │
+│      ├── Extension Marketplace/Browse                     │
+│      ├── Extension Details View                           │
+│      └── Extension Settings                               │
+├─────────────────────────────────────────────────────────────┤
+│                   Extension System                          │
+│  ├── Extension Registry (available extensions)             │
+│  ├── Extension Loader (dynamic loading)                    │
+│  ├── Extension Sandbox (security isolation)               │
+│  └── Extension API (hooks, events, UI slots)              │
+├─────────────────────────────────────────────────────────────┤
+│                Backend (Rust - Actix)                       │
+│  ├── Extension Management Service                          │
+│  ├── Extension Storage (PostgreSQL)                        │
+│  ├── Permission Enforcement                                │
+│  └── Extension Runtime                                     │
+└─────────────────────────────────────────────────────────────┘
+            </pre>
+        </div>
+        
+        <h2 id="data-models">📊 Data Models</h2>
+        
+        <h3>Extension Model</h3>
+        <pre><code>interface Extension {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  icon: string;
+  author: string;
+  category: ExtensionCategory;
+  permissions: ExtensionPermission[];
+  config_schema?: JSONSchema;
+  is_verified: boolean;
+  install_count: number;
+  rating: number;
+  pricing: ExtensionPricing;
+}</code></pre>
+        
+        <h3>Extension Categories</h3>
+        <ul>
+            <li><code>productivity</code> - Task management, time tracking, etc.</li>
+            <li><code>integration</code> - Third-party service connections</li>
+            <li><code>analytics</code> - Data visualization and reporting</li>
+            <li><code>communication</code> - Chat, notifications, etc.</li>
+            <li><code>security</code> - Access control, encryption, etc.</li>
+            <li><code>ai</code> - AI-powered features</li>
+            <li><code>custom</code> - Other extensions</li>
+        </ul>
+        
+        <h3>Pricing Models</h3>
+        <pre><code>type ExtensionPricing = 
+  | { type: 'free' }
+  | { type: 'paid'; price: number; billing: 'monthly' | 'yearly' | 'one-time' }
+  | { type: 'freemium'; free_features: string[]; paid_features: string[]; price: number };</code></pre>
+        
+        <h2 id="security">🔒 Security Model</h2>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> Only workspace owners can install, configure, or uninstall extensions to ensure workspace security.
+        </div>
+        
+        <h3>Permission System</h3>
+        <table class="permission-table">
+            <thead>
+                <tr>
+                    <th>Permission Type</th>
+                    <th>Resource</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>read</code></td>
+                    <td><code>workspace</code></td>
+                    <td>View workspace information and settings</td>
+                </tr>
+                <tr>
+                    <td><code>write</code></td>
+                    <td><code>workspace</code></td>
+                    <td>Modify workspace settings</td>
+                </tr>
+                <tr>
+                    <td><code>read</code></td>
+                    <td><code>documents</code></td>
+                    <td>Access document content</td>
+                </tr>
+                <tr>
+                    <td><code>write</code></td>
+                    <td><code>documents</code></td>
+                    <td>Create or modify documents</td>
+                </tr>
+                <tr>
+                    <td><code>read</code></td>
+                    <td><code>members</code></td>
+                    <td>View member list and roles</td>
+                </tr>
+                <tr>
+                    <td><code>delete</code></td>
+                    <td><code>documents</code></td>
+                    <td>Delete documents</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3>Security Features</h3>
+        <ul>
+            <li><strong>Sandboxed Execution:</strong> Extensions run in isolated contexts</li>
+            <li><strong>Permission Approval:</strong> Users must explicitly grant permissions</li>
+            <li><strong>Verified Extensions:</strong> Security-reviewed extensions get verified badge</li>
+            <li><strong>Rate Limiting:</strong> API calls are rate-limited per extension</li>
+            <li><strong>Content Security Policy:</strong> Prevents XSS and injection attacks</li>
+        </ul>
+        
+        <h2 id="api-endpoints">🔌 API Endpoints</h2>
+        
+        <h3>Extension Management</h3>
+        
+        <div class="api-endpoint">GET /api/extensions</div>
+        <p>List all available extensions with filtering and pagination</p>
+        <pre><code>Query Parameters:
+- category: Filter by category (productivity, integration, etc.)
+- search: Search in name/description
+- verified_only: Show only verified extensions
+- pricing_type: Filter by pricing model (free, paid, freemium)
+- page: Page number (default: 1)
+- per_page: Items per page (default: 20, max: 100)</code></pre>
+        
+        <div class="api-endpoint">GET /api/extensions/{extension_id}</div>
+        <p>Get detailed information about a specific extension</p>
+        
+        <div class="api-endpoint">GET /api/workspaces/{workspace_id}/extensions</div>
+        <p>List installed extensions for a workspace (requires workspace access)</p>
+        
+        <div class="api-endpoint">POST /api/workspaces/{workspace_id}/extensions</div>
+        <p>Install an extension (Owner only)</p>
+        <pre><code>Request Body:
+{
+  "extension_id": "uuid",
+  "permissions_granted": [
+    {"type": "read", "resource": "workspace"},
+    {"type": "write", "resource": "documents"}
+  ],
+  "config": {"setting": "value"}
+}</code></pre>
+        
+        <div class="api-endpoint">PUT /api/workspaces/{workspace_id}/extensions/{extension_id}</div>
+        <p>Update extension configuration (Owner only)</p>
+        <pre><code>Request Body:
+{
+  "config": {"setting": "new_value"},
+  "enabled": true
+}</code></pre>
+        
+        <div class="api-endpoint">DELETE /api/workspaces/{workspace_id}/extensions/{extension_id}</div>
+        <p>Uninstall an extension (Owner only)</p>
+        
+        <div class="api-endpoint">POST /api/workspaces/{workspace_id}/extensions/{extension_id}/toggle</div>
+        <p>Enable/disable an extension (Owner only)</p>
+        <pre><code>Request Body:
+{
+  "enabled": false
+}</code></pre>
+
+        <h3>Authentication</h3>
+        <div class="info">
+            <strong>📝 Authentication Headers:</strong><br>
+            • Development: <code>x-user-id: {user_uuid}</code><br>
+            • Production: <code>Authorization: Bearer {jwt_token}</code>
+        </div>
+
+        <h3>Response Formats</h3>
+        <pre><code>// Extension Response
+{
+  "id": "uuid",
+  "ext_id": "project-management",
+  "name": "Project Management",
+  "version": "1.0.0",
+  "description": "Manage projects with kanban boards",
+  "icon": "📋",
+  "author": "AppFlowy Team",
+  "category": "productivity",
+  "permissions": [
+    {"type": "read", "resource": "workspace"},
+    {"type": "write", "resource": "documents"}
+  ],
+  "is_verified": true,
+  "install_count": 1250,
+  "rating": 4.8,
+  "pricing": {"type": "free"},
+  "created_at": "2024-01-01T00:00:00Z"
+}
+
+// Installed Extension Response
+{
+  "id": "uuid",
+  "workspace_id": "uuid",
+  "extension": { /* Extension object */ },
+  "installed_by": "uuid",
+  "enabled": true,
+  "config": {"default_columns": ["To Do", "Doing", "Done"]},
+  "permissions_granted": [...],
+  "installed_at": "2024-01-15T10:30:00Z"
+}</code></pre>
+        
+        <h2 id="frontend-components">🎨 Frontend Components</h2>
+        
+        <h3>Main Components</h3>
+        <ul>
+            <li><code>ExtensionsSettings</code> - Main extensions management interface</li>
+            <li><code>ExtensionsSettingsWrapper</code> - Role-based access control wrapper</li>
+            <li><code>ExtensionCard</code> - Display extension information</li>
+            <li><code>ExtensionDetailsDialog</code> - Detailed view with screenshots</li>
+            <li><code>InstallConfirmDialog</code> - Permission approval dialog</li>
+        </ul>
+        
+        <h3>User Interface</h3>
+        <div class="info">
+            <strong>ℹ️ Note:</strong> The Extensions tab only appears in Workspace Settings for users with Owner role.
+        </div>
+        
+        <h2 id="extension-development">👨‍💻 Extension Development</h2>
+        
+        <h3>Extension API</h3>
+        <pre><code>interface ExtensionAPI {
+  // UI Integration
+  ui: {
+    registerMenuItem(location: MenuLocation, item: MenuItem): void;
+    registerWidget(location: WidgetLocation, widget: Widget): void;
+    registerCommand(command: Command): void;
+    showNotification(notification: Notification): void;
+  };
+  
+  // Data Access
+  data: {
+    workspace: WorkspaceAPI;
+    documents: DocumentsAPI;
+    members: MembersAPI;
+  };
+  
+  // Events
+  events: {
+    on(event: ExtensionEvent, handler: EventHandler): void;
+    off(event: ExtensionEvent, handler: EventHandler): void;
+  };
+  
+  // Storage
+  storage: {
+    get(key: string): Promise&lt;any&gt;;
+    set(key: string, value: any): Promise&lt;void&gt;;
+    remove(key: string): Promise&lt;void&gt;;
+  };
+}</code></pre>
+        
+        <h3>Example Extension</h3>
+        <pre><code>// manifest.json
+{
+  "id": "my-extension",
+  "name": "My Extension",
+  "version": "1.0.0",
+  "permissions": ["read:documents", "write:documents"],
+  "main": "index.js"
+}
+
+// index.js
+export default function activate(api) {
+  // Register a menu item
+  api.ui.registerMenuItem('workspace_menu', {
+    label: 'My Extension',
+    icon: '🚀',
+    onClick: () => {
+      api.ui.showNotification({
+        type: 'success',
+        message: 'Hello from My Extension!'
+      });
+    }
+  });
+  
+  // Listen to document changes
+  api.events.on('document:change', (doc) => {
+    console.log('Document changed:', doc.id);
+  });
+}</code></pre>
+        
+        <h2 id="implementation">⚙️ Implementation Details</h2>
+
+        <h3>Backend Architecture</h3>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>🦀 Rust API Service</h4>
+                <p>Built with Actix-web framework, providing high-performance REST endpoints</p>
+            </div>
+            <div class="feature-card">
+                <h4>🗄️ PostgreSQL Database</h4>
+                <p>Structured schema with automated triggers for ratings and install counts</p>
+            </div>
+            <div class="feature-card">
+                <h4>🔒 SeaORM Integration</h4>
+                <p>Type-safe database operations with compile-time query validation</p>
+            </div>
+            <div class="feature-card">
+                <h4>📊 Structured Logging</h4>
+                <p>Comprehensive logging with tracing for observability</p>
+            </div>
+        </div>
+
+        <h3>Database Schema</h3>
+        <p>The extensions system uses four main tables:</p>
+        <pre><code>extensions              -- Extension catalog/marketplace
+workspace_extensions    -- Installed extensions per workspace  
+extension_reviews       -- User ratings and reviews
+extension_usage_stats   -- Usage analytics and metrics</code></pre>
+
+        <div class="warning">
+            <strong>⚠️ Database Triggers:</strong> The system includes automatic triggers to update extension ratings and install counts when reviews or installations change.
+        </div>
+
+        <h3>Built-in Extensions</h3>
+        <p>The system comes with several pre-built extensions:</p>
+        <ul>
+            <li><strong>Project Management</strong> - Kanban boards with customizable columns</li>
+            <li><strong>GitHub Integration</strong> - Sync repositories and track issues</li>
+            <li><strong>AI Writing Assistant</strong> - Grammar checking and content generation</li>
+            <li><strong>Slack Notifications</strong> - Workspace activity notifications</li>
+            <li><strong>Analytics Dashboard</strong> - Usage metrics and insights</li>
+        </ul>
+
+        <h2 id="deployment">🚀 Deployment</h2>
+
+        <h3>Prerequisites</h3>
+        <ul>
+            <li>PostgreSQL 12+ database</li>
+            <li>Rust 1.70+ toolchain</li>
+            <li>Docker (optional)</li>
+        </ul>
+        
+        <h3>Database Setup</h3>
+        <pre><code># 1. Run the migration
+psql -U appflowy -d appflowy_db -f migrations/20240308_extensions.sql
+
+# 2. Verify tables created
+psql -U appflowy -d appflowy_db -c "\dt"</code></pre>
+        
+        <h3>Environment Variables</h3>
+        <pre><code># Database connection
+DATABASE_URL=postgresql://appflowy:password@localhost/appflowy_db
+
+# Server configuration  
+BIND_ADDRESS=127.0.0.1:8080
+RUST_LOG=info
+
+# Extension system
+EXTENSIONS_ENABLED=true
+EXTENSION_SANDBOX_ENABLED=true
+EXTENSION_MARKETPLACE_URL=https://marketplace.appflowy.io</code></pre>
+
+        <h3>Running the Service</h3>
+        <pre><code># Development
+cargo run --bin appflowy-cloud
+
+# Production
+cargo run --release --bin appflowy-cloud
+
+# Docker
+docker build -t appflowy-extensions .
+docker run -p 8080:8080 appflowy-extensions</code></pre>
+
+        <h3>Health Check</h3>
+        <pre><code>curl http://localhost:8080/health
+# Response: "Extensions API is healthy"</code></pre>
+
+        <h3>Docker Deployment</h3>
+        <pre><code>FROM rust:1.70 as builder
+WORKDIR /app
+COPY . .
+RUN cargo build --release --bin appflowy-cloud
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y ca-certificates libpq5
+COPY --from=builder /app/target/release/appflowy-cloud /usr/local/bin/
+EXPOSE 8080
+CMD ["appflowy-cloud"]</code></pre>
+
+        <h3>Kubernetes Configuration</h3>
+        <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appflowy-extensions-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: extensions-api
+  template:
+    metadata:
+      labels:
+        app: extensions-api
+    spec:
+      containers:
+      - name: api
+        image: appflowy/extensions-api:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: url
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10</code></pre>
+        
+        <hr style="margin-top: 50px;">
+        <p style="text-align: center; color: #666;">
+            AppFlowy Extensions Documentation • Last updated: March 2024
+        </p>
+    </div>
+</body>
+</html>

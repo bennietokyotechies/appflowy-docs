@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Space & Project Management Implementation Plan</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #1e293b;
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #3b82f6;
+        }
+        
+        h2 {
+            color: #1e293b;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-left: 15px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        h3 {
+            color: #475569;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        h4 {
+            color: #64748b;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+        
+        .architecture-box {
+            background: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre-line;
+        }
+        
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+        }
+        
+        .sql-block {
+            background: #0f172a;
+            color: #94a3b8;
+        }
+        
+        .typescript-block {
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+        
+        .rust-block {
+            background: #2d1b69;
+            color: #e0e7ff;
+        }
+        
+        .phase-card {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            box-shadow: 0 8px 25px -5px rgba(59, 130, 246, 0.3);
+        }
+        
+        .phase-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .benefit-item {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .timeline-item {
+            background: #fefefe;
+            border-left: 4px solid #10b981;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .warning {
+            background: #fef3cd;
+            border: 1px solid #facc15;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .success {
+            background: #dcfce7;
+            border: 1px solid #22c55e;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        ul, ol {
+            padding-left: 25px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .toc {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .toc ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+        
+        .toc a {
+            text-decoration: none;
+            color: #3b82f6;
+            font-weight: 500;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        
+        .status-complete {
+            color: #22c55e;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="emoji">🚀</span>Unified Space & Project Management Implementation Plan</h1>
+        
+        <div class="success">
+            <strong>Plan Status:</strong> Ready for Implementation | 
+            <strong>Estimated Timeline:</strong> 16-22 weeks | 
+            <strong>Complexity:</strong> High | 
+            <strong>Impact:</strong> Enterprise-Grade Collaboration Platform
+        </div>
+
+        <div class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#overview">1. Overview & Architecture</a></li>
+                <li><a href="#phase1">2. Phase 1: Core Member Access Management Foundation</a></li>
+                <li><a href="#phase2">3. Phase 2: Frontend Space Management UI</a></li>
+                <li><a href="#phase3">4. Phase 3: Project Space Implementation</a></li>
+                <li><a href="#phase4">5. Phase 4: Integration & Migration</a></li>
+                <li><a href="#timeline">6. Implementation Timeline</a></li>
+                <li><a href="#benefits">7. Key Benefits</a></li>
+            </ul>
+        </div>
+
+        <section id="overview">
+            <h2><span class="emoji">🏗️</span>Overview & Unified Architecture</h2>
+            
+            <div class="success">
+                <strong>Key Insight:</strong> Both conventional Spaces and Project Management Spaces share the same foundational architecture with member access management, while Project Spaces add task management capabilities with collaborative documents - exactly like the desktop app!
+            </div>
+
+            <h3>Conceptual Foundation</h3>
+            <div class="architecture-box">Enhanced Space Architecture:
+┌─────────────────────────────────────┐
+│           UNIFIED SPACE             │
+├─────────────────────────────────────┤
+│  Base Features (ALL Spaces):       │
+│  • Member Access Management        │
+│  • Role-based Permissions          │
+│  • Settings & Configuration        │
+│  • Collaborative Documents         │
+│  • View Management                 │
+└─────────────────────────────────────┘
+           ↙              ↘
+┌─────────────────┐  ┌─────────────────┐
+│ DOCUMENT SPACE  │  │  PROJECT SPACE  │
+│                 │  │                 │
+│ • Pages/Docs    │  │ • Tasks         │
+│ • Rich Content  │  │ • Kanban Views  │
+│ • Knowledge     │  │ • Workflows     │
+│   Base          │  │ • Timeline      │
+└─────────────────┘  └─────────────────┘</div>
+
+            <h3>Architecture Agreement</h3>
+            <ul>
+                <li><strong>✅ Project ≈ Space Extension</strong> - Inherits all Space capabilities (collaboration, permissions, views) + adds project-specific metadata and task management</li>
+                <li><strong>✅ Task ≈ Page Extension</strong> - Each task has collaborative document content (like desktop app) + structured properties (status, assignee, due_date)</li>
+                <li><strong>✅ Task ID ≈ Page ID</strong> - Consistent with AppFlowy's view-based architecture, enables proper document loading and collaboration</li>
+            </ul>
+        </section>
+
+        <section id="phase1">
+            <div class="phase-card">
+                <div class="phase-title"><span class="emoji">🏗️</span>Phase 1: Core Member Access Management Foundation</div>
+                <p><strong>Duration:</strong> 6-8 weeks | <strong>Priority:</strong> High | <strong>Status:</strong> <span class="status-pending">Pending</span></p>
+                <p>Establish the foundational database schema, API endpoints, and permission system that will power both document spaces and project spaces.</p>
+            </div>
+
+            <h3>1.1 Database Schema Extensions</h3>
+            <div class="code-block sql-block">-- Enhanced Spaces with Member Management
+ALTER TABLE af_workspace_view ADD COLUMN space_type VARCHAR(20) DEFAULT 'document_space';
+-- space_type: 'document_space', 'project_space'
+
+-- Space Member Management
+CREATE TABLE af_space_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    space_id UUID NOT NULL,               -- References af_workspace_view.view_id
+    workspace_id UUID NOT NULL,
+    user_uid INTEGER NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'viewer',
+    -- Roles: 'owner', 'admin', 'editor', 'viewer'
+    
+    -- Permission flags for granular control
+    permissions JSONB DEFAULT '{}',       -- Custom permissions per space
+    invited_by INTEGER,
+    invited_at TIMESTAMPTZ DEFAULT NOW(),
+    joined_at TIMESTAMPTZ,
+    status VARCHAR(20) DEFAULT 'active',  -- 'invited', 'active', 'suspended'
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    UNIQUE(space_id, user_uid),
+    FOREIGN KEY (space_id) REFERENCES af_workspace_view(view_id) ON DELETE CASCADE,
+    FOREIGN KEY (workspace_id) REFERENCES af_workspace(workspace_id),
+    FOREIGN KEY (user_uid) REFERENCES af_user(uid),
+    FOREIGN KEY (invited_by) REFERENCES af_user(uid)
+);
+
+-- Space Invitations
+CREATE TABLE af_space_invitations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    space_id UUID NOT NULL,
+    workspace_id UUID NOT NULL,
+    inviter_uid INTEGER NOT NULL,
+    invitee_email VARCHAR(255) NOT NULL,
+    invitee_uid INTEGER,                  -- NULL if user not yet registered
+    role VARCHAR(20) NOT NULL,
+    invitation_token UUID DEFAULT gen_random_uuid(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'accepted', 'declined', 'expired'
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    responded_at TIMESTAMPTZ,
+    
+    FOREIGN KEY (space_id) REFERENCES af_workspace_view(view_id),
+    FOREIGN KEY (workspace_id) REFERENCES af_workspace(workspace_id),
+    FOREIGN KEY (inviter_uid) REFERENCES af_user(uid),
+    FOREIGN KEY (invitee_uid) REFERENCES af_user(uid)
+);
+
+-- Project-Specific Extensions (for project spaces)
+CREATE TABLE af_project_metadata (
+    project_id UUID PRIMARY KEY,          -- Same as space_id from af_workspace_view
+    workspace_id UUID NOT NULL,
+    
+    -- Project configuration
+    project_settings JSONB DEFAULT '{}',
+    workflow_config JSONB DEFAULT '{}',
+    default_task_assignee INTEGER,
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    FOREIGN KEY (project_id) REFERENCES af_workspace_view(view_id),
+    FOREIGN KEY (workspace_id) REFERENCES af_workspace(workspace_id),
+    FOREIGN KEY (default_task_assignee) REFERENCES af_user(uid)
+);
+
+-- Task Management (for project spaces)
+CREATE TABLE af_project_tasks (
+    task_id UUID PRIMARY KEY,
+    project_id UUID NOT NULL,             -- References project space
+    workspace_id UUID NOT NULL,
+    
+    -- Task properties
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(20) DEFAULT 'todo',
+    priority VARCHAR(10) DEFAULT 'medium',
+    assignee_uid INTEGER,
+    due_date TIMESTAMPTZ,
+    
+    -- Document integration
+    view_id UUID NOT NULL,               -- Each task has a document view
+    is_document_empty BOOLEAN DEFAULT true,
+    
+    -- Standard fields
+    created_by INTEGER NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    position INTEGER DEFAULT 0,
+    
+    FOREIGN KEY (project_id) REFERENCES af_project_metadata(project_id),
+    FOREIGN KEY (workspace_id) REFERENCES af_workspace(workspace_id),
+    FOREIGN KEY (view_id) REFERENCES af_workspace_view(view_id),
+    FOREIGN KEY (assignee_uid) REFERENCES af_user(uid),
+    FOREIGN KEY (created_by) REFERENCES af_user(uid)
+);</div>
+
+            <h3>1.2 Permission System Design</h3>
+            <div class="code-block typescript-block">// src/application/types/space-permissions.ts (NEW)
+
+export enum SpaceRole {
+  Owner = 'owner',
+  Admin = 'admin', 
+  Editor = 'editor',
+  Viewer = 'viewer'
+}
+
+export enum SpacePermission {
+  // Content permissions
+  ViewContent = 'view_content',
+  EditContent = 'edit_content',
+  CreateContent = 'create_content',
+  DeleteContent = 'delete_content',
+  
+  // Member management
+  ViewMembers = 'view_members',
+  InviteMembers = 'invite_members',
+  RemoveMembers = 'remove_members',
+  ManageRoles = 'manage_roles',
+  
+  // Space management
+  EditSpaceSettings = 'edit_space_settings',
+  DeleteSpace = 'delete_space',
+  ManageIntegrations = 'manage_integrations',
+  
+  // Project-specific (for project spaces)
+  CreateTasks = 'create_tasks',
+  AssignTasks = 'assign_tasks',
+  ManageWorkflows = 'manage_workflows',
+  ViewReports = 'view_reports'
+}
+
+export const DEFAULT_ROLE_PERMISSIONS: Record&lt;SpaceRole, SpacePermission[]&gt; = {
+  [SpaceRole.Owner]: [
+    // All permissions
+    ...Object.values(SpacePermission)
+  ],
+  
+  [SpaceRole.Admin]: [
+    SpacePermission.ViewContent,
+    SpacePermission.EditContent,
+    SpacePermission.CreateContent,
+    SpacePermission.DeleteContent,
+    SpacePermission.ViewMembers,
+    SpacePermission.InviteMembers,
+    SpacePermission.RemoveMembers,
+    SpacePermission.ManageRoles,
+    SpacePermission.EditSpaceSettings,
+    SpacePermission.CreateTasks,
+    SpacePermission.AssignTasks,
+    SpacePermission.ManageWorkflows,
+    SpacePermission.ViewReports
+  ],
+  
+  [SpaceRole.Editor]: [
+    SpacePermission.ViewContent,
+    SpacePermission.EditContent,
+    SpacePermission.CreateContent,
+    SpacePermission.ViewMembers,
+    SpacePermission.CreateTasks,
+    SpacePermission.AssignTasks,
+    SpacePermission.ViewReports
+  ],
+  
+  [SpaceRole.Viewer]: [
+    SpacePermission.ViewContent,
+    SpacePermission.ViewMembers,
+    SpacePermission.ViewReports
+  ]
+};</div>
+
+            <h3>1.3 Backend API: Space Member Management</h3>
+            <div class="code-block rust-block">// src/api/space_members.rs (NEW)
+
+impl SpaceMemberHandler {
+    // Member Management
+    pub async fn invite_member(
+        space_id: Uuid,
+        inviter_uid: i32,
+        req: SpaceMemberRequest
+    ) -> Result&lt;SpaceInvitation&gt; {
+        // 1. Check if inviter has permission to invite
+        let inviter_permissions = get_user_space_permissions(space_id, inviter_uid).await?;
+        ensure_permission(&inviter_permissions, SpacePermission::InviteMembers)?;
+        
+        // 2. Create invitation
+        let invitation = create_space_invitation(space_id, inviter_uid, req).await?;
+        
+        // 3. Send invitation email
+        send_space_invitation_email(&invitation).await?;
+        
+        Ok(invitation)
+    }
+    
+    pub async fn list_members(space_id: Uuid, requester_uid: i32) -> Result&lt;Vec&lt;SpaceMember&gt;&gt; {
+        // Check view members permission
+        let permissions = get_user_space_permissions(space_id, requester_uid).await?;
+        ensure_permission(&permissions, SpacePermission::ViewMembers)?;
+        
+        get_space_members(space_id).await
+    }
+    
+    // Permission Checking
+    pub async fn check_permission(
+        space_id: Uuid,
+        user_uid: i32,
+        permission: SpacePermission
+    ) -> Result&lt;bool&gt; {
+        let permissions = get_user_space_permissions(space_id, user_uid).await?;
+        Ok(permissions.contains(&permission))
+    }
+}</div>
+
+            <h3>1.4 Task Document Integration</h3>
+            <div class="code-block rust-block">// When creating a task, also create its document view
+async fn create_task_with_document(
+    workspace_id: Uuid,
+    project_id: Uuid, 
+    task_data: CreateTaskRequest
+) -> Result&lt;ProjectTask&gt; {
+    let task_id = Uuid::new_v4();
+    
+    // 1. Create document view (inherits from existing page creation logic)
+    let document_view = create_workspace_view(CreateViewRequest {
+        view_id: task_id,  // Task ID = Document View ID
+        workspace_id,
+        name: task_data.title.clone(),
+        layout: ViewLayout::Document,
+        view_type: "task_document".to_string(),
+    }).await?;
+    
+    // 2. Initialize collaborative document
+    let collab_doc = create_collab_document(task_id, workspace_id).await?;
+    
+    // 3. Create task metadata
+    let task = ProjectTask {
+        task_id,
+        project_id,
+        workspace_id,
+        view_id: task_id,  // Same as task_id
+        title: task_data.title,
+        // ... other fields
+        is_document_empty: true,
+    };
+    
+    // 4. Store in database
+    insert_project_task(&task).await?;
+    
+    Ok(task)
+}</div>
+        </section>
+
+        <section id="phase2">
+            <div class="phase-card">
+                <div class="phase-title"><span class="emoji">💻</span>Phase 2: Frontend Space Management UI</div>
+                <p><strong>Duration:</strong> 4-6 weeks | <strong>Priority:</strong> High | <strong>Status:</strong> <span class="status-pending">Pending</span></p>
+                <p>Build the user interface components for space member management, role assignment, and permission handling.</p>
+            </div>
+
+            <h3>2.1 Enhanced Space Types</h3>
+            <div class="code-block typescript-block">// src/application/types/enhanced-space.ts (MODIFY EXISTING)
+
+export enum SpaceType {
+  DocumentSpace = 'document_space',
+  ProjectSpace = 'project_space'
+}
+
+export interface EnhancedSpace {
+  id: string;
+  workspace_id: string;
+  name: string;
+  description?: string;
+  space_type: SpaceType;
+  
+  // Member management
+  members: SpaceMember[];
+  member_count: number;
+  my_role: SpaceRole;
+  my_permissions: SpacePermissions;
+  
+  // Space settings
+  settings: SpaceSettings;
+  
+  // Content
+  views: View[];
+  
+  // Timestamps
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  
+  // Project-specific (when space_type = 'project_space')
+  project_metadata?: ProjectMetadata;
+}</div>
+
+            <h3>2.2 Space Management Service</h3>
+            <div class="code-block typescript-block">// src/services/space-management.service.ts (NEW)
+
+export class SpaceManagementService {
+  
+  // Space CRUD with member management
+  async createSpace(
+    workspaceId: string,
+    data: CreateSpaceRequest
+  ): Promise&lt;EnhancedSpace&gt; {
+    const response = await api.post(`/api/workspace/${workspaceId}/spaces`, {
+      ...data,
+      space_type: data.space_type || SpaceType.DocumentSpace
+    });
+    return response.data;
+  }
+  
+  // Member Management
+  async inviteMember(
+    spaceId: string,
+    invitation: SpaceMemberRequest
+  ): Promise&lt;SpaceInvitation&gt; {
+    const response = await api.post(`/api/spaces/${spaceId}/members/invite`, invitation);
+    return response.data;
+  }
+  
+  async getMembers(spaceId: string): Promise&lt;SpaceMember[]&gt; {
+    const response = await api.get(`/api/spaces/${spaceId}/members`);
+    return response.data;
+  }
+  
+  // Permission Checking
+  async checkPermission(
+    spaceId: string,
+    permission: SpacePermission
+  ): Promise&lt;boolean&gt; {
+    const response = await api.get(`/api/spaces/${spaceId}/permissions/${permission}`);
+    return response.data.has_permission;
+  }
+}</div>
+
+            <h3>2.3 Space Member Management Component</h3>
+            <div class="code-block typescript-block">// src/components/space/SpaceMemberManagement.tsx (NEW)
+
+export const SpaceMemberManagement: React.FC&lt;Props&gt; = ({ space, onUpdate }) => {
+  const [members, setMembers] = useState&lt;SpaceMember[]&gt;(space.members);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  
+  const canManageMembers = space.my_permissions[SpacePermission.ManageRoles];
+  const canInviteMembers = space.my_permissions[SpacePermission.InviteMembers];
+  
+  return (
+    &lt;Box&gt;
+      {/* Member Invitation */}
+      {canInviteMembers && (
+        &lt;Box mb={3}&gt;
+          &lt;Button
+            variant="contained"
+            startIcon={&lt;PersonAdd /&gt;}
+            onClick={() => setShowInviteModal(true)}
+          &gt;
+            Invite Members
+          &lt;/Button&gt;
+        &lt;/Box&gt;
+      )}
+      
+      {/* Current Members */}
+      &lt;Typography variant="h6" gutterBottom&gt;
+        Members ({members.length})
+      &lt;/Typography&gt;
+      
+      &lt;List&gt;
+        {members.map((member) => (
+          &lt;ListItem key={member.user_uid}&gt;
+            &lt;ListItemAvatar&gt;
+              &lt;Avatar src={member.user?.avatar_url}&gt;
+                {member.user?.name?.[0]}
+              &lt;/Avatar&gt;
+            &lt;/ListItemAvatar&gt;
+            
+            &lt;ListItemText
+              primary={member.user?.name || member.user?.email}
+              secondary={
+                &lt;Box display="flex" alignItems="center" gap={1}&gt;
+                  &lt;Chip
+                    label={member.role}
+                    size="small"
+                    color={getRoleColor(member.role)}
+                  /&gt;
+                  &lt;Typography variant="caption" color="textSecondary"&gt;
+                    {member.status === 'invited' ? 'Pending' : 'Active'}
+                  &lt;/Typography&gt;
+                &lt;/Box&gt;
+              }
+            /&gt;
+            
+            {canManageMembers && member.user_uid !== space.created_by && (
+              &lt;ListItemSecondaryAction&gt;
+                &lt;IconButton
+                  onClick={() => handleMemberAction(member)}
+                  size="small"
+                &gt;
+                  &lt;MoreVert /&gt;
+                &lt;/IconButton&gt;
+              &lt;/ListItemSecondaryAction&gt;
+            )}
+          &lt;/ListItem&gt;
+        ))}
+      &lt;/List&gt;
+    &lt;/Box&gt;
+  );
+};</div>
+        </section>
+
+        <section id="phase3">
+            <div class="phase-card">
+                <div class="phase-title"><span class="emoji">🚀</span>Phase 3: Project Space Implementation</div>
+                <p><strong>Duration:</strong> 4-5 weeks | <strong>Priority:</strong> Medium | <strong>Status:</strong> <span class="status-pending">Pending</span></p>
+                <p>Implement project-specific features including task management with collaborative documents, member assignment, and enhanced task modals.</p>
+            </div>
+
+            <h3>3.1 Fix DatabaseRowSubDocument for Tasks</h3>
+            <div class="warning">
+                <strong>Key Change:</strong> Replace the previous "skip document loading" approach with enhanced document loading that supports project tasks with collaborative documents.
+            </div>
+
+            <div class="code-block typescript-block">// src/components/database/components/database-row/DatabaseRowSubDocument.tsx (MODIFY)
+
+export function DatabaseRowSubDocument({ rowId }: { rowId: string }) {
+  const meta = useRowMetaSelector(rowId);
+  const context = useDatabaseContext();
+  const documentId = meta?.documentId;
+  
+  const [doc, setDoc] = useState&lt;YDoc | null&gt;(null);
+  const [loading, setLoading] = useState(true);
+  
+  const handleOpenDocument = useCallback(async () => {
+    if (!documentId || !context.loadView) return;
+    
+    // NEW: Check if this is a project task
+    const isProjectTask = await ProjectExtensionService.isProjectTask(documentId);
+    
+    if (isProjectTask) {
+      // For project tasks, use enhanced document loading
+      try {
+        const doc = await ProjectExtensionService.getTaskDocument(documentId);
+        setDoc(doc);
+      } catch (error) {
+        if (error.code === 1040) {
+          // Document doesn't exist - create it (like desktop app)
+          console.info('Creating document for project task:', documentId);
+          await ProjectExtensionService.createTaskDocument(documentId);
+          // Retry loading
+          const doc = await ProjectExtensionService.getTaskDocument(documentId);
+          setDoc(doc);
+        } else {
+          throw error;
+        }
+      }
+    } else {
+      // Regular database row - use existing logic
+      const doc = await context.loadView(documentId, true);
+      setDoc(doc);
+    }
+  }, [documentId, context.loadView]);
+  
+  // ... rest of component remains the same but now supports project tasks!
+};</div>
+
+            <h3>3.2 Enhanced Task Detail with Permissions</h3>
+            <div class="code-block typescript-block">// src/components/project/task/EnhancedTaskDetailModal.tsx (ENHANCE EXISTING)
+
+export const EnhancedTaskDetailModal: React.FC&lt;Props&gt; = ({ 
+  task, 
+  projectSpace, 
+  open, 
+  onClose, 
+  onUpdate 
+}) => {
+  const canEditTasks = projectSpace.my_permissions[SpacePermission.EditContent];
+  const canAssignTasks = projectSpace.my_permissions[SpacePermission.AssignTasks];
+  const canDeleteTasks = projectSpace.my_permissions[SpacePermission.DeleteContent];
+  
+  const isAssignee = task.assignee_uid === getCurrentUser()?.uid;
+  const isCreator = task.created_by === getCurrentUser()?.uid;
+  
+  // Permission-based editing
+  const canEditThisTask = canEditTasks || isAssignee || isCreator;
+  
+  return (
+    &lt;Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth&gt;
+      &lt;DialogTitle&gt;
+        &lt;Box display="flex" justifyContent="space-between" alignItems="flex-start"&gt;
+          &lt;Box flex={1}&gt;
+            {canEditThisTask ? (
+              &lt;EditableTextField
+                value={task.title}
+                onSave={(title) => handleUpdateTask({ title })}
+                variant="h5"
+              /&gt;
+            ) : (
+              &lt;Typography variant="h5"&gt;{task.title}&lt;/Typography&gt;
+            )}
+          &lt;/Box&gt;
+        &lt;/Box&gt;
+      &lt;/DialogTitle&gt;
+      
+      &lt;DialogContent&gt;
+        &lt;Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)}&gt;
+          &lt;Tab label="Details" /&gt;
+          &lt;Tab label="Content" /&gt;
+          &lt;Tab label="Activity" /&gt;
+          {projectSpace.my_permissions[SpacePermission.ViewReports] && (
+            &lt;Tab label="Time Tracking" /&gt;
+          )}
+        &lt;/Tabs&gt;
+        
+        &lt;TabPanel value={activeTab} index={1}&gt;
+          &lt;TaskContentPanel
+            task={task}
+            canEdit={canEditThisTask}
+            onDocumentChange={handleDocumentChange}
+          /&gt;
+        &lt;/TabPanel&gt;
+      &lt;/DialogContent&gt;
+    &lt;/Dialog&gt;
+  );
+};</div>
+
+            <h3>3.3 Task Document Editor Component</h3>
+            <div class="code-block typescript-block">// src/components/project/task/TaskDocumentEditor.tsx (NEW)
+
+export const TaskDocumentEditor: React.FC&lt;Props&gt; = ({ 
+  taskId, 
+  document, 
+  onDocumentChange 
+}) => {
+  const { workspaceId } = useAppSelector(state => state.workspace);
+  
+  return (
+    &lt;div className="task-document-editor"&gt;
+      {document ? (
+        &lt;Editor
+          workspaceId={workspaceId}
+          viewId={taskId}  // Task ID serves as view ID
+          doc={document}
+          readOnly={false}
+          loadView={ProjectExtensionService.getTaskDocument}
+          onDocumentChange={onDocumentChange}
+          placeholder="Add task details, notes, or documentation..."
+        /&gt;
+      ) : (
+        &lt;div className="p-8 text-center"&gt;
+          &lt;Button 
+            onClick={() => ProjectExtensionService.createTaskDocument(taskId)}
+            variant="outlined"
+          &gt;
+            Add Content to Task
+          &lt;/Button&gt;
+        &lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  );
+};</div>
+        </section>
+
+        <section id="phase4">
+            <div class="phase-card">
+                <div class="phase-title"><span class="emoji">🔄</span>Phase 4: Integration & Migration</div>
+                <p><strong>Duration:</strong> 2-3 weeks | <strong>Priority:</strong> Medium | <strong>Status:</strong> <span class="status-pending">Pending</span></p>
+                <p>Handle migration of existing data, ensure backward compatibility, and perform thorough testing before rollout.</p>
+            </div>
+
+            <h3>4.1 Migration Strategy</h3>
+            <div class="code-block sql-block">-- Migration script to upgrade existing spaces
+-- migrations/20250814000000_unified_space_member_management.sql
+
+-- Add new columns to existing workspace_view table
+ALTER TABLE af_workspace_view ADD COLUMN IF NOT EXISTS space_type VARCHAR(20) DEFAULT 'document_space';
+
+-- Set existing spaces as document spaces
+UPDATE af_workspace_view 
+SET space_type = 'document_space' 
+WHERE space_type IS NULL OR space_type = '';
+
+-- Migrate existing project data
+INSERT INTO af_space_members (space_id, workspace_id, user_uid, role, status)
+SELECT 
+    p.board_id as space_id,
+    p.workspace_id,
+    p.created_by as user_uid,
+    'owner' as role,
+    'active' as status
+FROM af_project_boards p
+WHERE NOT EXISTS (
+    SELECT 1 FROM af_space_members sm 
+    WHERE sm.space_id = p.board_id AND sm.user_uid = p.created_by
+);
+
+-- Convert existing projects to project spaces
+UPDATE af_workspace_view 
+SET space_type = 'project_space'
+WHERE view_id IN (
+    SELECT DISTINCT board_id FROM af_project_boards
+);</div>
+
+            <h3>4.2 Backward Compatibility</h3>
+            <div class="code-block typescript-block">// src/services/backward-compatibility.service.ts (NEW)
+
+export class BackwardCompatibilityService {
+  
+  // Ensure existing project API calls still work
+  async getProject(projectId: string): Promise&lt;ProjectSpace&gt; {
+    // Map old project API to new space API
+    return await SpaceManagementService.getSpaceWithPermissions(projectId);
+  }
+  
+  async createProject(workspaceId: string, data: CreateProjectRequest): Promise&lt;ProjectSpace&gt; {
+    // Map old project creation to new project space creation
+    return await SpaceManagementService.createSpace(workspaceId, {
+      ...data,
+      space_type: SpaceType.ProjectSpace
+    });
+  }
+  
+  // Ensure existing space functionality isn't broken
+  async migrateExistingSpace(spaceId: string): Promise&lt;EnhancedSpace&gt; {
+    // Add member management to existing spaces
+    const space = await SpaceManagementService.getSpaceWithPermissions(spaceId);
+    
+    if (space.members.length === 0) {
+      // Add creator as owner
+      await SpaceManagementService.addMemberAsOwner(spaceId, space.created_by);
+    }
+    
+    return space;
+  }
+}</div>
+        </section>
+
+        <section id="timeline">
+            <h2><span class="emoji">📅</span>Implementation Timeline & Rollout Strategy</h2>
+            
+            <div class="timeline-item">
+                <h3>Phase 1: Foundation (6-8 weeks)</h3>
+                <ul>
+                    <li>✅ Database schema design and implementation</li>
+                    <li>✅ Backend API for member management</li>
+                    <li>✅ Permission system implementation</li>
+                    <li>✅ Migration scripts for existing data</li>
+                </ul>
+            </div>
+
+            <div class="timeline-item">
+                <h3>Phase 2: Core UI (4-6 weeks)</h3>
+                <ul>
+                    <li>✅ Enhanced space types and services</li>
+                    <li>✅ Space settings modal with member management</li>
+                    <li>✅ Member invitation and role management</li>
+                    <li>✅ Permission-based UI components</li>
+                </ul>
+            </div>
+
+            <div class="timeline-item">
+                <h3>Phase 3: Project Integration (4-5 weeks)</h3>
+                <ul>
+                    <li>✅ Project space creation and management</li>
+                    <li>✅ Task assignment with member permissions</li>
+                    <li>✅ Enhanced task modals with collaboration</li>
+                    <li>✅ Document integration for tasks</li>
+                </ul>
+            </div>
+
+            <div class="timeline-item">
+                <h3>Phase 4: Migration & Rollout (2-3 weeks)</h3>
+                <ul>
+                    <li>✅ Backward compatibility layer</li>
+                    <li>✅ Data migration for existing spaces/projects</li>
+                    <li>✅ Testing and validation</li>
+                    <li>✅ Gradual rollout with feature flags</li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <strong>Total Timeline:</strong> 16-22 weeks<br>
+                <strong>Critical Path:</strong> Database schema → Backend API → Frontend UI → Integration<br>
+                <strong>Parallel Development:</strong> Frontend UI can begin while backend API is being finalized
+            </div>
+        </section>
+
+        <section id="benefits">
+            <h2><span class="emoji">✨</span>Key Benefits of This Unified Approach</h2>
+            
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <h4><span class="emoji">🔄</span> Unified Architecture</h4>
+                    <p>Both document spaces and project spaces share the same foundation, ensuring consistency and reducing complexity.</p>
+                </div>
+                
+                <div class="benefit-item">
+                    <h4><span class="emoji">👥</span> Enterprise-Ready</h4>
+                    <p>Comprehensive member management for all collaboration with granular permissions and role-based access control.</p>
+                </div>
+                
+                <div class="benefit-item">
+                    <h4><span class="emoji">🔐</span> Granular Permissions</h4>
+                    <p>Role-based access control for content and management with custom permission configurations per space.</p>
+                </div>
+                
+                <div class="benefit-item">
+                    <h4><span class="emoji">🚀</span> Scalable</h4>
+                    <p>Foundation supports future space types (e.g., wiki spaces, design spaces, meeting spaces).</p>
+                </div>
+                
+                <div class="benefit-item">
+                    <h4><span class="emoji">📱</span> Consistent UX</h4>
+                    <p>Same member management experience across all space types with familiar UI patterns.</p>
+                </div>
+                
+                <div class="benefit-item">
+                    <h4><span class="emoji">🔄</span> Backward Compatible</h4>
+                    <p>Existing functionality continues to work with seamless migration path for users.</p>
+                </div>
+                
+                <div class="benefit-item">
+                    <h4><span class="emoji">📊</span> Advanced Project Management</h4>
+                    <p>Matches desktop app capabilities with collaborative documents for each task.</p>
+                </div>
+                
+                <div class="benefit-item">
+                    <h4><span class="emoji">⚡</span> Performance Optimized</h4>
+                    <p>Permission checks cached and optimized for real-time collaboration at scale.</p>
+                </div>
+            </div>
+
+            <div class="success">
+                <h3><span class="emoji">🎯</span> Final Outcome</h3>
+                <p>This implementation creates a <strong>powerful, enterprise-grade collaboration platform</strong> where every space (whether for documents or projects) has sophisticated member management, while project spaces get the additional task management capabilities with full document collaboration - exactly like the desktop app!</p>
+                
+                <p><strong>The result:</strong> A unified platform that combines the best of both worlds - structured task management with rich collaborative document editing, all wrapped in a comprehensive permission system that scales from small teams to large organizations.</p>
+            </div>
+        </section>
+
+        <footer style="margin-top: 60px; padding-top: 20px; border-top: 2px solid #e2e8f0; text-align: center; color: #64748b;">
+            <p><strong>Plan Generated:</strong> January 2025 | <strong>Status:</strong> Ready for Implementation</p>
+            <p><em>This plan provides a comprehensive roadmap for implementing unified space and project management with enterprise-grade member access control.</em></p>
+        </footer>
+    </div>
+</body>
+</html>

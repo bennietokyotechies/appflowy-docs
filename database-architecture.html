@@ -3,1332 +3,694 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Database Architecture - AppFlowy Developer Wiki</title>
+    <title>AppFlowy Database Architecture - Technical Documentation</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #f1f5f9;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --code-bg: #f8fafc;
+            --accent-color: #0ea5e9;
         }
-
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.5;
-            color: #24292f;
-            background-color: #ffffff;
-            height: 100vh;
-            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: #fafbfc;
         }
-
-        /* Main Layout Container */
-        .layout-container {
-            display: flex;
-            height: 100vh;
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
-
-        /* Page Header */
-        .page-header {
-            position: fixed;
+        
+        header {
+            background: white;
+            border-bottom: 2px solid var(--border-color);
+            padding: 20px 0;
+            position: sticky;
             top: 0;
-            left: 300px;
-            right: 0;
-            height: 60px;
-            background: #ffffff;
-            border-bottom: 1px solid #d0d7de;
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            z-index: 50;
-            transition: left 0.2s ease;
-        }
-
-        .page-header.sidebar-collapsed {
-            left: 0;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 300px;
-            background: #f6f8fa;
-            color: #24292f;
-            overflow-y: auto;
-            border-right: 1px solid #d0d7de;
             z-index: 100;
-            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-
-        .sidebar.collapsed {
-            width: 0;
-            border-right: none;
+        
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
         }
-
-        .sidebar-header {
-            padding: 16px 20px;
-            background: #ffffff;
-            text-align: center;
-            border-bottom: 1px solid #d0d7de;
+        
+        .subtitle {
+            color: #64748b;
+            font-size: 1.1rem;
+            font-weight: 400;
         }
-
-        .sidebar-header h1 {
-            font-size: 1.25rem;
-            margin-bottom: 4px;
-            font-weight: 600;
-            color: #24292f;
+        
+        nav {
+            background: var(--secondary-color);
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
         }
-
-        .sidebar-header p {
-            font-size: 0.875rem;
-            color: #656d76;
-        }
-
-        .sidebar-nav {
-            padding: 0;
-        }
-
-        /* Navigation Items */
-        .nav-section {
-            border-bottom: 1px solid #d0d7de;
-        }
-
-        .nav-section-header {
-            padding: 12px 16px;
-            background: #f6f8fa;
-            color: #24292f;
-            border: none;
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
+        
+        .nav-links {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.875rem;
-            font-weight: 600;
-            transition: background-color 0.15s ease;
+            gap: 30px;
+            flex-wrap: wrap;
         }
-
-        .nav-section-header:hover {
-            background: #eaeef2;
-        }
-
-        .nav-section-header.active {
-            background: #eaeef2;
-            color: #0969da;
-        }
-
-        .nav-section-icon {
-            font-size: 1rem;
-            margin-right: 8px;
-        }
-
-        .nav-section-chevron {
-            transition: transform 0.15s ease;
-            font-size: 0.75rem;
-            color: #656d76;
-        }
-
-        .nav-section-header.active .nav-section-chevron {
-            transform: rotate(90deg);
-            color: #0969da;
-        }
-
-        .nav-section-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.2s ease;
-            background: #ffffff;
-        }
-
-        .nav-section-content.active {
-            max-height: 500px;
-        }
-
-        .nav-item {
-            display: block;
-            padding: 8px 16px 8px 40px;
-            color: #656d76;
+        
+        .nav-links a {
+            color: var(--text-color);
             text-decoration: none;
-            border-bottom: 1px solid #f6f8fa;
-            transition: all 0.15s ease;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-
-        .nav-item:hover {
-            background: #f6f8fa;
-            color: #24292f;
-        }
-
-        .nav-item.active {
-            background: #ddf4ff;
-            color: #0969da;
-            border-left: 3px solid #0969da;
             font-weight: 500;
-        }
-
-        .nav-item-icon {
-            margin-right: 8px;
-            font-size: 0.9rem;
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            overflow-y: auto;
-            background: #ffffff;
-            position: relative;
-        }
-
-        /* Header Sidebar Toggle Button */
-        .sidebar-toggle {
-            background: #ffffff;
-            border: 1px solid #d0d7de;
+            padding: 8px 16px;
             border-radius: 6px;
-            padding: 6px 8px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            margin-right: 16px;
+            transition: background 0.2s;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        main {
+            padding: 40px 0;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        
+        h2 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-bottom: 20px;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+        
+        h3 {
+            color: var(--accent-color);
+            font-size: 1.4rem;
+            margin: 25px 0 15px 0;
+        }
+        
+        h4 {
+            color: var(--text-color);
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+            font-weight: 600;
+        }
+        
+        p, li {
+            margin-bottom: 12px;
+        }
+        
+        ul, ol {
+            margin-left: 25px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .inline-code {
+            background: var(--code-bg);
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .architecture-diagram {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .layer {
+            background: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .layer h4 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .component-card {
+            background: linear-gradient(135deg, #fafbfc 0%, #f1f5f9 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .component-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        .component-card h4 {
+            color: var(--accent-color);
+            margin-bottom: 12px;
+        }
+        
+        .highlight {
+            background: linear-gradient(90deg, #fef3c7, #fbbf24);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .warning {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-left: 4px solid #ef4444;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-left: 4px solid #3b82f6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .data-flow {
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .sidebar-toggle:hover {
-            background: #f6f8fa;
-            border-color: #8c959f;
-        }
-
-        .sidebar-toggle svg {
-            width: 16px;
-            height: 16px;
-            color: #656d76;
-        }
-
-        /* Page Title in Header */
-        .page-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: #24292f;
-            margin: 0;
-        }
-
-        /* Content Area */
-        .content-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            margin-top: 60px;
-            overflow: hidden;
-        }
-
-        .content-header {
-            background: #ffffff;
-            color: #24292f;
-            padding: 24px 48px;
-            border-bottom: 1px solid #d0d7de;
-            flex-shrink: 0;
-        }
-
-        .content-header h1 {
-            font-size: 2rem;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #24292f;
-        }
-
-        .content-header p {
-            font-size: 1rem;
-            color: #656d76;
-        }
-
-        .content-body {
-            padding: 32px 48px;
-            max-width: 1200px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        /* Content Cards */
-        .content-card {
-            background: #ffffff;
-            border-radius: 6px;
-            padding: 24px;
-            margin-bottom: 24px;
-            border: 1px solid #d0d7de;
-        }
-
-        .content-card h2 {
-            color: #24292f;
-            margin-bottom: 16px;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-        }
-
-        .content-card h3 {
-            color: #24292f;
-            margin: 24px 0 16px;
-            font-size: 1.25rem;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #d0d7de;
-            font-weight: 600;
-        }
-
-        .content-card h4 {
-            color: #24292f;
-            margin: 20px 0 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        /* Code Blocks */
-        .code-block {
-            background: #f6f8fa;
-            color: #24292f;
-            padding: 16px;
-            border-radius: 6px;
-            margin: 16px 0;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            border: 1px solid #d0d7de;
-            overflow-x: auto;
-        }
-
-        .code-block code {
-            font-size: 0.875rem;
-            line-height: 1.5;
-        }
-
-        .code-comment {
-            color: #0550ae;
-        }
-
-        /* Feature Grid */
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
-            margin: 24px 0;
-        }
-
-        .feature-card {
-            background: #ffffff;
-            border: 1px solid #d0d7de;
-            border-radius: 6px;
-            padding: 20px;
-            transition: all 0.15s ease;
-        }
-
-        .feature-card:hover {
-            border-color: #8c959f;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
-        }
-
-        .feature-card h4 {
-            font-size: 1rem;
-            margin-bottom: 8px;
-            color: #24292f;
-            font-weight: 600;
-        }
-
-        .feature-card p {
-            color: #656d76;
-            font-size: 0.875rem;
-        }
-
-        /* Tables */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 16px 0;
-            border: 1px solid #d0d7de;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #d0d7de;
-        }
-
-        th {
-            background: #f6f8fa;
-            font-weight: 600;
-            color: #24292f;
-        }
-
-        td {
-            color: #656d76;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        /* Lists */
-        ul, ol {
-            margin: 16px 0;
-            padding-left: 24px;
-            color: #656d76;
-        }
-
-        li {
-            margin: 8px 0;
-        }
-
-        li strong {
-            color: #24292f;
-        }
-
-        /* Info Box */
-        .info-box {
-            background: #ddf4ff;
-            border-left: 3px solid #0969da;
-            padding: 16px;
-            margin: 16px 0;
-            color: #0550ae;
-            border-radius: 6px;
-        }
-
-        .warning-box {
-            background: #fff8c5;
-            border-left: 3px solid #bf8700;
-            padding: 16px;
-            margin: 16px 0;
-            color: #9a6700;
-            border-radius: 6px;
-        }
-
-        /* Mobile Responsive */
-        .mobile-toggle {
-            display: none;
-            position: fixed;
-            top: 16px;
-            left: 16px;
-            background: #0969da;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 8px;
-            cursor: pointer;
-            z-index: 200;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-        }
-
-        @media (max-width: 768px) {
-            .page-header {
-                left: 0 !important;
-                padding: 0 16px;
-            }
-
-            .sidebar-toggle {
-                display: none;
-            }
-
-            .mobile-toggle {
-                display: block;
-            }
-
-            .sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                height: 100vh;
-                z-index: 150;
-                transform: translateX(-100%);
-                width: 300px !important;
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            .content-header {
-                padding: 24px 20px;
-            }
-
-            .content-body {
-                padding: 24px 20px;
-            }
-
-            .feature-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Overlay for mobile */
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 140;
-        }
-
-        .overlay.active {
-            display: block;
-        }
-
-        /* Quick Links */
-        .quick-links {
-            display: flex;
-            gap: 12px;
-            margin: 16px 0;
+            gap: 20px;
+            margin: 20px 0;
             flex-wrap: wrap;
         }
-
-        .quick-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #0969da;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.15s ease;
-            border: 1px solid #0969da;
+        
+        .flow-step {
+            background: white;
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            padding: 15px 20px;
+            text-align: center;
+            min-width: 150px;
         }
-
-        .quick-link:hover {
-            background: #0860ca;
-            border-color: #0860ca;
-            box-shadow: 0 3px 12px rgba(9, 105, 218, 0.4);
+        
+        .flow-arrow {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        footer {
+            background: var(--text-color);
+            color: white;
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 60px;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 0 15px; }
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.6rem; }
+            .component-grid { grid-template-columns: 1fr; }
+            .nav-links { flex-direction: column; gap: 10px; }
+            .data-flow { flex-direction: column; }
+            .flow-arrow { transform: rotate(90deg); }
         }
     </style>
 </head>
 <body>
-    <!-- Mobile Toggle Button -->
-    <button class="mobile-toggle" onclick="toggleMobileSidebar()">
-        ☰
-    </button>
+    <header>
+        <div class="container">
+            <h1>AppFlowy Database Architecture</h1>
+            <p class="subtitle">Comprehensive Technical Documentation for Web Implementation</p>
+        </div>
+    </header>
 
-    <!-- Overlay for Mobile -->
-    <div class="overlay" onclick="closeSidebar()"></div>
-
-    <!-- Main Layout Container -->
-    <div class="layout-container">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h1>📚 AppFlowy Wiki</h1>
-                <p>Database Architecture</p>
+    <nav>
+        <div class="container">
+            <div class="nav-links">
+                <a href="#overview" class="active">Architecture Overview</a>
+                <a href="#frontend">Frontend Components</a>
+                <a href="#backend">Backend Services</a>
+                <a href="#data-flow">Data Flow</a>
+                <a href="#storage">Storage & Sync</a>
+                <a href="#implementation">Implementation Guidelines</a>
             </div>
+        </div>
+    </nav>
 
-            <nav class="sidebar-nav">
-                <!-- Overview Section -->
-                <div class="nav-section">
-                    <button class="nav-section-header active" onclick="toggleSection(this)">
-                        <span><span class="nav-section-icon">📋</span>Overview</span>
-                        <span class="nav-section-chevron">▶</span>
-                    </button>
-                    <div class="nav-section-content active">
-                        <a href="#overview" class="nav-item active" onclick="showContent('overview')">
-                            <span class="nav-item-icon">🏠</span>Introduction
-                        </a>
-                        <a href="#core-concepts" class="nav-item" onclick="showContent('core-concepts')">
-                            <span class="nav-item-icon">💡</span>Core Concepts
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Architecture Section -->
-                <div class="nav-section">
-                    <button class="nav-section-header" onclick="toggleSection(this)">
-                        <span><span class="nav-section-icon">🏗️</span>Architecture</span>
-                        <span class="nav-section-chevron">▶</span>
-                    </button>
-                    <div class="nav-section-content">
-                        <a href="#data-structure" class="nav-item" onclick="showContent('data-structure')">
-                            <span class="nav-item-icon">🗄️</span>Data Structure
-                        </a>
-                        <a href="#field-types" class="nav-item" onclick="showContent('field-types')">
-                            <span class="nav-item-icon">📊</span>Field Types
-                        </a>
-                        <a href="#storage" class="nav-item" onclick="showContent('storage')">
-                            <span class="nav-item-icon">💾</span>Storage System
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Views Section -->
-                <div class="nav-section">
-                    <button class="nav-section-header" onclick="toggleSection(this)">
-                        <span><span class="nav-section-icon">👀</span>Database Views</span>
-                        <span class="nav-section-chevron">▶</span>
-                    </button>
-                    <div class="nav-section-content">
-                        <a href="#grid-view" class="nav-item" onclick="showContent('grid-view')">
-                            <span class="nav-item-icon">📑</span>Grid View
-                        </a>
-                        <a href="#board-view" class="nav-item" onclick="showContent('board-view')">
-                            <span class="nav-item-icon">📋</span>Board View (Kanban)
-                        </a>
-                        <a href="#calendar-view" class="nav-item" onclick="showContent('calendar-view')">
-                            <span class="nav-item-icon">📅</span>Calendar View
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Implementation Section -->
-                <div class="nav-section">
-                    <button class="nav-section-header" onclick="toggleSection(this)">
-                        <span><span class="nav-section-icon">⚙️</span>Implementation</span>
-                        <span class="nav-section-chevron">▶</span>
-                    </button>
-                    <div class="nav-section-content">
-                        <a href="#components" class="nav-item" onclick="showContent('components')">
-                            <span class="nav-item-icon">🧩</span>Key Components
-                        </a>
-                        <a href="#collaboration" class="nav-item" onclick="showContent('collaboration')">
-                            <span class="nav-item-icon">🤝</span>Collaboration
-                        </a>
-                        <a href="#filtering" class="nav-item" onclick="showContent('filtering')">
-                            <span class="nav-item-icon">🔍</span>Filtering & Sorting
-                        </a>
-                    </div>
-                </div>
-            </nav>
-        </aside>
-
-        <!-- Page Header -->
-        <header class="page-header" id="page-header">
-            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
-                <svg viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z"></path>
-                </svg>
-            </button>
-            <h1 class="page-title" id="page-title">Database Architecture - AppFlowy Wiki</h1>
-        </header>
-
-        <!-- Main Content Area -->
-        <main class="content-area">
-            <div class="content-header">
-                <h1>AppFlowy Database Architecture</h1>
-                <p>Understanding how AppFlowy implements databases for flexible data management</p>
-            </div>
-
-            <div class="content-body">
-                <!-- Overview Content (Default) -->
-                <div id="overview-content" class="content-section">
-                    <div class="content-card">
-                        <h2><span>🏠</span> Introduction</h2>
-                        <p>AppFlowy implements "databases" as a flexible data structure that can be rendered in multiple views (Grid, Kanban Board, Calendar). This document explains the architecture and implementation details of AppFlowy's database system based on analysis of the frontend codebase.</p>
-                        
-                        <div class="quick-links">
-                            <a href="#core-concepts" class="quick-link" onclick="showContent('core-concepts')">
-                                <span>💡</span>Core Concepts
-                            </a>
-                            <a href="#data-structure" class="quick-link" onclick="showContent('data-structure')">
-                                <span>🗄️</span>Data Structure
-                            </a>
-                            <a href="index.html" class="quick-link">
-                                <span>🏠</span>Back to Main Wiki
-                            </a>
-                        </div>
-
-                        <div class="info-box">
-                            <strong>💡 Key Insight:</strong> In AppFlowy, a database is not a traditional SQL database but rather a special type of collaborative document that stores structured data and supports multiple view types.
-                        </div>
-
-                        <h3>What Makes AppFlowy Databases Special?</h3>
-                        <div class="feature-grid">
-                            <div class="feature-card">
-                                <h4>🔄 Multiple Views</h4>
-                                <p>Same data can be viewed as a spreadsheet, kanban board, or calendar without data duplication.</p>
-                            </div>
-                            <div class="feature-card">
-                                <h4>🤝 Real-time Collaboration</h4>
-                                <p>Built on Yjs CRDT technology for conflict-free collaborative editing.</p>
-                            </div>
-                            <div class="feature-card">
-                                <h4>📱 Offline-First</h4>
-                                <p>Full functionality without internet connection using IndexedDB for local storage.</p>
-                            </div>
-                            <div class="feature-card">
-                                <h4>🎨 Flexible Schema</h4>
-                                <p>Add, remove, or modify fields (columns) at any time without migrations.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Core Concepts Content -->
-                <div id="core-concepts-content" class="content-section" style="display: none;">
-                    <div class="content-card">
-                        <h2><span>💡</span> Core Concepts</h2>
-                        
-                        <h3>Database as a Document Type</h3>
-                        <p>In AppFlowy's architecture, a database is treated as a special type of document that:</p>
-                        <ul>
-                            <li><strong>Stores structured data</strong> in rows and columns</li>
-                            <li><strong>Supports multiple view types</strong> of the same data</li>
-                            <li><strong>Enables real-time collaboration</strong> using Yjs (a CRDT library)</li>
-                            <li><strong>Allows flexible schema</strong> with various field types</li>
-                        </ul>
-
-                        <h3>Multiple Views of Same Data</h3>
-                        <p>A single database can be displayed in three different layouts:</p>
-                        
-                        <div class="feature-grid">
-                            <div class="feature-card" style="border-color: #68d391;">
-                                <h4>📑 Grid View</h4>
-                                <p>Traditional spreadsheet/table layout with rows and columns. Ideal for data entry and bulk editing.</p>
-                            </div>
-                            <div class="feature-card" style="border-color: #4299e1;">
-                                <h4>📋 Board View</h4>
-                                <p>Kanban-style board with cards grouped by select fields. Perfect for project management and workflows.</p>
-                            </div>
-                            <div class="feature-card" style="border-color: #f6ad55;">
-                                <h4>📅 Calendar View</h4>
-                                <p>Calendar display using date fields. Great for scheduling and time-based data visualization.</p>
-                            </div>
-                        </div>
-
-                        <p>Each view maintains its own:</p>
-                        <ul>
-                            <li>Field visibility and ordering</li>
-                            <li>Row ordering and grouping</li>
-                            <li>Filters and sort conditions</li>
-                            <li>Layout-specific settings</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Data Structure Content -->
-                <div id="data-structure-content" class="content-section" style="display: none;">
-                    <div class="content-card">
-                        <h2><span>🗄️</span> Data Structure</h2>
-                        
-                        <h3>Database Structure (YDatabase)</h3>
-                        <div class="code-block">
-                            <code>YDatabase = {
-    id: string,                 <span class="code-comment">// Unique database identifier</span>
-    views: YDatabaseViews,      <span class="code-comment">// Map of all views</span>
-    fields: YDatabaseFields,    <span class="code-comment">// Field (column) definitions</span>
-    metas: YDatabaseMetas       <span class="code-comment">// Additional metadata</span>
-}</code>
-                        </div>
-
-                        <h3>Row and Cell Structure</h3>
-                        <h4>Rows</h4>
-                        <p>Rows are stored as separate Yjs documents:</p>
-                        <div class="code-block">
-                            <code>YDatabaseRow = {
-    id: string,                    <span class="code-comment">// Unique row identifier</span>
-    cells: YDatabaseCells,         <span class="code-comment">// Map of fieldId → cell data</span>
-    created_at: string,            <span class="code-comment">// Creation timestamp</span>
-    last_modified: string,         <span class="code-comment">// Last modification timestamp</span>
-    height: number,                <span class="code-comment">// Row height in grid view</span>
-    visibility: boolean            <span class="code-comment">// Whether row is visible</span>
-}</code>
-                        </div>
-
-                        <h4>Cells</h4>
-                        <p>Cells contain the actual data:</p>
-                        <ul>
-                            <li>Each cell is mapped by its field ID</li>
-                            <li>Cell structure varies based on field type</li>
-                            <li>Cells can be empty (undefined)</li>
-                        </ul>
-
-                        <h3>View Structure</h3>
-                        <p>Each view contains:</p>
-                        <div class="code-block">
-                            <code>YDatabaseView = {
-    database_id: string,
-    name: string,
-    layout: DatabaseViewLayout,    <span class="code-comment">// 0=Grid, 1=Board, 2=Calendar</span>
-    field_settings: {...},         <span class="code-comment">// Visibility, width, etc.</span>
-    field_orders: [...],           <span class="code-comment">// Column ordering</span>
-    row_orders: [...],             <span class="code-comment">// Row ordering</span>
-    filters: [...],                <span class="code-comment">// Filter conditions</span>
-    sorts: [...],                  <span class="code-comment">// Sort conditions</span>
-    groups: [...],                 <span class="code-comment">// Grouping (for Board view)</span>
-    layout_settings: {...}         <span class="code-comment">// View-specific settings</span>
-}</code>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Field Types Content -->
-                <div id="field-types-content" class="content-section" style="display: none;">
-                    <div class="content-card">
-                        <h2><span>📊</span> Field Types</h2>
-                        <p>AppFlowy supports 14 different field types, each with specific behaviors and UI components:</p>
-                        
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Field Type</th>
-                                    <th>Value</th>
-                                    <th>Description</th>
-                                    <th>Use Cases</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>RichText</strong></td>
-                                    <td>0</td>
-                                    <td>Multi-line text with formatting</td>
-                                    <td>Descriptions, notes, comments</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Number</strong></td>
-                                    <td>1</td>
-                                    <td>Numeric values with formatting options</td>
-                                    <td>Prices, quantities, scores</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>DateTime</strong></td>
-                                    <td>2</td>
-                                    <td>Date and/or time values</td>
-                                    <td>Deadlines, schedules, timestamps</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>SingleSelect</strong></td>
-                                    <td>3</td>
-                                    <td>Single choice from predefined options</td>
-                                    <td>Status, category, priority</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>MultiSelect</strong></td>
-                                    <td>4</td>
-                                    <td>Multiple choices from predefined options</td>
-                                    <td>Tags, features, skills</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Checkbox</strong></td>
-                                    <td>5</td>
-                                    <td>Boolean true/false</td>
-                                    <td>Completion status, flags</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>URL</strong></td>
-                                    <td>6</td>
-                                    <td>Web links</td>
-                                    <td>References, resources</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Checklist</strong></td>
-                                    <td>7</td>
-                                    <td>List of checkable items</td>
-                                    <td>Task lists, requirements</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>LastEditedTime</strong></td>
-                                    <td>8</td>
-                                    <td>Auto-updated modification timestamp</td>
-                                    <td>Audit trails, sorting</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>CreatedTime</strong></td>
-                                    <td>9</td>
-                                    <td>Auto-set creation timestamp</td>
-                                    <td>Record keeping, sorting</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Relation</strong></td>
-                                    <td>10</td>
-                                    <td>Link to other database rows</td>
-                                    <td>References, relationships</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>FileMedia</strong></td>
-                                    <td>14</td>
-                                    <td>File attachments and images</td>
-                                    <td>Documents, images, media</td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <div class="info-box">
-                            <strong>💡 Pro Tip:</strong> SingleSelect and MultiSelect fields are essential for Board view grouping. DateTime fields enable Calendar view functionality.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Storage Content -->
-                <div id="storage-content" class="content-section" style="display: none;">
-                    <div class="content-card">
-                        <h2><span>💾</span> Storage Architecture</h2>
-                        
-                        <h3>Three-Tier Storage System</h3>
-                        <p>AppFlowy uses a sophisticated three-tier storage architecture:</p>
-
-                        <div class="feature-grid">
-                            <div class="feature-card">
-                                <h4>1️⃣ Yjs Documents</h4>
-                                <p>Real-time collaborative state management. Handles conflict resolution and merging through CRDT algorithms.</p>
-                            </div>
-                            <div class="feature-card">
-                                <h4>2️⃣ IndexedDB</h4>
-                                <p>Local persistence via Dexie library. Enables offline functionality and fast local access.</p>
-                            </div>
-                            <div class="feature-card">
-                                <h4>3️⃣ Backend API</h4>
-                                <p>Server synchronization for cross-device access and backup.</p>
-                            </div>
-                        </div>
-
-                        <h3>Data Flow</h3>
-                        <div class="code-block">
-                            <code>Backend API → Yjs Document → IndexedDB → React Components
-                    ↓
-              Row Document Map (Cache)</code>
-                        </div>
-
-                        <h3>Performance Optimizations</h3>
-                        <ul>
-                            <li><strong>Lazy Loading:</strong> Rows are loaded on-demand as they become visible</li>
-                            <li><strong>Debounced Updates:</strong> Changes are batched to reduce re-renders</li>
-                            <li><strong>Virtual Scrolling:</strong> Only visible rows are rendered in grid view</li>
-                            <li><strong>Memoization:</strong> Heavy computations are cached using React hooks</li>
-                            <li><strong>Row Document Map:</strong> Caches loaded row documents for quick access</li>
-                        </ul>
-
-                        <div class="warning-box">
-                            <strong>⚠️ Important:</strong> Each row is a separate Yjs document, which allows for fine-grained collaboration control but requires careful management of document lifecycle.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Grid View Content -->
-                <div id="grid-view-content" class="content-section" style="display: none;">
-                    <div class="content-card">
-                        <h2><span>📑</span> Grid View</h2>
-                        <p>The Grid view displays data in a traditional table/spreadsheet format.</p>
-
-                        <h3>Key Features</h3>
-                        <ul>
-                            <li>Traditional rows and columns layout</li>
-                            <li>Inline editing for all cell types</li>
-                            <li>Column resizing and reordering</li>
-                            <li>Row height adjustment</li>
-                            <li>Calculation rows (sum, average, count, etc.)</li>
-                            <li>Virtual scrolling for large datasets</li>
-                        </ul>
-
-                        <h3>Component Structure</h3>
-                        <div class="code-block">
-                            <code>Grid
-├── GridHeader
-│   ├── Column headers
-│   └── Add column button
-└── GridTable
-    ├── GridRow
-    │   ├── Row number
-    │   └── GridCell (for each field)
-    └── Add row button</code>
-                        </div>
-
-                        <h3>Cell Editing</h3>
-                        <p>Each field type has its own cell editor component:</p>
-                        <ul>
-                            <li><strong>TextCell:</strong> Inline text editor with rich text support</li>
-                            <li><strong>NumberCell:</strong> Numeric input with formatting</li>
-                            <li><strong>SelectCell:</strong> Dropdown for option selection</li>
-                            <li><strong>DateCell:</strong> Date/time picker</li>
-                            <li><strong>CheckboxCell:</strong> Toggle checkbox</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Board View Content -->
-                <div id="board-view-content" class="content-section" style="display: none;">
-                    <div class="content-card">
-                        <h2><span>📋</span> Board View (Kanban)</h2>
-                        <p>The Board view displays data as a kanban board with cards grouped by select fields.</p>
-
-                        <h3>Key Features</h3>
-                        <ul>
-                            <li>Groups rows by single-select or multi-select fields</li>
-                            <li>Each option becomes a column</li>
-                            <li>Drag-and-drop cards between columns</li>
-                            <li>Collapsible groups</li>
-                            <li>"No Status" column for ungrouped items</li>
-                            <li>Card preview with key fields</li>
-                        </ul>
-
-                        <h3>Component Structure</h3>
-                        <div class="code-block">
-                            <code>Board
-└── Group (for each field option)
-    ├── Column header
-    │   ├── Option name
-    │   ├── Card count
-    │   └── Collapse toggle
-    └── Column
-        └── Card (for each row)
-            ├── Title (primary field)
-            └── Preview fields</code>
-                        </div>
-
-                        <h3>Grouping Logic</h3>
-                        <p>The board view requires:</p>
-                        <ul>
-                            <li>A single-select or multi-select field for grouping</li>
-                            <li>Each option in the field becomes a column</li>
-                            <li>Rows are placed in columns based on their field value</li>
-                            <li>Multi-select fields can appear in multiple columns</li>
-                        </ul>
-
-                        <div class="info-box">
-                            <strong>💡 Use Case:</strong> Perfect for project management, task tracking, and workflow visualization.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Calendar View Content -->
-                <div id="calendar-view-content" class="content-section" style="display: none;">
-                    <div class="content-card">
-                        <h2><span>📅</span> Calendar View</h2>
-                        <p>The Calendar view displays rows with date fields on a calendar interface.</p>
-
-                        <h3>Key Features</h3>
-                        <ul>
-                            <li>Month, week, and day layouts</li>
-                            <li>Drag to reschedule events</li>
-                            <li>Configurable first day of week</li>
-                            <li>Show/hide weekends option</li>
-                            <li>Week numbers display</li>
-                            <li>Events from multiple date fields</li>
-                        </ul>
-
-                        <h3>Calendar Settings</h3>
-                        <div class="code-block">
-                            <code>CalendarLayoutSetting = {
-    fieldId: string,           <span class="code-comment">// Date field to use</span>
-    firstDayOfWeek: number,    <span class="code-comment">// 0=Sunday, 1=Monday</span>
-    showWeekNumbers: boolean,
-    showWeekends: boolean,
-    layout: CalendarLayout     <span class="code-comment">// Month, Week, Day</span>
-}</code>
-                        </div>
-
-                        <h3>Event Display</h3>
-                        <p>Calendar events show:</p>
-                        <ul>
-                            <li>Primary field as event title</li>
-                            <li>Time if included in date field</li>
-                            <li>Color based on select field values</li>
-                            <li>Click to open row details</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Components Content -->
-                <div id="components-content" class="content-section" style="display: none;">
-                    <div class="content-card">
-                        <h2><span>🧩</span> Key Components</h2>
-                        
-                        <h3>Database Component</h3>
-                        <p>Root component at <code>/components/database/Database.tsx</code></p>
-                        <ul>
-                            <li>Sets up the database context</li>
-                            <li>Manages row document mapping</li>
-                            <li>Handles view switching</li>
-                            <li>Provides data to child components</li>
-                        </ul>
-
-                        <h3>DatabaseContext</h3>
-                        <p>Located at <code>/application/database-yjs/context.ts</code></p>
-                        <ul>
-                            <li>Provides database state to all child components</li>
-                            <li>Exposes hooks for accessing database, fields, rows</li>
-                            <li>Manages read-only state</li>
-                            <li>Handles navigation between rows and views</li>
-                        </ul>
-
-                        <h3>Cell Components</h3>
-                        <p>Directory: <code>/components/database/components/cell/</code></p>
-                        <ul>
-                            <li>Individual renderers for each field type</li>
-                            <li>Handle both display and edit modes</li>
-                            <li>Implement field-specific validation</li>
-                            <li>Manage local state during editing</li>
-                        </ul>
-
-                        <h3>UI Component Hierarchy</h3>
-                        <div class="code-block">
-                            <code>Database
-├── DatabaseViews (Tab manager)
-│   ├── Grid
-│   │   ├── GridHeader
-│   │   └── GridTable
-│   │       └── GridRow → Cell components
-│   ├── Board
-│   │   └── Group
-│   │       └── Column
-│   │           └── Card → Cell components
-│   └── Calendar
-│       └── Event → Cell components
-└── DatabaseRow (Detail view)</code>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Collaboration Content -->
-                <div id="collaboration-content" class="content-section" style="display: none;">
-                    <div class="content-card">
-                        <h2><span>🤝</span> Collaboration Features</h2>
-                        
-                        <h3>Real-time Sync</h3>
-                        <p>AppFlowy's database collaboration is built on Yjs, providing:</p>
-                        <ul>
-                            <li><strong>Conflict-free collaborative editing</strong> through CRDT algorithms</li>
-                            <li><strong>Automatic merging</strong> of concurrent changes</li>
-                            <li><strong>Granular updates</strong> - only changed cells are synchronized</li>
-                            <li><strong>Presence awareness</strong> - see who's viewing/editing</li>
-                        </ul>
-
-                        <h3>Document Structure</h3>
-                        <p>Each database consists of multiple Yjs documents:</p>
-                        <ul>
-                            <li><strong>Main database document:</strong> Contains views, fields, and metadata</li>
-                            <li><strong>Row documents:</strong> Each row is a separate document for efficiency</li>
-                            <li><strong>View documents:</strong> View-specific settings and state</li>
-                        </ul>
-
-                        <h3>Offline Support</h3>
-                        <div class="feature-grid">
-                            <div class="feature-card">
-                                <h4>📱 Full Offline Functionality</h4>
-                                <p>All features work without internet connection using IndexedDB storage.</p>
-                            </div>
-                            <div class="feature-card">
-                                <h4>🔄 Automatic Sync</h4>
-                                <p>Changes sync automatically when connection is restored.</p>
-                            </div>
-                            <div class="feature-card">
-                                <h4>⚡ Conflict Resolution</h4>
-                                <p>Yjs CRDTs ensure conflicts are resolved deterministically.</p>
-                            </div>
-                        </div>
-
-                        <div class="info-box">
-                            <strong>💡 Technical Note:</strong> The use of CRDTs means that all operations are commutative, allowing for true offline-first functionality without conflict dialogs.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filtering Content -->
-                <div id="filtering-content" class="content-section" style="display: none;">
-                    <div class="content-card">
-                        <h2><span>🔍</span> Filtering & Sorting</h2>
-                        
-                        <h3>Filter System</h3>
-                        <p>Filters allow users to show/hide rows based on conditions:</p>
-                        
-                        <h4>Filter Structure</h4>
-                        <div class="code-block">
-                            <code>Filter = {
-    id: string,
-    fieldId: string,
-    filterType: FilterType,    <span class="code-comment">// Data, And, Or</span>
-    condition: number,         <span class="code-comment">// Field-specific condition</span>
-    content: string           <span class="code-comment">// Filter value</span>
-}</code>
-                        </div>
-
-                        <h4>Filter Conditions by Field Type</h4>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Field Type</th>
-                                    <th>Available Conditions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>Text</strong></td>
-                                    <td>Contains, Does not contain, Is, Is not, Starts with, Ends with, Is empty, Is not empty</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Number</strong></td>
-                                    <td>=, ≠, <, >, ≤, ≥, Is empty, Is not empty</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Select</strong></td>
-                                    <td>Is, Is not, Contains, Does not contain, Is empty, Is not empty</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Date</strong></td>
-                                    <td>Is, Is before, Is after, Is on or before, Is on or after, Is within, Is empty, Is not empty</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Checkbox</strong></td>
-                                    <td>Is checked, Is unchecked</td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <h3>Sort System</h3>
-                        <p>Sorts order rows based on field values:</p>
-                        
-                        <div class="code-block">
-                            <code>Sort = {
-    id: string,
-    fieldId: string,
-    condition: SortCondition   <span class="code-comment">// Ascending or Descending</span>
-}</code>
-                        </div>
-
-                        <h4>Sort Behavior</h4>
-                        <ul>
-                            <li>Multiple sorts can be applied (primary, secondary, etc.)</li>
-                            <li>Empty values are sorted to the bottom</li>
-                            <li>Each view maintains independent sort conditions</li>
-                            <li>Sorts are applied after filters</li>
-                        </ul>
-
-                        <h3>Groups (Board View)</h3>
-                        <p>Groups organize rows into columns:</p>
-                        <ul>
-                            <li>Based on single-select or multi-select fields</li>
-                            <li>Automatic grouping by field options</li>
-                            <li>Manual group ordering</li>
-                            <li>Hide/show empty groups</li>
-                            <li>Collapse/expand individual groups</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <script>
-        // Toggle sidebar section
-        function toggleSection(header) {
-            const content = header.nextElementSibling;
-            const isActive = header.classList.contains('active');
-            
-            // Close all sections
-            document.querySelectorAll('.nav-section-header').forEach(h => {
-                h.classList.remove('active');
-                h.nextElementSibling.classList.remove('active');
-            });
-            
-            // Open clicked section if it wasn't active
-            if (!isActive) {
-                header.classList.add('active');
-                content.classList.add('active');
-            }
-        }
-
-        // Show content section
-        function showContent(contentId) {
-            // Hide all content sections
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.style.display = 'none';
-            });
-            
-            // Show selected content
-            const targetContent = document.getElementById(contentId + '-content');
-            if (targetContent) {
-                targetContent.style.display = 'block';
-            }
-            
-            // Update page title
-            updatePageTitle(contentId);
-            
-            // Update active nav item
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            const activeNavItem = document.querySelector(`[href="#${contentId}"]`);
-            if (activeNavItem) {
-                activeNavItem.classList.add('active');
+    <main>
+        <div class="container">
+            <section id="overview" class="section">
+                <h2>🏗️ Architecture Overview</h2>
                 
-                // Ensure parent section is open
-                const parentSection = activeNavItem.closest('.nav-section');
-                if (parentSection) {
-                    const header = parentSection.querySelector('.nav-section-header');
-                    const content = parentSection.querySelector('.nav-section-content');
-                    header.classList.add('active');
-                    content.classList.add('active');
-                }
-            }
-            
-            // Close sidebar on mobile after selection
-            if (window.innerWidth <= 768) {
-                closeSidebar();
-            }
-        }
+                <div class="info">
+                    <strong>Key Insight:</strong> AppFlowy's database architecture is designed around collaborative editing with a clear separation between frontend Flutter components and backend Rust services, connected through protobuf-defined interfaces.
+                </div>
 
-        // Update page title
-        function updatePageTitle(contentId) {
-            const pageTitle = document.getElementById('page-title');
-            const titleMap = {
-                'overview': 'Database Architecture - AppFlowy Wiki',
-                'core-concepts': 'Core Concepts - AppFlowy Wiki',
-                'data-structure': 'Data Structure - AppFlowy Wiki',
-                'field-types': 'Field Types - AppFlowy Wiki',
-                'storage': 'Storage System - AppFlowy Wiki',
-                'grid-view': 'Grid View - AppFlowy Wiki',
-                'board-view': 'Board View - AppFlowy Wiki',
-                'calendar-view': 'Calendar View - AppFlowy Wiki',
-                'components': 'Key Components - AppFlowy Wiki',
-                'collaboration': 'Collaboration - AppFlowy Wiki',
-                'filtering': 'Filtering & Sorting - AppFlowy Wiki'
-            };
-            
-            pageTitle.textContent = titleMap[contentId] || 'Database Architecture - AppFlowy Wiki';
-        }
+                <div class="architecture-diagram">
+                    <div class="layer">
+                        <h4>Frontend Layer (Flutter/Dart)</h4>
+                        <p>UI components, state management (BLoC), and user interaction handling</p>
+                    </div>
+                    <div class="layer">
+                        <h4>Communication Layer (Protobuf + FFI)</h4>
+                        <p>Event-driven messaging between frontend and backend</p>
+                    </div>
+                    <div class="layer">
+                        <h4>Backend Layer (Rust)</h4>
+                        <p>Core business logic, collaborative editing, and data persistence</p>
+                    </div>
+                    <div class="layer">
+                        <h4>Storage Layer</h4>
+                        <p>SQLite for local storage + Cloud sync for collaboration</p>
+                    </div>
+                </div>
 
-        // Desktop sidebar toggle
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const pageHeader = document.getElementById('page-header');
-            
-            sidebar.classList.toggle('collapsed');
-            pageHeader.classList.toggle('sidebar-collapsed');
-        }
+                <h3>🎯 Core Design Principles</h3>
+                <ul>
+                    <li><strong>Event-Driven Architecture:</strong> All operations trigger events that propagate through the system</li>
+                    <li><strong>Multi-Layer Caching:</strong> Efficient data management at cell, row, and view levels</li>
+                    <li><strong>Collaborative Real-time Sync:</strong> Operational transforms for concurrent editing</li>
+                    <li><strong>Type-Safe Communication:</strong> Protobuf schemas ensure data integrity across layers</li>
+                    <li><strong>Modular Field System:</strong> Extensible field types with custom editors and renderers</li>
+                </ul>
+            </section>
 
-        // Mobile sidebar toggle
-        function toggleMobileSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.querySelector('.overlay');
-            
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
+            <section id="frontend" class="section">
+                <h2>🎨 Frontend Architecture (Flutter/Dart)</h2>
 
-        function closeSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.querySelector('.overlay');
-            
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        }
+                <h3>Core Controllers</h3>
+                <div class="component-grid">
+                    <div class="component-card">
+                        <h4>DatabaseController</h4>
+                        <p>Central orchestrator managing database state, field operations, and row operations. Acts as the main entry point for all database interactions.</p>
+                        <div class="code-block">DatabaseController(
+  view: view,
+  fieldsController: fieldsController,
+  rowController: rowController,
+)</div>
+                    </div>
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Show overview content by default
-            showContent('overview');
-        });
+                    <div class="component-card">
+                        <h4>RowCache</h4>
+                        <p>Manages in-memory row data with change notifications and cell caching. Provides efficient row-level operations and data synchronization.</p>
+                        <div class="code-block">RowCache(
+  viewId: viewId,
+  fieldController: fieldController,
+  delegate: RowCacheDelegateImpl(),
+)</div>
+                    </div>
 
-        // Handle window resize
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 768) {
-                closeSidebar();
-            }
-        });
+                    <div class="component-card">
+                        <h4>FieldController</h4>
+                        <p>Handles field-specific operations and metadata management. Controls field types, properties, and validation rules.</p>
+                        <div class="code-block">FieldController(
+  viewId: viewId,
+  fieldBackendSvc: fieldBackendSvc,
+)</div>
+                    </div>
 
-        // Handle back/forward navigation
-        window.addEventListener('popstate', function(event) {
-            const hash = window.location.hash.substring(1);
-            if (hash) {
-                showContent(hash);
-            }
-        });
-    </script>
+                    <div class="component-card">
+                        <h4>CellCache</h4>
+                        <p>Provides efficient cell-level caching and data management. Optimizes individual cell operations and reduces backend calls.</p>
+                        <div class="code-block">CellMemCache(
+  cellLoader: CellLoader(
+    reloadOnFieldChanged: true,
+  ),
+)</div>
+                    </div>
+                </div>
+
+                <h3>State Management Pattern (BLoC)</h3>
+                <div class="code-block">// Typical database BLoC implementation
+class DatabaseBloc extends Bloc&lt;DatabaseEvent, DatabaseState&gt; {
+  final DatabaseController databaseController;
+  
+  DatabaseBloc({required this.databaseController}) 
+      : super(const DatabaseState.initial()) {
+    _startListening();
+  }
+
+  void _startListening() {
+    databaseController.addListener(() {
+      add(DatabaseEvent.didReceiveDatabaseUpdate());
+    });
+  }
+}
+
+// Event-driven updates
+abstract class DatabaseEvent {
+  const DatabaseEvent();
+  const factory DatabaseEvent.initial() = _Initial;
+  const factory DatabaseEvent.didReceiveDatabaseUpdate() = _DidReceiveDatabaseUpdate;
+  const factory DatabaseEvent.didUpdateFields(List&lt;FieldInfo&gt; fields) = _DidUpdateFields;
+}</div>
+
+                <div class="warning">
+                    <strong>Important:</strong> The frontend never directly manipulates data. All operations go through the backend via event messaging, ensuring data consistency and enabling real-time collaboration.
+                </div>
+            </section>
+
+            <section id="backend" class="section">
+                <h2>⚙️ Backend Architecture (Rust)</h2>
+
+                <h3>Core Services</h3>
+                <div class="component-grid">
+                    <div class="component-card">
+                        <h4>DatabaseEditor</h4>
+                        <p>Core database management with collaborative editing support. Handles database-level operations and coordinates with view editors.</p>
+                        <div class="code-block">impl DatabaseEditor {
+  pub async fn create_row(&amp;self, params: CreateRowParams) 
+      -> FlowyResult&lt;RowDetail&gt; {
+    // Row creation logic
+  }
+  
+  pub async fn update_cell(&amp;self, changeset: CellChangeset) 
+      -> FlowyResult&lt;()&gt; {
+    // Cell update with collaboration
+  }
+}</div>
+                    </div>
+
+                    <div class="component-card">
+                        <h4>DatabaseViewEditor</h4>
+                        <p>View-specific operations handling grid, board, and calendar layouts. Manages view-specific state and filtering.</p>
+                        <div class="code-block">impl DatabaseViewEditor {
+  pub async fn move_group_row(&amp;self, params: MoveGroupRowParams) 
+      -> FlowyResult&lt;()&gt; {
+    // Row movement between groups
+  }
+  
+  pub async fn create_group(&amp;self, params: InsertGroupParams) 
+      -> FlowyResult&lt;()&gt; {
+    // Group creation for board view
+  }
+}</div>
+                    </div>
+
+                    <div class="component-card">
+                        <h4>GroupController</h4>
+                        <p>Manages grouping logic for board views. Handles group creation, row assignment, and group-specific operations.</p>
+                        <div class="code-block">pub struct GroupController {
+    pub field_id: String,
+    pub groups: Vec&lt;Group&gt;,
+    pub configuration: GroupConfiguration,
+}
+
+impl GroupController {
+  pub async fn move_row(&amp;mut self, context: MoveGroupRowContext) 
+      -> FlowyResult&lt;()&gt; {
+    // Handle row movement logic
+  }
+}</div>
+                    </div>
+
+                    <div class="component-card">
+                        <h4>CellCache (Backend)</h4>
+                        <p>Backend cell-level data caching and validation. Ensures data integrity and provides efficient cell operations.</p>
+                        <div class="code-block">impl CellCache {
+  pub fn get_cell(&amp;self, cell_id: &amp;CellId) 
+      -> Option&lt;Cell&gt; {
+    // Retrieve cached cell data
+  }
+  
+  pub async fn set_cell(&amp;mut self, cell_id: CellId, cell: Cell) 
+      -> FlowyResult&lt;()&gt; {
+    // Update cell with validation
+  }
+}</div>
+                    </div>
+                </div>
+
+                <h3>Collaborative Database (Collab)</h3>
+                <div class="info">
+                    <strong>Collaboration Engine:</strong> AppFlowy uses a sophisticated operational transform system built on top of Yjs/Yrs for real-time collaborative editing. This ensures consistency across multiple users editing the same database simultaneously.
+                </div>
+
+                <div class="code-block">// Collaborative database structure
+pub struct Database {
+    pub collab: Arc&lt;MutexCollab&gt;,
+    pub body: DatabaseBody,
+    pub lock: Arc&lt;RwLock&lt;()&gt;&gt;,
+}
+
+// Operational transforms for collaborative editing
+impl Database {
+    pub fn apply_change(&amp;self, change: DatabaseChange) -&gt; FlowyResult&lt;()&gt; {
+        let txn = self.collab.lock().transact_mut();
+        // Apply operational transform
+        self.body.apply_change_with_txn(&amp;mut txn, change)?;
+        Ok(())
+    }
+}</div>
+            </section>
+
+            <section id="data-flow" class="section">
+                <h2>🔄 Data Flow Patterns</h2>
+
+                <h3>Frontend to Backend Communication</h3>
+                <div class="data-flow">
+                    <div class="flow-step">
+                        <strong>User Action</strong><br>
+                        UI Component
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>BLoC Event</strong><br>
+                        State Management
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>FFI Call</strong><br>
+                        Protobuf Message
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>Backend Service</strong><br>
+                        Rust Implementation
+                    </div>
+                </div>
+
+                <h3>Backend to Frontend Notifications</h3>
+                <div class="data-flow">
+                    <div class="flow-step">
+                        <strong>Data Change</strong><br>
+                        Backend Service
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>Notification</strong><br>
+                        Broadcast Channel
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>Listener</strong><br>
+                        Frontend Controller
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>UI Update</strong><br>
+                        BLoC State Emit
+                    </div>
+                </div>
+
+                <h3>Typical Operation Flow</h3>
+                <div class="code-block">// Example: Creating a new row
+1. User clicks "Add Card" in board view
+   └─→ BoardColumnFooter widget triggers action
+
+2. BLoC receives event
+   └─→ BoardBloc.add(BoardEvent.createRow(groupId, position, name))
+
+3. Controller processes request
+   └─→ databaseController.createRow(CreateRowParams)
+
+4. FFI call to backend
+   └─→ DatabaseEventCreateRow protobuf message
+
+5. Rust backend processes
+   └─→ DatabaseEditor.create_row() implementation
+
+6. Database update with collaboration
+   └─→ Operational transform applied to collaborative document
+
+7. Notification sent back
+   └─→ DatabaseNotification.DidUpdateViewRowsVisibility
+
+8. Frontend listeners update UI
+   └─→ BLoC emits new state, UI rebuilds automatically</div>
+            </section>
+
+            <section id="storage" class="section">
+                <h2>💾 Storage & Synchronization</h2>
+
+                <h3>Local Storage (SQLite)</h3>
+                <div class="component-grid">
+                    <div class="component-card">
+                        <h4>Database Tables</h4>
+                        <ul>
+                            <li><span class="inline-code">collab_snapshot</span> - Document snapshots</li>
+                            <li><span class="inline-code">collab_state</span> - Collaboration state</li>
+                            <li><span class="inline-code">user_data</span> - User-specific data</li>
+                            <li><span class="inline-code">workspace</span> - Workspace information</li>
+                        </ul>
+                    </div>
+
+                    <div class="component-card">
+                        <h4>Caching Strategy</h4>
+                        <ul>
+                            <li><strong>View Cache:</strong> Complete view data</li>
+                            <li><strong>Row Cache:</strong> Individual row data</li>
+                            <li><strong>Cell Cache:</strong> Granular cell data</li>
+                            <li><strong>Field Cache:</strong> Field metadata</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Cloud Synchronization</h3>
+                <div class="info">
+                    <strong>Sync Architecture:</strong> AppFlowy uses a sophisticated synchronization system that handles offline-first scenarios with conflict resolution through operational transforms.
+                </div>
+
+                <div class="code-block">// Synchronization flow
+pub struct DatabaseCloudService {
+    pub cloud_service: Arc&lt;dyn DatabaseCloudService&gt;,
+}
+
+impl DatabaseCloudService {
+    // Push local changes to cloud
+    pub async fn push_updates(&amp;self, workspace_id: &amp;str, updates: Vec&lt;DatabaseUpdate&gt;) 
+        -> FlowyResult&lt;()&gt; {
+        // Upload operational transforms
+    }
+    
+    // Pull remote changes from cloud  
+    pub async fn pull_updates(&amp;self, workspace_id: &amp;str) 
+        -> FlowyResult&lt;Vec&lt;DatabaseUpdate&gt;&gt; {
+        // Download and apply remote changes
+    }
+}</div>
+
+                <h3>Conflict Resolution</h3>
+                <ul>
+                    <li><strong>Operational Transforms:</strong> Changes are represented as operations that can be applied in any order</li>
+                    <li><strong>Vector Clocks:</strong> Track causality between changes from different users</li>
+                    <li><strong>Last-Writer-Wins:</strong> For simple conflicts, timestamp-based resolution</li>
+                    <li><strong>Merge Strategies:</strong> Field-specific merge logic for complex data types</li>
+                </ul>
+            </section>
+
+            <section id="implementation" class="section">
+                <h2>🚀 Web Implementation Guidelines</h2>
+
+                <h3>Architecture Translation</h3>
+                <div class="component-grid">
+                    <div class="component-card">
+                        <h4>Frontend (React/Vue + TypeScript)</h4>
+                        <ul>
+                            <li>Replace BLoC with Context/Redux/Zustand</li>
+                            <li>Use React Query/SWR for data fetching</li>
+                            <li>Implement similar controller patterns</li>
+                            <li>Maintain multi-layer caching</li>
+                        </ul>
+                    </div>
+
+                    <div class="component-card">
+                        <h4>Backend Integration</h4>
+                        <ul>
+                            <li>Compile Rust backend to WASM</li>
+                            <li>Maintain protobuf communication</li>
+                            <li>Use Web Workers for heavy operations</li>
+                            <li>Implement IndexedDB for local storage</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Key Patterns to Preserve</h3>
+                <div class="highlight">Event-Driven Architecture</div>
+                <p>Maintain the event-driven pattern where UI actions trigger events that propagate through the system.</p>
+
+                <div class="highlight">Multi-Layer Caching</div>  
+                <p>Implement view, row, and cell-level caching to minimize backend calls and improve performance.</p>
+
+                <div class="highlight">Collaborative Synchronization</div>
+                <p>Preserve the operational transform system for real-time collaboration features.</p>
+
+                <div class="highlight">Type-Safe Communication</div>
+                <p>Use TypeScript and maintain protobuf schemas for type safety across layers.</p>
+
+                <h3>Web-Specific Considerations</h3>
+                <ul>
+                    <li><strong>Bundle Size:</strong> Code-split database functionality to avoid large initial bundles</li>
+                    <li><strong>Performance:</strong> Use virtual scrolling for large datasets</li>
+                    <li><strong>Offline Support:</strong> Implement Service Workers for offline functionality</li>
+                    <li><strong>Browser Compatibility:</strong> Ensure WASM support and fallbacks</li>
+                    <li><strong>Memory Management:</strong> Implement proper cleanup for WebAssembly modules</li>
+                    <li><strong>Security:</strong> Handle sensitive data in WASM securely</li>
+                </ul>
+
+                <div class="warning">
+                    <strong>Critical Success Factors:</strong>
+                    <ol>
+                        <li>Preserve the event-driven architecture for maintainability</li>
+                        <li>Maintain backend compatibility for collaboration features</li>
+                        <li>Implement robust caching to match desktop performance</li>
+                        <li>Ensure type safety throughout the application</li>
+                        <li>Plan for offline-first functionality from the beginning</li>
+                    </ol>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 AppFlowy Database Architecture Documentation | Generated for Web Implementation Reference</p>
+        </div>
+    </footer>
 </body>
 </html>

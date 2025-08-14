@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Cases - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>AppFlowy Docs</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+        <h1>🧪 Test Cases for Unified Space & Project Management</h1>
+        
+        <p>Comprehensive test cases for verifying the implementation of the unified space and project management system. These tests cover all major functionality including space creation, member management, project features, and error handling.</p>
+
+        <div class="card">
+          <div class="card-title">Test Environment Setup</div>
+          <p>Before running tests, ensure:</p>
+          <ul>
+            <li>Development server is running on <code>http://localhost:3000</code></li>
+            <li>You have at least 2 test user accounts</li>
+            <li>Browser DevTools console is open for error monitoring</li>
+            <li>Network tab is available for API call verification</li>
+          </ul>
+        </div>
+
+        <h2>1. Space Creation & Management</h2>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 1.1: Create a New Document Space</h3>
+            <span class="badge badge-success">Core Feature</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Click on "+" button in the sidebar</li>
+              <li>Select "Create Space" option</li>
+              <li>Enter space name: "Marketing Docs"</li>
+              <li>Select space type: "Document"</li>
+              <li>Choose icon: 📄</li>
+              <li>Set permission: "Public"</li>
+              <li>Click "Create"</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>New space appears in sidebar with 📄 icon</li>
+              <li>Space is accessible to all workspace members</li>
+              <li>Space shows in the outline with correct hierarchy</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 1.2: Create a New Project Space</h3>
+            <span class="badge badge-success">Core Feature</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Click on "+" button in the sidebar</li>
+              <li>Select "Create Space" option</li>
+              <li>Enter space name: "Q1 Product Launch"</li>
+              <li>Select space type: "Project"</li>
+              <li>Choose icon: 🚀</li>
+              <li>Set permission: "Private"</li>
+              <li>Click "Create"</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>New project space appears in sidebar with 🚀 icon</li>
+              <li>Project space includes a Kanban board view automatically</li>
+              <li>Only space creator has access initially</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>2. Space Member Management</h2>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 2.1: Invite Members to Space</h3>
+            <span class="badge badge-info">Collaboration</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Right-click on any space in sidebar</li>
+              <li>Select "Manage Space"</li>
+              <li>Click "Manage Space Members" button</li>
+              <li>Click "Invite Members" button</li>
+              <li>Enter email: "colleague@company.com"</li>
+              <li>Select role: "Editor"</li>
+              <li>Click "Send Invitation"</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Invitation sent successfully message appears</li>
+              <li>Pending invitation shows in members list</li>
+              <li>Invited user receives invitation email</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 2.2: Change Member Role</h3>
+            <span class="badge badge-info">Permissions</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Navigate to Space Members Settings</li>
+              <li>Find existing member in the list</li>
+              <li>Click on role dropdown (e.g., "Editor")</li>
+              <li>Change to "Admin"</li>
+              <li>Confirm the change</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Role updates immediately</li>
+              <li>Member gains admin permissions</li>
+              <li>Can now manage other members</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 2.3: Remove Space Member</h3>
+            <span class="badge badge-warning">Destructive</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Navigate to Space Members Settings</li>
+              <li>Find member to remove</li>
+              <li>Click three-dot menu next to member</li>
+              <li>Select "Remove from space"</li>
+              <li>Confirm removal</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Member removed from space</li>
+              <li>Member loses access to space content</li>
+              <li>Member count updates</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>3. Project Space Features</h2>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 3.1: Create Tasks in Project Space</h3>
+            <span class="badge badge-success">Core Feature</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Open a project space (e.g., "Q1 Product Launch")</li>
+              <li>Click "Add Task" button</li>
+              <li>Fill in:
+                <ul>
+                  <li>Title: "Design landing page"</li>
+                  <li>Description: "Create mockups for new product landing"</li>
+                  <li>Status: "To Do"</li>
+                  <li>Priority: "High"</li>
+                </ul>
+              </li>
+              <li>Click "Create Task"</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Task appears in "To Do" column</li>
+              <li>Task shows high priority indicator</li>
+              <li>Task is persisted (refresh page to verify)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 3.2: Drag & Drop Tasks</h3>
+            <span class="badge badge-success">Core Feature</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Open project space with existing tasks</li>
+              <li>Click and hold on a task in "To Do" column</li>
+              <li>Drag task to "In Progress" column</li>
+              <li>Release mouse button</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Task moves smoothly to new column</li>
+              <li>Status updates to "In Progress"</li>
+              <li>Change persists after page refresh</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 3.3: Edit Task Details</h3>
+            <span class="badge badge-info">Task Management</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Click three-dot menu on any task</li>
+              <li>Select "Edit Task"</li>
+              <li>Update:
+                <ul>
+                  <li>Title: Add " - URGENT" to title</li>
+                  <li>Priority: Change to "High"</li>
+                  <li>Description: Add more details</li>
+                </ul>
+              </li>
+              <li>Click "Save Changes"</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Task updates immediately</li>
+              <li>Changes visible on task card</li>
+              <li>Updates persist after refresh</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 3.4: Delete Task</h3>
+            <span class="badge badge-warning">Destructive</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Click three-dot menu on a task</li>
+              <li>Select "Delete Task"</li>
+              <li>Confirm deletion</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Task removed from board</li>
+              <li>No errors in console</li>
+              <li>Task doesn't reappear after refresh</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>4. Space Permissions</h2>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 4.1: Verify Owner Permissions</h3>
+            <span class="badge badge-info">Security</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Create a new space as Owner</li>
+              <li>Verify you can:
+                <ul>
+                  <li>Edit space name/icon</li>
+                  <li>Manage all members</li>
+                  <li>Delete the space</li>
+                  <li>Change space permissions</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>All administrative actions available</li>
+              <li>No permission errors</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 4.2: Verify Editor Permissions</h3>
+            <span class="badge badge-info">Security</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Access a space where you're an Editor</li>
+              <li>Try to:
+                <ul>
+                  <li>✅ Create/edit content</li>
+                  <li>✅ View all content</li>
+                  <li>❌ Manage members (should be disabled)</li>
+                  <li>❌ Delete space (should be disabled)</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Can edit content but not manage space</li>
+              <li>Management options are disabled/hidden</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 4.3: Verify Viewer Permissions</h3>
+            <span class="badge badge-info">Security</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Access a space where you're a Viewer</li>
+              <li>Try to:
+                <ul>
+                  <li>✅ View all content</li>
+                  <li>❌ Create/edit content</li>
+                  <li>❌ Manage members</li>
+                  <li>❌ Edit tasks</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Read-only access</li>
+              <li>No edit buttons visible</li>
+              <li>Cannot drag & drop tasks</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>5. Migration & Integration</h2>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 5.1: Migrate Existing Pages to Spaces</h3>
+            <span class="badge badge-info">Migration</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Click on workspace settings</li>
+              <li>Select "Migration Wizard"</li>
+              <li>Choose migration type: "Convert pages to spaces"</li>
+              <li>Select pages to migrate</li>
+              <li>Map permissions for each page</li>
+              <li>Click "Start Migration"</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Progress bar shows migration status</li>
+              <li>Selected pages converted to spaces</li>
+              <li>Original hierarchy preserved</li>
+              <li>Permissions applied correctly</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 5.2: Use Space Templates</h3>
+            <span class="badge badge-success">Templates</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Click "+" in sidebar</li>
+              <li>Select "Create from Template"</li>
+              <li>Choose "Project Template"</li>
+              <li>Customize:
+                <ul>
+                  <li>Name: "Mobile App Development"</li>
+                  <li>Icon: 📱</li>
+                </ul>
+              </li>
+              <li>Click "Create"</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Space created with predefined structure</li>
+              <li>Includes sample tasks and categories</li>
+              <li>Ready-to-use project board</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>6. Search & Analytics</h2>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 6.1: Search Within Space</h3>
+            <span class="badge badge-info">Search</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Open any space</li>
+              <li>Use Cmd/Ctrl + K for quick search</li>
+              <li>Type a keyword that exists in the space</li>
+              <li>Select "Search in current space only"</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Results filtered to current space</li>
+              <li>Shows matching documents/tasks</li>
+              <li>Quick navigation to results</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 6.2: View Space Analytics</h3>
+            <span class="badge badge-info">Analytics</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Open a project space</li>
+              <li>Look at the stats dashboard showing:
+                <ul>
+                  <li>Total tasks</li>
+                  <li>In Progress tasks</li>
+                  <li>Completed tasks</li>
+                  <li>Team members</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Real-time statistics displayed</li>
+              <li>Numbers match actual task counts</li>
+              <li>Updates when tasks change</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>7. Error Handling & Edge Cases</h2>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 7.1: Handle Network Errors</h3>
+            <span class="badge badge-warning">Error Handling</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Open browser DevTools</li>
+              <li>Go to Network tab, set to "Offline"</li>
+              <li>Try to create a new task</li>
+              <li>Re-enable network</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>User-friendly error message appears</li>
+              <li>No app crash</li>
+              <li>Can retry when network returns</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 7.2: Concurrent Editing</h3>
+            <span class="badge badge-warning">Collaboration</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Open same project in two browser tabs</li>
+              <li>Create a task in Tab 1</li>
+              <li>Switch to Tab 2 and refresh</li>
+              <li>Edit the same task in both tabs</li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Changes sync between tabs</li>
+              <li>Last edit wins</li>
+              <li>No data corruption</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>8. Performance Tests</h2>
+
+        <div class="test-case">
+          <div class="test-case-header">
+            <h3 class="test-case-title">Test Case 8.1: Large Number of Tasks</h3>
+            <span class="badge badge-warning">Performance</span>
+          </div>
+          
+          <div class="test-steps">
+            <h4>Steps:</h4>
+            <ol>
+              <li>Create 50+ tasks in a project</li>
+              <li>Test:
+                <ul>
+                  <li>Page load time</li>
+                  <li>Drag & drop responsiveness</li>
+                  <li>Search performance</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+          
+          <div class="expected-result">
+            <h5>Expected Result:</h5>
+            <ul>
+              <li>Page loads in < 3 seconds</li>
+              <li>Drag & drop remains smooth</li>
+              <li>Search returns results instantly</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>🔍 Verification Checklist</h2>
+          
+          <p>After running all tests, verify:</p>
+          <ul>
+            <li>☐ No console errors in browser DevTools</li>
+            <li>☐ All data persists after page refresh</li>
+            <li>☐ UI remains responsive</li>
+            <li>☐ Proper error messages for invalid actions</li>
+            <li>☐ Correct permission enforcement</li>
+            <li>☐ Smooth animations and transitions</li>
+            <li>☐ Mobile responsive design works</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>📝 Notes for Testers</h2>
+          
+          <ol>
+            <li><strong>Test Data Setup</strong>: Create at least 3 spaces of different types with various permission levels</li>
+            <li><strong>Multiple Users</strong>: Test with at least 2 different user accounts to verify permissions</li>
+            <li><strong>Browser Testing</strong>: Test on Chrome, Firefox, and Safari</li>
+            <li><strong>State Persistence</strong>: Always refresh page after actions to verify persistence</li>
+            <li><strong>Console Monitoring</strong>: Keep browser console open to catch any errors</li>
+          </ol>
+        </div>
+
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 AppFlowy. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="assets/docs-script.js"></script>
+</body>
+</html>

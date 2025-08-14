@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Architecture - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="assets/docs-style.css">
+  <style>
+    /* Additional styles specific to architecture document */
+    .architecture-diagram {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      overflow-x: auto;
+    }
+    
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    
+    .table th,
+    .table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .table th {
+      background: #f7fafc;
+      font-weight: 600;
+      color: #2d3748;
+    }
+    
+    .table tr:hover {
+      background: #f8fafc;
+    }
+    
+    .permission-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+    
+    .permission-card {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    
+    .permission-card h4 {
+      color: #4299e1;
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+    
+    .permission-card ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    
+    .api-endpoint {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+    
+    .api-method {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #4299e1;
+      color: white;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    
+    .api-endpoint code {
+      display: block;
+      background: #2d3748;
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin: 8px 0;
+      font-family: 'Consolas', 'Monaco', monospace;
+    }
+    
+    .tech-stack {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+    
+    .tech-item {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+    
+    .tech-item h4 {
+      color: #4299e1;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    
+    .phase {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+    
+    .phase.status-completed {
+      border-color: #48bb78;
+      background: #f0fff4;
+    }
+    
+    .phase.status-current {
+      border-color: #4299e1;
+      background: #ebf8ff;
+    }
+    
+    .phase.status-planned {
+      border-color: #ed8936;
+      background: #fffaf0;
+    }
+    
+    .phase h3 {
+      margin-top: 0;
+      color: #2d3748;
+    }
+    
+    .mermaid {
+      text-align: center;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>AppFlowy Docs</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+        <h1>AppFlowy Unified Space & Project Management - System Architecture</h1>
+
+        <p>This document provides a comprehensive architectural overview of the unified space and project management system for AppFlowy. The system introduces a hierarchical space model with integrated project management capabilities.</p>
+
+        <div class="card">
+          <div class="card-title">Executive Summary</div>
+          <p>The unified space and project management system transforms AppFlowy's document organization by introducing:</p>
+          <ul>
+            <li>Hierarchical space containers for documents and projects</li>
+            <li>Fine-grained role-based permissions at the space level</li>
+            <li>Integrated project management with kanban boards</li>
+            <li>Real-time collaboration with member management</li>
+          </ul>
+        </div>
+
+        <h2>System Architecture Overview</h2>
+
+        <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                               AppFlowy Architecture                              │
+│                                                                                 │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌───────────────────────────┐  │
+│  │  Frontend (Web) │    │     Backend     │    │      Database Layer       │  │
+│  │                 │    │                 │    │                           │  │
+│  │ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────────────┐  │  │
+│  │ │Space Manager│ │◄───┤ │Space API    │ │◄───┤ │ af_space_members    │  │  │
+│  │ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────────────┘  │  │
+│  │                 │    │                 │    │                           │  │
+│  │ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────────────┐  │  │
+│  │ │Project View │ │◄───┤ │Project API  │ │◄───┤ │ af_project_metadata │  │  │
+│  │ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────────────┘  │  │
+│  │                 │    │                 │    │                           │  │
+│  │ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────────────┐  │  │
+│  │ │Member Panel │ │◄───┤ │Permission   │ │◄───┤ │ af_space_invitations│  │  │
+│  │ └─────────────┘ │    │ │Service      │ │    │ └─────────────────────┘  │  │
+│  │                 │    │ └─────────────┘ │    │                           │  │
+│  └─────────────────┘    └─────────────────┘    └───────────────────────────┘  │
+│                                                                                 │
+│  ┌───────────────────────────────────────────────────────────────────────┐     │
+│  │                     Collaborative Layer                                │     │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐ │     │
+│  │  │Y.js Docs    │  │WebSocket    │  │Redis Cache  │  │Access Control│ │     │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘  └──────────────┘ │     │
+│  └───────────────────────────────────────────────────────────────────────┘     │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+        </div>
+
+        <h2>Data Model Architecture</h2>
+
+        <h3>Core Entities</h3>
+
+        <table class="table">
+          <tr>
+            <th>Entity</th>
+            <th>Purpose</th>
+            <th>Key Relationships</th>
+            <th>Status</th>
+          </tr>
+          <tr>
+            <td><strong>af_space_members</strong></td>
+            <td>Member roles and permissions for spaces</td>
+            <td>→ af_workspace, af_user</td>
+            <td>✅ Implemented</td>
+          </tr>
+          <tr>
+            <td><strong>af_space_invitations</strong></td>
+            <td>Pending invitations to join spaces</td>
+            <td>→ af_workspace, af_user</td>
+            <td>✅ Implemented</td>
+          </tr>
+          <tr>
+            <td><strong>af_project_metadata</strong></td>
+            <td>Project-specific settings and stats</td>
+            <td>→ af_workspace</td>
+            <td>✅ Implemented</td>
+          </tr>
+          <tr>
+            <td><strong>af_project_tasks</strong></td>
+            <td>Tasks with document integration</td>
+            <td>→ af_project_metadata, af_user</td>
+            <td>✅ Implemented</td>
+          </tr>
+        </table>
+
+        <h3>Permission Model</h3>
+
+        <div class="permission-grid">
+          <div class="permission-card">
+            <h4>Owner Role</h4>
+            <ul>
+              <li>All content permissions</li>
+              <li>Full member management</li>
+              <li>Space settings & deletion</li>
+              <li>Project: All task permissions</li>
+            </ul>
+          </div>
+          <div class="permission-card">
+            <h4>Admin Role</h4>
+            <ul>
+              <li>All content permissions</li>
+              <li>Member & role management</li>
+              <li>Space settings (no deletion)</li>
+              <li>Project: All task permissions</li>
+            </ul>
+          </div>
+          <div class="permission-card">
+            <h4>Editor Role</h4>
+            <ul>
+              <li>View, edit, create content</li>
+              <li>View members only</li>
+              <li>Project: Create & assign tasks</li>
+              <li>View reports</li>
+            </ul>
+          </div>
+          <div class="permission-card">
+            <h4>Viewer Role</h4>
+            <ul>
+              <li>View content only</li>
+              <li>View members only</li>
+              <li>Project: View reports only</li>
+              <li>No editing capabilities</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>API Architecture</h2>
+
+        <h3>RESTful Endpoints</h3>
+
+        <div class="api-endpoint">
+          <div class="api-method">POST</div>
+          <code>/api/spaces/{space_id}/members/invite</code>
+          <p>Invite new members to a space with specified role</p>
+        </div>
+
+        <div class="api-endpoint">
+          <div class="api-method">GET</div>
+          <code>/api/spaces/{space_id}/members</code>
+          <p>List all space members with roles and user profiles</p>
+        </div>
+
+        <div class="api-endpoint">
+          <div class="api-method">PUT</div>
+          <code>/api/spaces/{space_id}/members/{member_uid}</code>
+          <p>Update member role or permissions</p>
+        </div>
+
+        <div class="api-endpoint">
+          <div class="api-method">DELETE</div>
+          <code>/api/spaces/{space_id}/members/{member_uid}</code>
+          <p>Remove member from space</p>
+        </div>
+
+        <div class="api-endpoint">
+          <div class="api-method">GET</div>
+          <code>/api/spaces/{space_id}/permissions/{permission}</code>
+          <p>Check if user has specific permission in space</p>
+        </div>
+
+        <div class="api-endpoint">
+          <div class="api-method">POST</div>
+          <code>/api/space-invitations/{token}/accept</code>
+          <p>Accept space invitation using invitation token</p>
+        </div>
+
+        <h2>Technology Stack</h2>
+
+        <div class="tech-stack">
+          <div class="tech-item">
+            <h4>Backend</h4>
+            <p>Rust + Actix Web<br>PostgreSQL<br>SQLx ORM</p>
+          </div>
+          <div class="tech-item">
+            <h4>Frontend</h4>
+            <p>React + TypeScript<br>Tailwind CSS<br>React Query</p>
+          </div>
+          <div class="tech-item">
+            <h4>Collaboration</h4>
+            <p>Y.js Documents<br>WebSocket<br>Redis Cache</p>
+          </div>
+          <div class="tech-item">
+            <h4>Database</h4>
+            <p>PostgreSQL 15+<br>JSONB for settings<br>UUID primary keys</p>
+          </div>
+        </div>
+
+        <h2>Implementation Phases</h2>
+
+        <div class="phase status-completed">
+          <h3>Phase 1: Backend Foundation</h3>
+          <p><strong>Status:</strong> ✅ Completed</p>
+          
+          <h4>Deliverables:</h4>
+          <ul>
+            <li>✅ Database schema with migrations</li>
+            <li>✅ Space member API endpoints</li>
+            <li>✅ Permission system with role-based access</li>
+            <li>✅ Integration with existing workspace system</li>
+            <li>✅ PostgreSQL functions for permission checking</li>
+          </ul>
+
+          <h4>Technical Implementation:</h4>
+          <ul>
+            <li>Created comprehensive database tables (af_space_members, af_space_invitations, af_project_metadata)</li>
+            <li>Implemented full REST API in Rust with proper error handling</li>
+            <li>Built permission service with caching and context awareness</li>
+            <li>Added proper indexes and constraints for performance</li>
+          </ul>
+        </div>
+
+        <div class="phase status-completed">
+          <h3>Phase 2: Frontend Space Management</h3>
+          <p><strong>Status:</strong> ✅ Completed</p>
+          
+          <h4>Delivered Components:</h4>
+          <ul>
+            <li>✅ Space settings UI with member management panel</li>
+            <li>✅ Member invitation flow with role selection</li>
+            <li>✅ Real-time member list with role editing</li>
+            <li>✅ Permission-based UI visibility controls</li>
+            <li>✅ Integration with existing workspace UI</li>
+          </ul>
+
+          <h4>Technical Implementation:</h4>
+          <ul>
+            <li>React components for member management</li>
+            <li>TypeScript interfaces matching backend API</li>
+            <li>React Query for API state management</li>
+            <li>Tailwind CSS for responsive design</li>
+          </ul>
+        </div>
+
+        <div class="phase status-completed">
+          <h3>Phase 3: Project Space Implementation</h3>
+          <p><strong>Status:</strong> ✅ Completed</p>
+          
+          <h4>Delivered Features:</h4>
+          <ul>
+            <li>✅ Project space type with kanban board</li>
+            <li>✅ Task management with drag & drop</li>
+            <li>✅ Task-to-document linking</li>
+            <li>✅ Project dashboard with analytics</li>
+            <li>✅ Project templates</li>
+          </ul>
+
+          <h4>Technical Components:</h4>
+          <ul>
+            <li>Kanban board using @dnd-kit library</li>
+            <li>Task persistence with database integration</li>
+            <li>Real-time updates with Y.js</li>
+            <li>Project analytics dashboard</li>
+          </ul>
+        </div>
+
+        <div class="phase status-completed">
+          <h3>Phase 4: Integration & Migration</h3>
+          <p><strong>Status:</strong> ✅ Completed</p>
+          
+          <h4>Delivered Capabilities:</h4>
+          <ul>
+            <li>✅ Migration tools for existing workspaces</li>
+            <li>✅ Space search and discovery</li>
+            <li>✅ Cross-space navigation</li>
+            <li>✅ Space templates and presets</li>
+            <li>✅ Space usage analytics</li>
+          </ul>
+
+          <h4>Migration Strategy:</h4>
+          <ul>
+            <li>Automatic migration for existing pages to spaces</li>
+            <li>Permission mapping from workspace to space level</li>
+            <li>Backward compatibility maintained</li>
+            <li>Progressive rollout capability</li>
+          </ul>
+        </div>
+
+        <h2>Key Technical Decisions</h2>
+
+        <h3>Architecture Patterns</h3>
+        <ul>
+          <li><strong>Event-Driven Updates:</strong> Using WebSocket for real-time member changes</li>
+          <li><strong>Permission Caching:</strong> Redis cache for permission checks</li>
+          <li><strong>Optimistic UI:</strong> Frontend updates before server confirmation</li>
+          <li><strong>Database Transactions:</strong> Ensuring data consistency for space operations</li>
+        </ul>
+
+        <h3>Security Considerations</h3>
+        <ul>
+          <li><strong>Token-Based Invitations:</strong> Secure invitation links with expiration</li>
+          <li><strong>Row-Level Security:</strong> PostgreSQL RLS for data isolation</li>
+          <li><strong>Permission Inheritance:</strong> Space permissions cascade to content</li>
+          <li><strong>Audit Logging:</strong> All permission changes are logged</li>
+        </ul>
+
+        <h3>Performance Optimizations</h3>
+        <ul>
+          <li><strong>Lazy Loading:</strong> Load space members on demand</li>
+          <li><strong>Batch Operations:</strong> Bulk invite and permission updates</li>
+          <li><strong>Index Strategy:</strong> Optimized indexes for permission queries</li>
+          <li><strong>Connection Pooling:</strong> Efficient database connection management</li>
+        </ul>
+
+        <h2>Future Enhancements</h2>
+
+        <div class="card">
+          <h3>Planned Features</h3>
+          <ul>
+            <li><strong>External Sharing:</strong> Share spaces with external users</li>
+            <li><strong>Space Analytics:</strong> Advanced usage and activity metrics</li>
+            <li><strong>Custom Roles:</strong> Define custom permission sets</li>
+            <li><strong>Space Archiving:</strong> Archive inactive spaces</li>
+            <li><strong>API Access:</strong> Third-party integration support</li>
+          </ul>
+        </div>
+
+        <h2>Monitoring & Metrics</h2>
+
+        <h3>Key Performance Indicators</h3>
+        <ul>
+          <li>Space creation rate</li>
+          <li>Member invitation acceptance rate</li>
+          <li>Average members per space</li>
+          <li>Permission check latency</li>
+          <li>API response times</li>
+        </ul>
+
+        <h3>Health Metrics</h3>
+        <ul>
+          <li>Database connection pool usage</li>
+          <li>Redis cache hit rate</li>
+          <li>WebSocket connection stability</li>
+          <li>Error rates by endpoint</li>
+        </ul>
+
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 AppFlowy. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="assets/docs-script.js"></script>
+</body>
+</html>

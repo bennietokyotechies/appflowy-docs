@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Management Kanban Specifications - AppFlowy Web</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #24292f;
+            background-color: #ffffff;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0969da, #0550ae);
+            color: white;
+            padding: 40px 32px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            margin-bottom: 24px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .toc {
+            background: #f6f8fa;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .toc h2 {
+            color: #24292f;
+            margin-bottom: 16px;
+            font-size: 1.25rem;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc li {
+            margin: 8px 0;
+        }
+
+        .toc a {
+            color: #0969da;
+            text-decoration: none;
+            display: block;
+            padding: 4px 0;
+            font-weight: 500;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        .section {
+            background: white;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #24292f;
+            font-size: 1.75rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section h3 {
+            color: #24292f;
+            font-size: 1.375rem;
+            margin: 24px 0 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eaeef2;
+        }
+
+        .section h4 {
+            color: #24292f;
+            font-size: 1.125rem;
+            margin: 20px 0 12px;
+        }
+
+        .priority-high { color: #d73a49; }
+        .priority-medium { color: #fb8500; }
+        .priority-low { color: #28a745; }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .feature-card h4 {
+            color: #24292f;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-card p {
+            color: #586069;
+            font-size: 0.875rem;
+        }
+
+        .mockup {
+            background: #f6f8fa;
+            border: 2px dashed #d0d7de;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .mockup-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #24292f;
+        }
+
+        .kanban-mockup {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 16px 0;
+        }
+
+        .column-mockup {
+            background: white;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            width: 200px;
+            min-height: 300px;
+            padding: 12px;
+        }
+
+        .column-header {
+            font-weight: 600;
+            padding: 8px;
+            margin-bottom: 12px;
+            background: #f6f8fa;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+
+        .card-mockup {
+            background: white;
+            border: 1px solid #e1e4e8;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 8px;
+            font-size: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .card-meta {
+            color: #586069;
+            font-size: 0.625rem;
+        }
+
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .tech-item {
+            background: #f8f9fa;
+            border-left: 4px solid #0969da;
+            padding: 16px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .tech-item h5 {
+            color: #24292f;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .api-example {
+            background: #f6f8fa;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+        }
+
+        .api-example pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-size: 0.875rem;
+        }
+
+        .implementation-phase {
+            background: linear-gradient(to right, #e3f2fd, #f3e5f5);
+            border-left: 4px solid #2196f3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .implementation-phase h4 {
+            color: #1565c0;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .checkbox-list li {
+            margin: 8px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .checkbox-list li::before {
+            content: "☐";
+            color: #0969da;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .info-box {
+            background: #ddf4ff;
+            border: 1px solid #54aeff;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .warning-box {
+            background: #fff8c5;
+            border: 1px solid #f9c23c;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 24px 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .kanban-mockup {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .column-mockup {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Project Management Kanban Specifications</h1>
+        <p>Technical specifications for implementing kanban functionality in AppFlowy Web Application</p>
+        <span class="status-badge">📋 Design & Implementation Specification</span>
+    </div>
+
+    <div class="toc">
+        <h2>📑 Table of Contents</h2>
+        <ul>
+            <li><a href="#overview">1. Overview & Goals</a></li>
+            <li><a href="#ui-ux-design">2. UI/UX Design Requirements</a></li>
+            <li><a href="#features">3. Core Features Specification</a></li>
+            <li><a href="#data-models">4. Data Models & API</a></li>
+            <li><a href="#technical-architecture">5. Technical Architecture</a></li>
+            <li><a href="#implementation-plan">6. Implementation Plan</a></li>
+            <li><a href="#testing-strategy">7. Testing Strategy</a></li>
+            <li><a href="#future-enhancements">8. Future Enhancements</a></li>
+        </ul>
+    </div>
+
+    <div class="section" id="overview">
+        <h2>🎯 1. Overview & Goals</h2>
+        
+        <h3>Project Context</h3>
+        <p>This specification outlines the implementation of a comprehensive project management feature for the AppFlowy Web application. The feature will introduce kanban boards as the primary interface for managing project tasks, closely replicating the UI/UX patterns established in the AppFlowy Desktop application.</p>
+
+        <h3>Primary Objectives</h3>
+        <div class="feature-list">
+            <div class="feature-card">
+                <h4><span class="priority-high">🎯</span> Core Functionality</h4>
+                <p>Implement full CRUD operations for both kanban cards (tasks) and columns with drag-and-drop support</p>
+            </div>
+            <div class="feature-card">
+                <h4><span class="priority-high">💼</span> Project Management</h4>
+                <p>Provide dedicated project spaces with individual kanban boards accessible through sidebar navigation</p>
+            </div>
+            <div class="feature-card">
+                <h4><span class="priority-medium">🎨</span> UI Consistency</h4>
+                <p>Match the design language and interaction patterns of the existing desktop application</p>
+            </div>
+            <div class="feature-card">
+                <h4><span class="priority-medium">📱</span> Responsive Design</h4>
+                <p>Ensure optimal user experience across desktop, tablet, and mobile devices</p>
+            </div>
+        </div>
+
+        <h3>Success Criteria</h3>
+        <ul class="checkbox-list">
+            <li>Users can create and manage multiple project spaces</li>
+            <li>Each project space contains a fully functional kanban board</li>
+            <li>Cards and columns support full CRUD operations</li>
+            <li>Drag-and-drop functionality works reliably across all supported browsers</li>
+            <li>Card detail modal provides comprehensive task management capabilities</li>
+            <li>Integration seamlessly fits within existing application architecture</li>
+        </ul>
+    </div>
+
+    <div class="section" id="ui-ux-design">
+        <h2>🎨 2. UI/UX Design Requirements</h2>
+
+        <h3>Design Principles</h3>
+        <p>The kanban implementation must adhere to AppFlowy's established design system while providing intuitive project management workflows.</p>
+
+        <div class="mockup">
+            <div class="mockup-title">Kanban Board Layout (Reference)</div>
+            <div class="kanban-mockup">
+                <div class="column-mockup">
+                    <div class="column-header">📋 To Do</div>
+                    <div class="card-mockup">
+                        <div class="card-title">Setup project infrastructure</div>
+                        <div class="card-meta">Due: Tomorrow • High Priority</div>
+                    </div>
+                    <div class="card-mockup">
+                        <div class="card-title">Design database schema</div>
+                        <div class="card-meta">Assigned: John • 3 days</div>
+                    </div>
+                </div>
+                <div class="column-mockup">
+                    <div class="column-header">🔄 In Progress</div>
+                    <div class="card-mockup">
+                        <div class="card-title">Implement user authentication</div>
+                        <div class="card-meta">Progress: 60% • 2 days left</div>
+                    </div>
+                </div>
+                <div class="column-mockup">
+                    <div class="column-header">✅ Done</div>
+                    <div class="card-mockup">
+                        <div class="card-title">Initial project setup</div>
+                        <div class="card-meta">Completed: Yesterday</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3>Key UI Components</h3>
+
+        <h4>Sidebar Navigation</h4>
+        <ul>
+            <li><strong>Projects Section:</strong> Collapsible section in left sidebar below Documents</li>
+            <li><strong>Project List:</strong> Shows all user projects with board icons</li>
+            <li><strong>Add Project:</strong> Plus icon button for creating new projects</li>
+            <li><strong>Project Actions:</strong> Three-dot menu for project operations (edit, delete, etc.)</li>
+        </ul>
+
+        <h4>Kanban Board Interface</h4>
+        <ul>
+            <li><strong>Board Header:</strong> Project title, description, and board controls</li>
+            <li><strong>Column Headers:</strong> Editable titles with card count and action menus</li>
+            <li><strong>Cards:</strong> Compact task representation with key information visible</li>
+            <li><strong>Add Buttons:</strong> Inline card creation within columns</li>
+            <li><strong>Column Management:</strong> Add, reorder, edit, and delete columns</li>
+        </ul>
+
+        <h4>Card Detail Modal</h4>
+        <ul>
+            <li><strong>Title & Description:</strong> Editable task name and detailed description</li>
+            <li><strong>Metadata Fields:</strong> Due date, priority, labels, assignees</li>
+            <li><strong>Comments:</strong> Task discussion and activity log</li>
+            <li><strong>Attachments:</strong> File uploads and links</li>
+            <li><strong>Activity Timeline:</strong> Historical changes and updates</li>
+        </ul>
+
+        <div class="info-box">
+            <strong>🎯 Design Goal:</strong> The interface should feel familiar to users of Trello, Asana, or similar project management tools while maintaining AppFlowy's unique design identity.
+        </div>
+    </div>
+
+    <div class="section" id="features">
+        <h2>⚙️ 3. Core Features Specification</h2>
+
+        <h3>Must-Have Features (MVP)</h3>
+
+        <div class="implementation-phase">
+            <h4>📋 Project & Board Management</h4>
+            <ul class="checkbox-list">
+                <li>Create new project spaces with name and description</li>
+                <li>Edit project metadata (name, description, settings)</li>
+                <li>Delete projects with confirmation dialog</li>
+                <li>Navigate between projects via sidebar</li>
+                <li>Automatic kanban board creation for each project</li>
+            </ul>
+        </div>
+
+        <div class="implementation-phase">
+            <h4>🏗️ Column Management</h4>
+            <ul class="checkbox-list">
+                <li>Add new columns to kanban board</li>
+                <li>Edit column titles inline or via menu</li>
+                <li>Reorder columns via drag-and-drop</li>
+                <li>Delete columns with card reassignment options</li>
+                <li>Default columns: "To Do", "In Progress", "Done"</li>
+            </ul>
+        </div>
+
+        <div class="implementation-phase">
+            <h4>🎴 Card (Task) Management</h4>
+            <ul class="checkbox-list">
+                <li>Create new cards within any column</li>
+                <li>Edit card titles and descriptions</li>
+                <li>Move cards between columns via drag-and-drop</li>
+                <li>Reorder cards within columns</li>
+                <li>Delete cards with confirmation</li>
+                <li>Bulk operations (select multiple cards)</li>
+            </ul>
+        </div>
+
+        <div class="implementation-phase">
+            <h4>📝 Card Detail Modal</h4>
+            <ul class="checkbox-list">
+                <li>Rich text editor for card descriptions</li>
+                <li>Due date picker with calendar interface</li>
+                <li>Priority levels (High, Medium, Low) with visual indicators</li>
+                <li>Label system with color coding</li>
+                <li>Comment system for task discussions</li>
+                <li>File attachment capabilities</li>
+                <li>Activity log showing all changes</li>
+            </ul>
+        </div>
+
+        <h3>Technical Requirements</h3>
+
+        <div class="tech-stack">
+            <div class="tech-item">
+                <h5>🎯 Drag & Drop</h5>
+                <p>Implement using @dnd-kit or react-beautiful-dnd for smooth, accessible drag-and-drop interactions</p>
+            </div>
+            <div class="tech-item">
+                <h5>💾 Data Persistence</h5>
+                <p>Real-time synchronization with backend database for all board changes</p>
+            </div>
+            <div class="tech-item">
+                <h5>🔄 State Management</h5>
+                <p>Redux/Context-based state management for board data and UI state</p>
+            </div>
+            <div class="tech-item">
+                <h5>📱 Responsive Design</h5>
+                <p>Tailwind CSS with custom breakpoints for mobile-first responsive layout</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="section" id="data-models">
+        <h2>🗄️ 4. Data Models & API</h2>
+
+        <h3>Database Schema</h3>
+
+        <div class="api-example">
+<pre>// Project Model
+interface Project {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  boardViewId: string; // References the kanban board view
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+}
+
+// Board Column Model
+interface BoardColumn {
+  id: string;
+  boardId: string;
+  title: string;
+  position: number; // For ordering columns
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Card (Task) Model
+interface Card {
+  id: string;
+  columnId: string;
+  boardId: string;
+  title: string;
+  description?: string;
+  position: number; // For ordering within column
+  dueDate?: Date;
+  priority: 'high' | 'medium' | 'low';
+  labels: string[];
+  assignees: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+}
+
+// Card Comment Model
+interface CardComment {
+  id: string;
+  cardId: string;
+  authorId: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+}</pre>
+        </div>
+
+        <h3>API Endpoints</h3>
+
+        <h4>Project Management</h4>
+        <div class="api-example">
+<pre>GET    /api/projects              // List user projects
+POST   /api/projects              // Create new project
+GET    /api/projects/:id          // Get project details
+PUT    /api/projects/:id          // Update project
+DELETE /api/projects/:id          // Delete project</pre>
+        </div>
+
+        <h4>Board Operations</h4>
+        <div class="api-example">
+<pre>GET    /api/boards/:id/columns    // Get board columns
+POST   /api/boards/:id/columns    // Create column
+PUT    /api/columns/:id           // Update column
+DELETE /api/columns/:id           // Delete column
+POST   /api/columns/reorder       // Reorder columns</pre>
+        </div>
+
+        <h4>Card Operations</h4>
+        <div class="api-example">
+<pre>GET    /api/columns/:id/cards     // Get cards in column
+POST   /api/columns/:id/cards     // Create card
+GET    /api/cards/:id             // Get card details
+PUT    /api/cards/:id             // Update card
+DELETE /api/cards/:id             // Delete card
+POST   /api/cards/move            // Move card between columns
+POST   /api/cards/reorder         // Reorder cards within column</pre>
+        </div>
+
+        <div class="warning-box">
+            <strong>⚠️ Data Consistency:</strong> All drag-and-drop operations must maintain proper position ordering and handle concurrent updates gracefully.
+        </div>
+    </div>
+
+    <div class="section" id="technical-architecture">
+        <h2>🏗️ 5. Technical Architecture</h2>
+
+        <h3>Frontend Architecture</h3>
+
+        <h4>Component Hierarchy</h4>
+        <div class="api-example">
+<pre>ProjectManagement/
+├── ProjectSidebar/
+│   ├── ProjectsList
+│   ├── CreateProjectDialog
+│   └── ProjectActions
+├── KanbanBoard/
+│   ├── BoardHeader
+│   ├── BoardColumns/
+│   │   ├── ColumnHeader
+│   │   ├── ColumnCards
+│   │   └── AddCardButton
+│   ├── DragDropContext
+│   └── AddColumnButton
+├── CardDetailModal/
+│   ├── CardHeader
+│   ├── CardDescription
+│   ├── CardMetadata
+│   ├── CardComments
+│   └── CardAttachments
+└── SharedComponents/
+    ├── PriorityIndicator
+    ├── DueDateDisplay
+    ├── LabelChips
+    └── UserAvatar</pre>
+        </div>
+
+        <h3>State Management Strategy</h3>
+
+        <div class="tech-stack">
+            <div class="tech-item">
+                <h5>📊 Global State</h5>
+                <p>Project list, current project, user permissions managed in Redux/Context</p>
+            </div>
+            <div class="tech-item">
+                <h5>🎨 Local State</h5>
+                <p>Board layout, drag states, modal visibility handled in component state</p>
+            </div>
+            <div class="tech-item">
+                <h5>🔄 Server State</h5>
+                <p>React Query for server state management, caching, and synchronization</p>
+            </div>
+            <div class="tech-item">
+                <h5>⚡ Real-time Updates</h5>
+                <p>WebSocket integration for collaborative board updates</p>
+            </div>
+        </div>
+
+        <h3>Integration with Existing Systems</h3>
+
+        <ul>
+            <li><strong>Document Management:</strong> Projects complement existing document spaces</li>
+            <li><strong>User Management:</strong> Leverage existing user authentication and permissions</li>
+            <li><strong>File Storage:</strong> Card attachments use existing file upload infrastructure</li>
+            <li><strong>Search:</strong> Integrate project content into global search functionality</li>
+            <li><strong>Extensions:</strong> Follow extension architecture for future project-related plugins</li>
+        </ul>
+    </div>
+
+    <div class="section" id="implementation-plan">
+        <h2>📅 6. Implementation Plan</h2>
+
+        <h3>Phase 1: Foundation (Week 1-2)</h3>
+        <div class="implementation-phase">
+            <h4>🏗️ Core Infrastructure</h4>
+            <ul class="checkbox-list">
+                <li>Set up project data models and database migrations</li>
+                <li>Create basic API endpoints for project CRUD operations</li>
+                <li>Implement project sidebar navigation component</li>
+                <li>Add project creation and management dialogs</li>
+                <li>Basic routing for project views</li>
+            </ul>
+        </div>
+
+        <h3>Phase 2: Kanban Board (Week 3-4)</h3>
+        <div class="implementation-phase">
+            <h4>📋 Board Implementation</h4>
+            <ul class="checkbox-list">
+                <li>Create kanban board layout and column components</li>
+                <li>Implement card display and basic interactions</li>
+                <li>Add column management (create, edit, delete)</li>
+                <li>Integrate drag-and-drop library (@dnd-kit)</li>
+                <li>Connect frontend to backend APIs</li>
+            </ul>
+        </div>
+
+        <h3>Phase 3: Advanced Features (Week 5-6)</h3>
+        <div class="implementation-phase">
+            <h4>🎯 Feature Completion</h4>
+            <ul class="checkbox-list">
+                <li>Implement card detail modal with full functionality</li>
+                <li>Add card metadata (due dates, priorities, labels)</li>
+                <li>Create comment system for cards</li>
+                <li>Implement file attachment capabilities</li>
+                <li>Add activity logging and history</li>
+            </ul>
+        </div>
+
+        <h3>Phase 4: Polish & Testing (Week 7-8)</h3>
+        <div class="implementation-phase">
+            <h4>🎨 User Experience</h4>
+            <ul class="checkbox-list">
+                <li>Responsive design implementation and testing</li>
+                <li>Performance optimization and loading states</li>
+                <li>Error handling and user feedback</li>
+                <li>Comprehensive testing (unit, integration, E2E)</li>
+                <li>Documentation and deployment preparation</li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <strong>🚀 Deployment Strategy:</strong> Feature will be deployed behind a feature flag, allowing gradual rollout and A/B testing with existing users.
+        </div>
+    </div>
+
+    <div class="section" id="testing-strategy">
+        <h2>🧪 7. Testing Strategy</h2>
+
+        <h3>Testing Levels</h3>
+
+        <h4>Unit Testing</h4>
+        <ul>
+            <li>Component rendering and props handling</li>
+            <li>State management logic and reducers</li>
+            <li>API service functions and data transformations</li>
+            <li>Utility functions and helpers</li>
+        </ul>
+
+        <h4>Integration Testing</h4>
+        <ul>
+            <li>Component interactions and data flow</li>
+            <li>API endpoint integration</li>
+            <li>Database operations and migrations</li>
+            <li>Authentication and authorization</li>
+        </ul>
+
+        <h4>End-to-End Testing</h4>
+        <ul>
+            <li>Complete user workflows (create project → add cards → move cards)</li>
+            <li>Cross-browser compatibility</li>
+            <li>Mobile responsive behavior</li>
+            <li>Performance under load</li>
+        </ul>
+
+        <h3>Test Scenarios</h3>
+
+        <div class="api-example">
+<pre>// Key User Journey Tests
+1. Create new project and navigate to kanban board
+2. Add columns to board and rename them
+3. Create cards and move them between columns
+4. Open card detail modal and edit card properties
+5. Delete cards and columns with proper confirmation
+6. Drag and drop cards and columns in various scenarios
+7. Test concurrent user actions (if real-time collaboration enabled)
+8. Mobile touch interactions and responsive layout</pre>
+        </div>
+    </div>
+
+    <div class="section" id="future-enhancements">
+        <h2>🚀 8. Future Enhancements</h2>
+
+        <h3>Phase 2 Features (Post-MVP)</h3>
+
+        <div class="feature-list">
+            <div class="feature-card">
+                <h4><span class="priority-medium">👥</span> Team Collaboration</h4>
+                <p>Multi-user project access, real-time collaborative editing, user assignments and mentions</p>
+            </div>
+            <div class="feature-card">
+                <h4><span class="priority-medium">📊</span> Project Analytics</h4>
+                <p>Task completion metrics, time tracking, project progress reports and burndown charts</p>
+            </div>
+            <div class="feature-card">
+                <h4><span class="priority-low">🔄</span> Advanced Workflows</h4>
+                <p>Custom board templates, automated card movements, integration with external tools</p>
+            </div>
+            <div class="feature-card">
+                <h4><span class="priority-low">📱</span> Mobile App</h4>
+                <p>Native mobile applications with offline capabilities and push notifications</p>
+            </div>
+        </div>
+
+        <h3>Integration Opportunities</h3>
+        <ul>
+            <li><strong>AI Assistant:</strong> Smart task suggestions and project insights</li>
+            <li><strong>Time Tracking:</strong> Built-in time logging for project activities</li>
+            <li><strong>Calendar Integration:</strong> Sync due dates with external calendars</li>
+            <li><strong>Notification System:</strong> Smart alerts for deadlines and assignments</li>
+            <li><strong>Export Options:</strong> Generate project reports and export data</li>
+        </ul>
+
+        <div class="info-box">
+            <strong>🎯 Long-term Vision:</strong> Transform AppFlowy into a comprehensive productivity suite that seamlessly integrates document management, project planning, and team collaboration in a unified interface.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📋 Implementation Checklist</h2>
+        <p>Use this checklist to track implementation progress:</p>
+        
+        <h3>Backend Development</h3>
+        <ul class="checkbox-list">
+            <li>Database schema design and migration scripts</li>
+            <li>Project management API endpoints</li>
+            <li>Board and column management APIs</li>
+            <li>Card CRUD operations and positioning</li>
+            <li>Comment and attachment systems</li>
+            <li>Real-time WebSocket integration</li>
+        </ul>
+
+        <h3>Frontend Development</h3>
+        <ul class="checkbox-list">
+            <li>Project sidebar navigation component</li>
+            <li>Kanban board layout and styling</li>
+            <li>Drag-and-drop functionality</li>
+            <li>Card detail modal implementation</li>
+            <li>Responsive design and mobile optimization</li>
+            <li>State management and API integration</li>
+        </ul>
+
+        <h3>Quality Assurance</h3>
+        <ul class="checkbox-list">
+            <li>Unit test coverage (>80%)</li>
+            <li>Integration testing for API endpoints</li>
+            <li>End-to-end user journey testing</li>
+            <li>Cross-browser compatibility testing</li>
+            <li>Performance and accessibility audits</li>
+            <li>Security review and penetration testing</li>
+        </ul>
+    </div>
+
+    <div style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 24px; border-radius: 8px; text-align: center; margin-top: 32px;">
+        <h3 style="margin-bottom: 8px;">🎯 Ready to Build!</h3>
+        <p style="margin: 0; opacity: 0.9;">This specification provides the foundation for implementing a world-class kanban project management system within AppFlowy. Let's create something amazing! 🚀</p>
+    </div>
+</body>
+</html>

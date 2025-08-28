@@ -6,9 +6,7 @@ const navigation = [
     title: 'Getting Started',
     items: [
       { name: 'Overview', path: 'index.html' },
-      { name: 'First-time Setup', path: 'pages/environment-setup.html' },
-      { name: 'Backend Configuration', path: 'backend-configuration.html' },
-      { name: 'Frontend Configuration', path: 'frontend-configuration.html' },
+      { name: 'Environment Setup', path: 'pages/environment-setup.html' },
     ]
   },
   {
@@ -108,18 +106,6 @@ const navigation = [
       { name: 'Icon Fixes', path: 'pages/ICON_FIXES.html' },
       { name: 'Outline Item Error Fix', path: 'pages/ERROR_FIX_OUTLINE_ITEM.html' },
       { name: 'Resolved Errors', path: 'pages/RESOLVED_ERRORS.html' },
-    ]
-  },
-  {
-    title: 'Extensibility',
-    items: [
-      { name: 'Extensions & Add-ons', path: 'extensions-and-addons.html' },
-    ]
-  },
-  {
-    title: 'Contributing',
-    items: [
-      { name: 'Contributing (Backend)', path: 'contributing-backend.html' },
     ]
   }
 ];

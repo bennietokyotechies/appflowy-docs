@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frontend Configuration - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <aside class="docs-sidebar">
+      <a href="index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>AppFlowy Docs</h1>
+      </a>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      <nav id="docs-nav" class="docs-nav"></nav>
+    </aside>
+
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb"></div>
+      </header>
+
+      <article class="docs-content">
+        <h1>Frontend Configuration</h1>
+        <p>This page summarizes the frontend setup and configuration based on the Frontend repository README. For full details, see the repository README.</p>
+
+        <div class="card">
+          <h2>Prerequisites</h2>
+          <ul>
+            <li>Node.js 18.20.0 or higher</li>
+            <li>pnpm (installed automatically by scripts if missing)</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>🚀 Quick Start (Recommended)</h2>
+          <pre class="code-block"><code># Clone the repository
+git clone https://github.com/AppFlowy-IO/AppFlowy-Web.git
+cd AppFlowy-Web
+
+# One-command setup (recommended for first-time setup)
+./setup.sh
+
+# Start development server
+pnpm run dev
+
+# Open the app
+http://localhost:3000</code></pre>
+        </div>
+
+        <div class="card">
+          <h2>🔧 Manual Setup</h2>
+          <pre class="code-block"><code># 1) Install pnpm (if not already installed)
+npm install -g pnpm
+
+# 2) Install dependencies
+pnpm install
+
+# 3) Verify setup
+pnpm run setup
+
+# 4) Start development server
+pnpm run dev</code></pre>
+        </div>
+
+        <div class="card">
+          <h2>📦 Available Scripts</h2>
+          <pre class="code-block"><code># Development
+pnpm run dev          # Start development server
+pnpm run dev:quick    # Install deps + start dev server
+pnpm run dev:coverage # Start with coverage reporting
+
+# Setup & Verification
+pnpm run setup        # Check environment setup
+pnpm run setup:full   # Run full automated setup
+pnpm run verify       # Complete environment verification
+
+# Building
+pnpm run build        # Build for production
+pnpm run start        # Preview production build
+
+# Testing & Quality
+pnpm run test         # Run all tests
+pnpm run type-check   # Check TypeScript types
+pnpm run lint         # Lint code
+
+# Maintenance
+pnpm run clean        # Clean install (remove node_modules)
+pnpm run fresh        # Complete fresh install</code></pre>
+        </div>
+
+        <div class="card">
+          <h2>🐳 Docker Development (Alternative)</h2>
+          <pre class="code-block"><code># Build and run with docker-compose
+docker-compose -f docker-compose.dev.yml up --build
+
+# Or with plain Docker
+docker build -f Dockerfile.dev -t appflowy-frontend-dev .
+docker run -p 3000:3000 -v $(pwd)/src:/app/src appflowy-frontend-dev</code></pre>
+        </div>
+
+        <div class="card">
+          <h2>🔗 Backend Connection</h2>
+          <ol>
+            <li>
+              <strong>Start Backend Services</strong> (in <code>appflowy-backend</code> directory):
+              <pre class="code-block"><code>cd ../appflowy-backend
+./script/generate_env.sh
+docker-compose -f docker-compose-dev.yml up -d</code></pre>
+            </li>
+            <li>
+              <strong>Configure Frontend Environment</strong>:
+              <pre class="code-block"><code># Copy environment template
+cp dev.env .env
+
+# Edit .env file to match your backend configuration
+# Key variables: API endpoints, authentication settings</code></pre>
+            </li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <h2>🐛 Troubleshooting</h2>
+          <ul>
+            <li><code>pnpm: command not found</code> — run <code>npm install -g pnpm</code>.</li>
+            <li>Port 3000 already in use — run <code>pnpm run dev -- --port 3001</code>.</li>
+            <li>TypeScript errors — run <code>pnpm run type-check</code> to see details.</li>
+            <li>Slow dependency install — try <code>pnpm install --registry https://registry.npmmirror.com/</code>.</li>
+            <li>Docker build fails — ensure Docker has enough memory (4GB+).</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>🔄 Development Workflow</h2>
+          <pre class="code-block"><code># Start feature branch and develop
+git checkout -b feature/your-feature-name
+pnpm run dev
+
+# Before submitting PR
+pnpm run verify
+pnpm run lint
+pnpm run test
+pnpm run build</code></pre>
+        </div>
+
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 AppFlowy. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+  <script src="assets/docs-script.js"></script>
+</body>
+</html>

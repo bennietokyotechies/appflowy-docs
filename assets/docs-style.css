@@ -278,6 +278,38 @@ body {
   color: #1e40af;
 }
 
+/* Alert Styles */
+.alert {
+  padding: 16px;
+  border-radius: 8px;
+  margin: 20px 0;
+  border-left: 4px solid;
+}
+
+.alert.warning {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.alert.info {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+.alert.success {
+  background: #f0fdf4;
+  border-color: #22c55e;
+  color: #166534;
+}
+
+.alert.danger {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
 /* Test Case Styles */
 .test-case {
   background: var(--bg-gray);

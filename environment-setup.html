@@ -3,491 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AppFlowy Backend - Environment Configuration Guide</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f8fafc;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-left: 4px solid #667eea;
-        }
-
-        .card h2 {
-            color: #2d3748;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .card h3 {
-            color: #4a5568;
-            margin-bottom: 15px;
-            margin-top: 20px;
-            font-size: 1.2rem;
-            padding-left: 20px;
-            border-left: 3px solid #e2e8f0;
-        }
-
-        .file-type {
-            background: #f7fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 15px 0;
-        }
-
-        .file-type.template {
-            border-color: #68d391;
-            background-color: #f0fff4;
-        }
-
-        .file-type.active {
-            border-color: #f6ad55;
-            background-color: #fffaf0;
-        }
-
-        .file-type.secret {
-            border-color: #fc8181;
-            background-color: #fffafa;
-        }
-
-        .file-name {
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: #2d3748;
-            margin-bottom: 8px;
-        }
-
-        .file-purpose {
-            color: #4a5568;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .file-details {
-            display: grid;
-            grid-template-columns: 120px 1fr;
-            gap: 10px;
-            font-size: 0.9rem;
-        }
-
-        .file-details strong {
-            color: #2d3748;
-        }
-
-        .workflow {
-            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-            color: white;
-            border-radius: 12px;
-            padding: 25px;
-            margin: 25px 0;
-        }
-
-        .workflow h3 {
-            margin-bottom: 20px;
-            color: white;
-            border: none;
-            padding: 0;
-            font-size: 1.3rem;
-        }
-
-        .workflow-step {
-            display: flex;
-            align-items: center;
-            margin: 15px 0;
-            padding: 10px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 6px;
-        }
-
-        .step-number {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 15px;
-            font-size: 0.9rem;
-        }
-
-        .code-block {
-            background: #1a202c;
-            color: #e2e8f0;
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 0.9rem;
-            margin: 15px 0;
-            overflow-x: auto;
-        }
-
-        .code-block .comment {
-            color: #68d391;
-        }
-
-        .icon {
-            font-size: 1.2rem;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 10px;
-        }
-
-        .badge.safe {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-
-        .badge.danger {
-            background: #fed7d7;
-            color: #742a2a;
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 4px solid;
-        }
-
-        .alert.warning {
-            background: #fffbeb;
-            border-color: #f59e0b;
-            color: #92400e;
-        }
-
-        .alert.info {
-            background: #eff6ff;
-            border-color: #3b82f6;
-            color: #1e40af;
-        }
-
-        .back-to-top {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
-        }
-
-        .back-to-top:hover {
-            background: #5a67d8;
-            transform: translateY(-2px);
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .file-details {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <title>First-time Setup - AppFlowy Documentation</title>
+    <link rel="stylesheet" href="assets/docs-style.css">
 </head>
 <body>
-    <div class="container">
+  <div class="docs-container">
+    <aside class="docs-sidebar">
+      <a href="index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>AppFlowy Docs</h1>
+      </a>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      <nav id="docs-nav" class="docs-nav"></nav>
+    </aside>
+
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb"></div>
+      </header>
+
+      <article class="docs-content">
         <div class="header">
-            <h1>🚀 AppFlowy Backend</h1>
-            <p>Environment Configuration Guide for Developers</p>
+          <h1>🚀 First-time Setup</h1>
+          <p>Local development setup for Backend and Frontend</p>
         </div>
 
         <div class="card">
-            <h2><span class="icon">📋</span> Overview</h2>
-            <p>AppFlowy Backend uses a sophisticated environment configuration system that separates templates, secrets, and active configuration files. This guide explains how each file works and when to use them.</p>
-            
-            <div class="alert info">
-                <strong>🎯 Quick Start:</strong> Run <code>./script/generate_env.sh</code> to interactively create your environment file, then use <code>docker-compose -f docker-compose-dev.yml up</code> to start the backend.
+          <h2><span class="icon">📋</span> Overview</h2>
+          <p>Follow this guide to get both Backend and Frontend running locally for the first time. For detailed configuration options, see <a href="backend-configuration.html">Backend Configuration</a> and <a href="frontend-configuration.html">Frontend Configuration</a>.</p>
+          
+          <div class="alert info">
+            <strong>🎯 Quick Start:</strong>
+            <ol style="margin-left: 20px;">
+              <li>Run <code>./script/generate_env.sh</code> to interactively create your <code>.env</code>.</li>
+              <li>Start the local server via <code>./script/run_local_server.sh --reset --sqlx</code> (first-time setup).</li>
+            </ol>
+            <div style="margin-top:8px; font-size: 0.95rem;">
+              <em>Note:</em> <code>--watch</code> is optional. When developing with AI assistance, avoid <code>--watch</code> as it may block the AI from running <code>cargo check</code>.
             </div>
+            <div style="margin-top:8px; font-size: 0.95rem;">
+              <em>Alternative:</em> Use <code>docker-compose -f docker-compose-dev.yml up</code> to bring up containers only.
+            </div>
+          </div>
+
+          <h3>Backend — First-time Setup</h3>
+          <pre class="code-block"><code># Prepare SQLx metadata and reset DB (recommended on first run)
+./script/run_local_server.sh --reset --sqlx
+
+# Alternatively, reset DB only
+./script/run_local_server.sh --reset</code></pre>
+
+          <h3>Backend — Required Environment Notes</h3>
+          <p><strong>SSO:</strong> Google OAuth is required to enable SSO. Create OAuth credentials and place client ID/secret in your secrets file.</p>
+          <pre class="code-block"><code># Enable Google OAuth (example)
+GOTRUE_EXTERNAL_GOOGLE_ENABLED=true
+GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID=your_google_client_id
+GOTRUE_EXTERNAL_GOOGLE_SECRET=your_google_client_secret
+GOTRUE_SITE_URL=http://localhost:3000
+
+# Enable default plugins/features
+SPACE_ACL_ENABLED=true
+PROJECT_ACL_ENABLED=true</code></pre>
+
+          <h3>Backend — Ongoing Development</h3>
+          <pre class="code-block"><code># Typical development run (no file watching)
+./script/run_local_server.sh --sqlx
+
+# Optional: watch mode (auto-rebuild on changes)
+./script/run_local_server.sh --sqlx --watch</code></pre>
+          <div class="alert warning">
+            <strong>Watch mode caveat:</strong> <code>--watch</code> can hold the process, which may prevent AI tooling from invoking <code>cargo check</code>. When collaborating with AI, prefer running <code>--sqlx</code> without <code>--watch</code>.
+          </div>
+
+          <h3>Frontend — First-time Setup</h3>
+          <pre class="code-block"><code># From the frontend repository directory
+pnpm install
+pnpm run dev</code></pre>
+          <p>Open <a href="http://localhost:3000" target="_blank" rel="noopener">http://localhost:3000</a> in your browser. For more details and scripts, see <a href="frontend-configuration.html">Frontend Configuration</a>.</p>
         </div>
 
         <div class="card">
-            <h2><span class="icon">📁</span> Environment Files Explained</h2>
-            
-            <div class="file-type template">
-                <div class="file-name">dev.env</div>
-                <div class="file-purpose">Development Configuration Template</div>
-                <div class="file-details">
-                    <strong>Purpose:</strong>
-                    <span>Base template with safe development defaults</span>
-                    <strong>When used:</strong>
-                    <span>Local development environment setup</span>
-                    <strong>Contains:</strong>
-                    <span>Non-sensitive defaults, example values, dev-specific settings</span>
-                    <strong>Version Control:</strong>
-                    <span>✅ Safe to commit <span class="badge safe">SAFE</span></span>
-                </div>
-            </div>
-
-            <div class="file-type template">
-                <div class="file-name">deploy.env</div>
-                <div class="file-purpose">Production Configuration Template</div>
-                <div class="file-details">
-                    <strong>Purpose:</strong>
-                    <span>Base template for production deployments</span>
-                    <strong>When used:</strong>
-                    <span>Production/staging environment setup</span>
-                    <strong>Contains:</strong>
-                    <span>Production-optimized settings, placeholder values</span>
-                    <strong>Version Control:</strong>
-                    <span>✅ Safe to commit <span class="badge safe">SAFE</span></span>
-                </div>
-            </div>
-
-            <div class="file-type active">
-                <div class="file-name">.env</div>
-                <div class="file-purpose">Active Environment File (Auto-generated)</div>
-                <div class="file-details">
-                    <strong>Purpose:</strong>
-                    <span>The actual file used by Docker Compose and applications</span>
-                    <strong>When used:</strong>
-                    <span>Always - docker-compose reads this by default</span>
-                    <strong>Generated by:</strong>
-                    <span>./script/generate_env.sh script</span>
-                    <strong>Version Control:</strong>
-                    <span>❌ Never commit <span class="badge danger">SENSITIVE</span></span>
-                </div>
-            </div>
-
-            <div class="file-type secret">
-                <div class="file-name">.env.dev.secret / .env.deploy.secret</div>
-                <div class="file-purpose">Secret Value Overrides</div>
-                <div class="file-details">
-                    <strong>Purpose:</strong>
-                    <span>Override sensitive values (API keys, passwords, etc.)</span>
-                    <strong>When used:</strong>
-                    <span>Optional - for storing real credentials</span>
-                    <strong>Contains:</strong>
-                    <span>Only sensitive keys to override (e.g., API_KEY=real_value)</span>
-                    <strong>Version Control:</strong>
-                    <span>❌ Never commit <span class="badge danger">HIGHLY SENSITIVE</span></span>
-                </div>
-            </div>
+          <h2><span class="icon">🧭</span> Next Steps & Configuration</h2>
+          <p>For all configuration details (environment files, flags, troubleshooting), see:</p>
+          <ul>
+            <li><a href="backend-configuration.html">Backend Configuration</a> — environment files, commands, common settings</li>
+            <li><a href="frontend-configuration.html">Frontend Configuration</a> — scripts, Docker, and development tips</li>
+          </ul>
         </div>
+      </article>
 
-        <div class="workflow">
-            <h3>🔄 Environment Setup Workflow</h3>
-            
-            <div class="workflow-step">
-                <div class="step-number">1</div>
-                <div>
-                    <strong>Choose Base Template</strong><br>
-                    Select <code>dev.env</code> for development or <code>deploy.env</code> for production
-                </div>
-            </div>
-            
-            <div class="workflow-step">
-                <div class="step-number">2</div>
-                <div>
-                    <strong>Add Secrets (Optional)</strong><br>
-                    Create <code>.env.dev.secret</code> or <code>.env.deploy.secret</code> with real credentials
-                </div>
-            </div>
-            
-            <div class="workflow-step">
-                <div class="step-number">3</div>
-                <div>
-                    <strong>Generate Environment File</strong><br>
-                    Run <code>./script/generate_env.sh</code> to create the final <code>.env</code> file
-                </div>
-            </div>
-            
-            <div class="workflow-step">
-                <div class="step-number">4</div>
-                <div>
-                    <strong>Start Services</strong><br>
-                    Docker Compose automatically reads the <code>.env</code> file
-                </div>
-            </div>
-        </div>
+      <footer class="docs-footer">
+        <p>© 2024 AppFlowy. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
 
-        <div class="card">
-            <h2><span class="icon">⚡</span> Quick Commands</h2>
-            
-            <h3>Generate Environment File</h3>
-            <div class="code-block">
-<span class="comment"># Interactive environment file generation</span>
-./script/generate_env.sh
-
-<span class="comment"># The script will guide you through:</span>
-<span class="comment"># 1. Selecting base template (dev.env or deploy.env)</span>
-<span class="comment"># 2. Optional secret file integration</span>
-<span class="comment"># 3. Generating final .env file</span>
-            </div>
-
-            <h3>Start Development Environment</h3>
-            <div class="code-block">
-<span class="comment"># Start all services with development configuration</span>
-docker-compose -f docker-compose-dev.yml up
-
-<span class="comment"># Start in background (detached mode)</span>
-docker-compose -f docker-compose-dev.yml up -d
-
-<span class="comment"># View logs</span>
-docker-compose -f docker-compose-dev.yml logs -f
-            </div>
-
-            <h3>Create Secret Override File</h3>
-            <div class="code-block">
-<span class="comment"># Create development secrets file</span>
-cp env.dev.secret.example .env.dev.secret
-
-<span class="comment"># Edit with your real values</span>
-nano .env.dev.secret
-
-<span class="comment"># Example content:</span>
-<span class="comment"># GOTRUE_JWT_SECRET=your_real_jwt_secret_here</span>
-<span class="comment"># AI_OPENAI_API_KEY=your_openai_api_key</span>
-<span class="comment"># GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID=your_google_client_id</span>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2><span class="icon">🔧</span> Common Configuration</h2>
-            
-            <h3>Database Settings</h3>
-            <p>PostgreSQL configuration is automatically set up in the templates:</p>
-            <div class="code-block">
-DATABASE_URL=postgres://postgres:password@localhost:5432/postgres
-POSTGRES_USER=postgres
-POSTGRES_DB=postgres  
-POSTGRES_PASSWORD=password
-            </div>
-
-            <h3>Authentication (GoTrue)</h3>
-            <p>JWT and admin settings for the authentication service:</p>
-            <div class="code-block">
-GOTRUE_ADMIN_EMAIL=admin@example.com
-GOTRUE_ADMIN_PASSWORD=password
-GOTRUE_JWT_SECRET=hello456  <span class="comment"># Change this in production!</span>
-GOTRUE_JWT_EXP=7200
-            </div>
-
-            <h3>File Storage (MinIO)</h3>
-            <p>Object storage configuration for file uploads:</p>
-            <div class="code-block">
-AWS_ACCESS_KEY=minioadmin
-AWS_SECRET=minioadmin
-APPFLOWY_S3_USE_MINIO=true
-APPFLOWY_S3_MINIO_URL=http://localhost:9000
-            </div>
-        </div>
-
-        <div class="card">
-            <h2><span class="icon">⚠️</span> Important Security Notes</h2>
-            
-            <div class="alert warning">
-                <strong>🔐 Never commit sensitive files:</strong> Always add <code>.env</code>, <code>.env.*.secret</code> files to your <code>.gitignore</code>
-            </div>
-            
-            <div class="alert warning">
-                <strong>🔑 Change default secrets:</strong> The template files contain example values. Always use strong, unique secrets in production.
-            </div>
-            
-            <div class="alert info">
-                <strong>💡 Pro Tip:</strong> Use environment-specific secret files to override only the sensitive values you need, keeping the rest as defaults.
-            </div>
-        </div>
-
-        <div class="card">
-            <h2><span class="icon">🐛</span> Troubleshooting</h2>
-            
-            <h3>Docker Compose Can't Find Environment Variables</h3>
-            <p><strong>Problem:</strong> PostgreSQL authentication errors, missing environment variables</p>
-            <p><strong>Solution:</strong> Generate the <code>.env</code> file using the provided script</p>
-            
-            <h3>Services Won't Start</h3>
-            <p><strong>Problem:</strong> Port conflicts, missing dependencies</p>
-            <p><strong>Solution:</strong> Check that ports 5432, 6379, 9000, 9001, 9999 are available</p>
-            
-            <h3>GoTrue Authentication Issues</h3>
-            <p><strong>Problem:</strong> JWT token validation fails</p>
-            <p><strong>Solution:</strong> Ensure <code>GOTRUE_JWT_SECRET</code> is consistent across all services</p>
-        </div>
-    </div>
-
-    <button class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Back to top">↑</button>
-
-    <script>
-        // Show/hide back to top button
-        window.addEventListener('scroll', function() {
-            const backToTop = document.querySelector('.back-to-top');
-            if (window.pageYOffset > 300) {
-                backToTop.style.display = 'block';
-            } else {
-                backToTop.style.display = 'none';
-            }
-        });
-
-        // Initially hide the button
-        document.querySelector('.back-to-top').style.display = 'none';
-    </script>
+  <script src="assets/docs-script.js"></script>
 </body>
 </html>

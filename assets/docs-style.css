@@ -219,6 +219,32 @@ body {
   padding: 0;
 }
 
+/* Custom Code Block Utility (used in some pages) */
+.docs-content pre.code-block,
+.docs-content pre.code-block code,
+.docs-content .code-block,
+.docs-content .code-block code {
+  background: #1f2937 !important; /* dark slate */
+}
+
+.docs-content pre.code-block,
+.docs-content .code-block {
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #374151; /* darker border on dark bg */
+  overflow-x: auto;
+  white-space: pre;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 14px;
+  margin-bottom: 16px;
+  color: #e5e7eb; /* base color; tokens will override */
+}
+
+.docs-content pre.code-block .comment,
+.docs-content .code-block .comment {
+  color: #10b981 !important; /* emerald */
+}
+
 /* Table Styles */
 .docs-content table {
   width: 100%;
@@ -383,8 +409,8 @@ body {
 
 /* Syntax Highlighting */
 .hljs {
-  background: var(--code-bg);
-  color: var(--text-primary);
+  background: transparent; /* keep pre/code-block background */
+  color: inherit; /* use the base text color from container */
 }
 
 .hljs-keyword { color: #7c3aed; }

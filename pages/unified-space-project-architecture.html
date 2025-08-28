@@ -178,7 +178,7 @@
       </header>
 
       <article class="docs-content">
-        <h1>AppFlowy Unified Space & Project Management - System Architecture</h1>
+        <h1>System Architecture - Unified Space & Project</h1>
 
         <p>This document provides a comprehensive architectural overview of the unified space and project management system for AppFlowy. The system introduces a hierarchical space model with integrated project management capabilities.</p>
 
@@ -196,34 +196,36 @@
         <h2>System Architecture Overview</h2>
 
         <div class="architecture-diagram">
+          <pre>
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                               AppFlowy Architecture                              │
+│                               AppFlowy Architecture                             │
 │                                                                                 │
-│  ┌─────────────────┐    ┌─────────────────┐    ┌───────────────────────────┐  │
-│  │  Frontend (Web) │    │     Backend     │    │      Database Layer       │  │
-│  │                 │    │                 │    │                           │  │
-│  │ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────────────┐  │  │
-│  │ │Space Manager│ │◄───┤ │Space API    │ │◄───┤ │ af_space_members    │  │  │
-│  │ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────────────┘  │  │
-│  │                 │    │                 │    │                           │  │
-│  │ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────────────┐  │  │
-│  │ │Project View │ │◄───┤ │Project API  │ │◄───┤ │ af_project_metadata │  │  │
-│  │ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────────────┘  │  │
-│  │                 │    │                 │    │                           │  │
-│  │ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────────────┐  │  │
-│  │ │Member Panel │ │◄───┤ │Permission   │ │◄───┤ │ af_space_invitations│  │  │
-│  │ └─────────────┘ │    │ │Service      │ │    │ └─────────────────────┘  │  │
-│  │                 │    │ └─────────────┘ │    │                           │  │
-│  └─────────────────┘    └─────────────────┘    └───────────────────────────┘  │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌───────────────────────────┐    │
+│  │  Frontend (Web) │    │     Backend     │    │      Database Layer       │    │
+│  │                 │    │                 │    │                           │    │
+│  │ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────────────┐   │    │
+│  │ │Space Manager│ │◄───┤ │Space API    │ │◄───┤ │ af_space_members    │   │    │
+│  │ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────────────┘   │    │
+│  │                 │    │                 │    │                           │    │
+│  │ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────────────┐   │    │
+│  │ │Project View │ │◄───┤ │Project API  │ │◄───┤ │ af_project_metadata │   │    │
+│  │ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────────────┘   │    │
+│  │                 │    │                 │    │                           │    │
+│  │ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────────────┐   │    │
+│  │ │Member Panel │ │◄───┤ │Permission   │ │◄───┤ │ af_space_invitations│   │    │
+│  │ └─────────────┘ │    │ │Service      │ │    │ └─────────────────────┘   │    │
+│  │                 │    │ └─────────────┘ │    │                           │    │
+│  └─────────────────┘    └─────────────────┘    └───────────────────────────┘    │
 │                                                                                 │
-│  ┌───────────────────────────────────────────────────────────────────────┐     │
-│  │                     Collaborative Layer                                │     │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐ │     │
-│  │  │Y.js Docs    │  │WebSocket    │  │Redis Cache  │  │Access Control│ │     │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘  └──────────────┘ │     │
-│  └───────────────────────────────────────────────────────────────────────┘     │
+│  ┌─────────────────────────────────────────────────────────────────────────┐    │
+│  │                     Collaborative Layer                                 │    │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐    │    │
+│  │  │Y.js Docs    │  │WebSocket    │  │Redis Cache  │  │Access Control│    │    │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘  └──────────────┘    │    │
+│  └─────────────────────────────────────────────────────────────────────────┘    │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
+          </pre>
         </div>
 
         <h2>Data Model Architecture</h2>
@@ -516,7 +518,7 @@
       </article>
 
       <footer class="docs-footer">
-        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+        <p>© 2025 Klever. Built with ❤️ for developers.</p>
       </footer>
     </main>
   </div>

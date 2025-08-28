@@ -322,7 +322,7 @@ function createSharedLayout(title, content) {
       </article>
 
       <footer class="docs-footer">
-        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+        <p>© 2025 Klever. Built with ❤️ for developers.</p>
       </footer>
     </main>
   </div>

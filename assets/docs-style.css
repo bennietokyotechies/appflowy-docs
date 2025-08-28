@@ -1,13 +1,13 @@
 /* AppFlowy Documentation Style */
 :root {
-  --primary-color: #6366f1;
-  --primary-hover: #5558e3;
-  --sidebar-bg: #f8fafc;
-  --sidebar-border: #e5e7eb;
+  --primary-color: #333333;
+  --primary-hover: #e5e5ebda;
+  --sidebar-bg: #f7f8fc;
+  --sidebar-border: #ededf1;
   --text-primary: #1f2937;
   --text-secondary: #6b7280;
   --bg-white: #ffffff;
-  --bg-gray: #f3f4f6;
+  --bg-gray: #ededf1;
   --border-color: #e5e7eb;
   --link-color: #6366f1;
   --code-bg: #f3f4f6;
@@ -38,7 +38,7 @@ body {
   width: 280px;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
-  padding: 24px;
+  padding: 12px;
   position: fixed;
   height: 100vh;
   overflow-y: auto;
@@ -48,7 +48,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
   text-decoration: none;
   color: var(--text-primary);
 }
@@ -73,16 +73,16 @@ body {
 
 .nav-section-title {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 800;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .nav-item {
   display: block;
-  padding: 8px 12px;
-  margin: 2px 0;
+  padding: 4px 12px;
+  margin: 4px 0;
   color: var(--text-primary);
   text-decoration: none;
   border-radius: 6px;

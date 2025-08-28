@@ -14,17 +14,19 @@ const navigation = [
   {
     title: 'Architecture',
     items: [
-      { name: 'System Architecture', path: 'unified-space-project-architecture.html' },
-      { name: 'Database Architecture', path: 'database-architecture.html' },
-      { name: 'Extensions Architecture', path: 'extensions-architecture.html' },
+      { name: 'System Architecture', path: 'pages/unified-space-project-architecture.html' },
+      { name: 'Database Architecture', path: 'pages/database-architecture.html' },
+      { name: 'Extensions Architecture', path: 'pages/extensions-architecture.html' },
     ]
   },
   {
     title: 'Implementation',
     items: [
-      { name: 'Space & Project Management', path: 'unified-space-project-management-plan.html' },
-      { name: 'Kanban Board', path: 'kanban-board-implementation.html' },
-      { name: 'Project Management Report', path: 'project-management-implementation-report.html' },
+      { name: 'Space & Project Management', path: 'pages/unified-space-project-management-plan.html' },
+      { name: 'Kanban Board', path: 'pages/kanban-board-implementation.html' },
+      { name: 'Kanban Board Spec', path: 'pages/project-management-kanban-spec.html' },
+      { name: 'Project Management Report', path: 'pages/project-management-implementation-report.html' },
+      { name: 'Project Extension Conversion', path: 'pages/project-extension-conversion.html' },
     ]
   },
   {
@@ -65,8 +67,8 @@ const navigation = [
   {
     title: 'Testing',
     items: [
-      { name: 'Test Cases', path: 'test-cases.html' },
-      { name: 'Compilation Fixes', path: 'compilation-fixes.html' },
+      { name: 'Test Cases', path: 'pages/test-cases.html' },
+      { name: 'Compilation Fixes', path: 'pages/compilation-fixes.html' },
     ]
   },
   {
@@ -125,7 +127,11 @@ function initializeNavigation() {
   const nav = document.getElementById('docs-nav');
   if (!nav) return;
 
-  const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+  // Get current path relative to the docs root
+  const pathParts = window.location.pathname.split('/');
+  const currentFile = pathParts.pop() || 'index.html';
+  const isInPages = pathParts[pathParts.length - 1] === 'pages';
+  const currentPath = isInPages ? `pages/${currentFile}` : currentFile;
   
   navigation.forEach(section => {
     const sectionDiv = document.createElement('div');
@@ -138,7 +144,16 @@ function initializeNavigation() {
     
     section.items.forEach(item => {
       const link = document.createElement('a');
-      link.href = item.path;
+      // Adjust path based on current location
+      if (isInPages) {
+        if (item.path.startsWith('pages/')) {
+          link.href = '../' + item.path;
+        } else {
+          link.href = '../' + item.path;
+        }
+      } else {
+        link.href = item.path;
+      }
       link.className = 'nav-item';
       link.textContent = item.name;
       
@@ -158,12 +173,17 @@ function initializeBreadcrumb() {
   const breadcrumb = document.getElementById('breadcrumb');
   if (!breadcrumb) return;
   
-  const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+  // Get current path relative to the docs root
+  const pathParts = window.location.pathname.split('/');
+  const currentFile = pathParts.pop() || 'index.html';
+  const isInPages = pathParts[pathParts.length - 1] === 'pages';
+  const currentPath = isInPages ? `pages/${currentFile}` : currentFile;
   const currentPage = findCurrentPage(currentPath);
   
   if (currentPage) {
+    const homeLink = isInPages ? '../index.html' : 'index.html';
     breadcrumb.innerHTML = `
-      <a href="index.html">Documentation</a>
+      <a href="${homeLink}">Documentation</a>
       <span class="breadcrumb-separator">›</span>
       <span>${currentPage.section}</span>
       <span class="breadcrumb-separator">›</span>

@@ -6,7 +6,9 @@ const navigation = [
     title: 'Getting Started',
     items: [
       { name: 'Overview', path: 'index.html' },
-      { name: 'Environment Setup', path: 'pages/environment-setup.html' },
+      { name: 'First-time Setup', path: 'pages/environment-setup.html' },
+      { name: 'Backend Configuration', path: 'backend-configuration.html' },
+      { name: 'Frontend Configuration', path: 'frontend-configuration.html' },
     ]
   },
   {
@@ -28,13 +30,97 @@ const navigation = [
     ]
   },
   {
+    title: 'Authentication & SSO',
+    items: [
+      { name: 'OAuth Providers', path: 'authentication.html' },
+      { name: 'Okta SAML', path: 'okta-saml.html' },
+    ]
+  },
+  {
+    title: 'Cloud Setup',
+    items: [
+      { name: 'Cloud Overview', path: 'cloud-guide.html' },
+      { name: 'Deployment', path: 'deployment.html' },
+      { name: 'AWS EC2 Self-Host', path: 'ec2-self-host-guide.html' },
+      { name: 'Local Multi-Arch Build', path: 'local-build-multiarch.html' },
+      { name: 'Backend Project Structure', path: 'project-structure-backend.html' },
+    ]
+  },
+  {
+    title: 'Access Control',
+    items: [
+      { name: 'Workspace Invitation Flow', path: 'workspace-invitation-flow.html' },
+      { name: 'Space Permissions Plan', path: 'space-permissions-plan.html' },
+      { name: 'Space Visibility & Enforcement', path: 'space-visibility-enforcement.html' },
+      { name: 'Space ACL API Status', path: 'space-acl-api-todo.html' },
+      { name: 'Per-View Visibility (Draft)', path: 'per-view-visibility.html' },
+    ]
+  },
+  {
+    title: 'Projects',
+    items: [
+      { name: 'Project Members — Requirements', path: 'project-member-requirements.html' },
+      { name: 'Project Members — Technical Plan', path: 'project-member-technical-plan.html' },
+      { name: 'Project Plugin Diagrams', path: 'project-plugin-diagrams.html' },
+    ]
+  },
+  {
     title: 'Testing',
     items: [
       { name: 'Test Cases', path: 'pages/test-cases.html' },
       { name: 'Compilation Fixes', path: 'pages/compilation-fixes.html' },
     ]
+  },
+  {
+    title: 'Extensibility',
+    items: [
+      { name: 'Extensions & Add-ons', path: 'extensions-and-addons.html' },
+    ]
+  },
+  {
+    title: 'Contributing',
+    items: [
+      { name: 'Contributing (Backend)', path: 'contributing-backend.html' },
+    ]
   }
 ];
+
+// ---------- Syntax Highlighting (Highlight.js) ----------
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+function initializeHighlighting() {
+  // Add a language hint to our custom blocks to improve accuracy
+  document.querySelectorAll('pre.code-block > code').forEach((el) => {
+    if (![...el.classList].some(c => c.startsWith('language-'))) {
+      el.classList.add('language-bash');
+    }
+  });
+
+  // Load Highlight.js from CDN and highlight
+  const HLJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js';
+  if (window.hljs && typeof window.hljs.highlightAll === 'function') {
+    window.hljs.highlightAll();
+    return;
+  }
+  loadScript(HLJS_CDN)
+    .then(() => {
+      if (window.hljs && typeof window.hljs.highlightAll === 'function') {
+        window.hljs.highlightAll();
+      }
+    })
+    .catch(() => {
+      // Non-fatal; code blocks will still render with base styles
+    });
+}
 
 // Initialize navigation
 function initializeNavigation() {
@@ -167,6 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeBreadcrumb();
   initializeSearch();
   initializeMobileMenu();
+  initializeHighlighting();
 });
 
 // Helper function to create the shared layout HTML

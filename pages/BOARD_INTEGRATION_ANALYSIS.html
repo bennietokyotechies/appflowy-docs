@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Board Service Integration Analysis - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Board Service Integration Analysis</h1>
+
+<h2>Executive Summary</h2>
+
+<p>The current board service implementation as a separate microservice should be integrated into the main AppFlowy Cloud backend to create a unified, cohesive platform. This document outlines the architectural rationale, benefits, and implementation plan for this integration.</p>
+
+<h2>Current Architecture Issues</h2>
+
+<h3><strong>Microservice Separation Problems</strong></h3>
+<ul>
+  <li>❌ <strong>Two separate backends</strong> - Unnecessary complexity for a unified workspace platform</li>
+  <li>❌ <strong>Duplicate auth systems</strong> - Board service bypasses AppFlowy&#x27;s user management</li>
+  <li>❌ <strong>No workspace integration</strong> - Boards aren&#x27;t tied to AppFlowy workspaces</li>
+  <li>❌ <strong>Deployment complexity</strong> - Multiple services to manage and coordinate</li>
+  <li>❌ <strong>Development overhead</strong> - Two codebases to maintain and sync</li>
+</ul>
+
+<h3><strong>User Experience Issues</strong></h3>
+<ul>
+  <li>❌ <strong>Fragmented experience</strong> - Users need to understand multiple service boundaries</li>
+  <li>❌ <strong>No unified permissions</strong> - Board access separate from workspace access</li>
+  <li>❌ <strong>Missing integrations</strong> - Boards can&#x27;t easily reference documents, folders, etc.</li>
+</ul>
+
+<h2>Proposed Integrated Architecture</h2>
+
+<h3><strong>Unified Backend Structure</strong></h3>
+<pre><code class="language-">AppFlowy Cloud Backend
+├── src/
+│   ├── api/
+│   │   ├── document/     # Existing document APIs
+│   │   ├── workspace/    # Existing workspace APIs  
+│   │   ├── user/         # Existing user APIs
+│   │   └── database/     # 🆕 Board APIs (integrated)
+│   ├── biz/
+│   │   ├── collab/       # Existing collaboration logic
+│   │   ├── workspace/    # Existing workspace logic
+│   │   └── database/     # 🆕 Board business logic
+│   └── services/
+│       ├── collab/       # Existing services
+│       └── database/     # 🆕 Board services</code></pre>
+
+<h3><strong>Benefits of Integration</strong></h3>
+
+<h4><strong>Architecture Benefits</strong></h4>
+<ul>
+  <li>✅ <strong>Single cohesive backend</strong> - One AppFlowy Cloud service</li>
+  <li>✅ <strong>Unified user auth</strong> - Use existing AppFlowy authentication</li>
+  <li>✅ <strong>Workspace integration</strong> - Boards belong to specific workspaces</li>
+  <li>✅ <strong>Permission system</strong> - Leverage AppFlowy&#x27;s existing access controls</li>
+  <li>✅ <strong>Simpler deployment</strong> - One service to run and manage</li>
+  <li>✅ <strong>Better UX</strong> - Seamless integration with documents, folders, etc.</li>
+</ul>
+
+<h4><strong>Development Benefits</strong></h4>
+<ul>
+  <li>✅ <strong>Single codebase</strong> - Easier maintenance and feature development</li>
+  <li>✅ <strong>Shared infrastructure</strong> - Database connections, logging, monitoring</li>
+  <li>✅ <strong>Consistent patterns</strong> - Error handling, validation, API design</li>
+  <li>✅ <strong>Integrated testing</strong> - End-to-end tests across all features</li>
+</ul>
+
+<h4><strong>Operational Benefits</strong></h4>
+<ul>
+  <li>✅ <strong>Simplified deployment</strong> - One Docker container instead of two</li>
+  <li>✅ <strong>Unified monitoring</strong> - Single service to monitor and debug</li>
+  <li>✅ <strong>Shared configuration</strong> - Environment variables, secrets management</li>
+  <li>✅ <strong>Resource efficiency</strong> - No duplicate infrastructure overhead</li>
+</ul>
+
+<h2>Integration Implementation Plan</h2>
+
+<h3><strong>Phase 1: Code Migration</strong></h3>
+<pre><code class="language-bash"><h1>1. Copy board modules into AppFlowy Cloud</h1>
+cp -r databases/src/views/board/ ../src/api/database/
+cp -r databases/src/models/ ../src/biz/database/models/
+cp -r databases/src/services/ ../src/biz/database/services/
+
+<h1>2. Update imports and namespaces</h1>
+<h1>3. Integrate with AppFlowy&#x27;s existing error handling, logging, etc.</h1></code></pre>
+
+<h3><strong>Phase 2: Router Integration</strong></h3>
+<pre><code class="language-rust">// In AppFlowy&#x27;s main router
+fn create<em>app</em>router() -&gt; Router {
+    Router::new()
+        .nest(&quot;/api/workspace&quot;, workspace_router())
+        .nest(&quot;/api/user&quot;, user_router())
+        .nest(&quot;/api/collab&quot;, collab_router())
+        .nest(&quot;/api/database&quot;, database_router()) // 🆕 Our boards
+}
+
+<p>fn database_router() -&gt; Router {
+    Router::new()
+        .route(&quot;/boards&quot;, get(list<em>boards).post(create</em>board))
+        .route(&quot;/boards/:id&quot;, get(get<em>board).put(update</em>board))
+        .route(&quot;/boards/:id/cards&quot;, post(create_card))
+        // All existing endpoints with workspace context
+}</code></pre></p>
+
+<h3><strong>Phase 3: Authentication Integration</strong></h3>
+<pre><code class="language-rust">// Use AppFlowy&#x27;s existing auth middleware
+async fn list_boards(
+    Extension(user): Extension&lt;UserContext&gt;,     // 🆕 Use AppFlowy auth
+    Extension(workspace): Extension&lt;WorkspaceId&gt;, // 🆕 Use workspace context
+    State(state): State&lt;AppState&gt;,
+) -&gt; Result&lt;Json&lt;Vec&lt;Board&gt;&gt;&gt; {
+    // Filter boards by user&#x27;s workspace access
+    let boards = state.database_service
+        .list<em>boards</em>for_workspace(user.id, workspace.id)
+        .await?;
+    Ok(Json(boards))
+}</code></pre>
+
+<h3><strong>Phase 4: Database Schema Integration</strong></h3>
+<pre><code class="language-sql">-- Extend existing workspace model
+ALTER TABLE af<em>workspace ADD COLUMN enable</em>databases BOOLEAN DEFAULT false;
+
+<p>-- Link boards to workspaces
+ALTER TABLE views ADD COLUMN workspace<em>id UUID REFERENCES af</em>workspace(workspace_id);</p>
+
+-- Use AppFlowy&#x27;s existing permission system
+-- Boards inherit workspace permissions by default</code></pre>
+
+<h2>User Experience Transformation</h2>
+
+<h3><strong>Before Integration (Microservice)</strong></h3>
+<pre><code class="language-">User Login → AppFlowy Workspace → Switch to Board Service → Separate Auth → No Context</code></pre>
+
+<h3><strong>After Integration (Unified)</strong></h3>
+<pre><code class="language-">User Login → AppFlowy Workspace → Create Board → Integrated Experience → Shared Context</code></pre>
+
+<h2>Access Control Framework</h2>
+
+<h3><strong>Immediate Integration</strong></h3>
+<pre><code class="language-rust">#[derive(Debug, Clone)]
+pub struct BoardPermission {
+    pub workspace_id: Uuid,
+    pub user_id: Uuid,
+    pub role: WorkspaceRole, // Use existing AppFlowy roles
+    pub board_access: BoardAccessLevel,
+}
+
+<p>impl BoardPermission {
+    pub fn can<em>create</em>board(&amp;self) -&gt; bool {
+        matches!(self.role, WorkspaceRole::Owner | WorkspaceRole::Member)
+    }
+    
+    pub fn can<em>edit</em>board(&amp;self, board_id: Uuid) -&gt; bool {
+        // Check workspace role + board-specific permissions
+        self.role.can<em>edit() &amp;&amp; self.has</em>board<em>access(board</em>id)
+    }
+}</code></pre></p>
+
+<h3><strong>Future Extension System</strong></h3>
+<pre><code class="language-rust">// Later: Plugin system for fine-grained control
+impl PermissionExt for BoardPermission {
+    fn can<em>create</em>board(&amp;self) -&gt; bool { /<em> custom extension logic </em>/ }
+    fn can<em>edit</em>board(&amp;self, board_id: Uuid) -&gt; bool { /<em> custom extension logic </em>/ }
+}</code></pre>
+
+<h2>Development Workflow After Integration</h2>
+
+<h3><strong>Unified Development Environment</strong></h3>
+<pre><code class="language-bash"><h1>Single service startup</h1>
+cargo run --bin appflowy-cloud
+
+<h1>Or with Docker</h1>
+docker compose up -d
+
+<h1>All APIs available at once:</h1>
+<h1>- http://localhost:8000/api/workspace/*</h1>
+<h1>- http://localhost:8000/api/user/*</h1>
+<h1>- http://localhost:8000/api/collab/*</h1>
+<h1>- http://localhost:8000/api/database/*  # 🆕 Boards</h1></code></pre>
+
+<h3><strong>Development Benefits</strong></h3>
+<ul>
+  <li>✅ <strong>One codebase</strong> to modify and test</li>
+  <li>✅ <strong>Shared configuration</strong> and environment setup  </li>
+  <li>✅ <strong>Integrated testing</strong> across all features</li>
+  <li>✅ <strong>Consistent error handling</strong> and logging patterns</li>
+</ul>
+
+<h2>Database Integration Strategy</h2>
+
+<h3><strong>Schema Unification</strong></h3>
+<ul>
+  <li>Merge board-specific tables into AppFlowy&#x27;s existing database</li>
+  <li>Use AppFlowy&#x27;s migration system for schema changes</li>
+  <li>Maintain data consistency with existing workspace model</li>
+</ul>
+
+<h3><strong>Performance Considerations</strong></h3>
+<ul>
+  <li>Leverage existing database connection pools</li>
+  <li>Reuse AppFlowy&#x27;s caching and optimization strategies</li>
+  <li>Ensure board operations don&#x27;t impact document collaboration performance</li>
+</ul>
+
+<h2>Future Extensions Framework</h2>
+
+<h3><strong>Plugin Architecture</strong></h3>
+<pre><code class="language-rust">pub trait DatabaseExtension {
+    fn customize<em>board</em>permissions(&amp;self, context: &amp;BoardContext) -&gt; PermissionOverride;
+    fn add<em>custom</em>fields(&amp;self, board_type: &amp;str) -&gt; Vec&lt;CustomField&gt;;
+    fn integrate<em>external</em>data(&amp;self, board_id: Uuid) -&gt; ExternalDataSource;
+}</code></pre>
+
+<h3><strong>Enterprise Features</strong></h3>
+<ul>
+  <li>Advanced permission models (department-based, project-based)</li>
+  <li>Integration with external systems (JIRA, GitHub, etc.)</li>
+  <li>Custom board templates and workflows</li>
+  <li>Audit logging and compliance features</li>
+</ul>
+
+<h2>Migration Timeline</h2>
+
+<h3><strong>Week 1-2: Foundation</strong></h3>
+<ul>
+  <li>[x] Analyze existing architecture</li>
+  <li>[ ] Create integration plan</li>
+  <li>[ ] Set up development environment</li>
+  <li>[ ] Begin code migration</li>
+</ul>
+
+<h3><strong>Week 3-4: Core Integration</strong></h3>
+<ul>
+  <li>[ ] Migrate board APIs to AppFlowy router</li>
+  <li>[ ] Integrate authentication system</li>
+  <li>[ ] Update database schema</li>
+  <li>[ ] Implement workspace-scoped boards</li>
+</ul>
+
+<h3><strong>Week 5-6: Testing &amp; Polish</strong></h3>
+<ul>
+  <li>[ ] End-to-end testing</li>
+  <li>[ ] Performance optimization</li>
+  <li>[ ] Documentation updates</li>
+  <li>[ ] Deployment preparation</li>
+</ul>
+
+<h2>Success Metrics</h2>
+
+<h3><strong>Technical Metrics</strong></h3>
+<ul>
+  <li>✅ Single service deployment</li>
+  <li>✅ Unified authentication flow</li>
+  <li>✅ Workspace-scoped board access</li>
+  <li>✅ Integrated API documentation</li>
+</ul>
+
+<h3><strong>User Experience Metrics</strong></h3>
+<ul>
+  <li>✅ Seamless board creation within workspaces</li>
+  <li>✅ Consistent permission model across features</li>
+  <li>✅ No service switching required</li>
+  <li>✅ Integrated search across boards and documents</li>
+</ul>
+
+<h2>Conclusion</h2>
+
+<p>Integrating the board service into the main AppFlowy Cloud backend transforms boards from a bolt-on feature into a first-class workspace component. This creates a more cohesive, maintainable, and user-friendly platform while enabling future extensibility through a proper plugin architecture.</p>
+
+The integration aligns with AppFlowy&#x27;s vision of being a unified workspace platform where all tools work together seamlessly within the context of user workspaces and permissions.
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

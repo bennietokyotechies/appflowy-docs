@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppFlowy Database Backend - Software Architecture - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>AppFlowy Database Backend - Software Architecture</h1>
+
+<strong>Status</strong>: ✅ <strong>READY FOR FRONTEND INTEGRATION</strong>  
+<strong>Generated</strong>: August 16, 2025  
+<strong>Analysis Scope</strong>: <code>appflowy-backend/databases/</code> service
+
+<p>---</p>
+
+<h2>Executive Summary</h2>
+
+<p>The AppFlowy database backend is <strong>production-ready</strong> with a complete kanban board API. The system provides structured CRUD operations, proper data modeling, and comprehensive error handling that enables immediate frontend integration.</p>
+
+<h2>System Architecture</h2>
+
+<h3><strong>Technology Stack</strong></h3>
+<ul>
+  <li><strong>Framework</strong>: Rust + Actix-Web 4.5</li>
+  <li><strong>Database</strong>: PostgreSQL 16 with JSONB support</li>
+  <li><strong>Architecture</strong>: Layered service-oriented design</li>
+  <li><strong>API Style</strong>: RESTful with JSON responses</li>
+</ul>
+
+<h3><strong>Database Schema</strong></h3>
+Located: <code>databases/migrations/001<em>initial</em>schema.sql</code>
+
+<pre><code class="language-sql">databases (id, name, created<em>at, updated</em>at)
+    ↓
+fields (id, database<em>id, name, field</em>type, options, position, is_primary)
+    ↓  
+views (id, database<em>id, name, view</em>type, settings)
+    ↓
+rows (id, database<em>id, cells JSONB, position, created</em>at, updated_at)</code></pre>
+
+<strong>Key Features</strong>:
+<ul>
+  <li>Auto-generated UUIDs for all entities</li>
+  <li>JSONB cells for flexible field storage</li>
+  <li>Automatic timestamp triggers</li>
+  <li>Unique constraints and foreign keys</li>
+  <li>Default field creation (Title, Status) per database</li>
+</ul>
+
+<h3><strong>Core Data Models</strong></h3>
+
+<strong>Board View Structure</strong> (<code>databases/src/models/board.rs</code>):
+<pre><code class="language-rust">BoardView {
+    view: BaseView,           // Metadata (id, name, settings)
+    groups: Vec&lt;BoardGroup&gt;   // Columns with cards
+}
+
+<p>BoardGroup {
+    id: String,              // e.g., &quot;todo&quot;, &quot;in_progress&quot;, &quot;done&quot;
+    name: String,            // Display name
+    color: String,           // Hex color
+    cards: Vec&lt;BoardCard&gt;,   // Sorted by position
+    is_default: bool         // For &quot;No Status&quot; group
+}</p>
+
+BoardCard {
+    row_id: UUID,
+    title: String,
+    properties: HashMap&lt;UUID, CellValue&gt;,  // field_id -&gt; value
+    position: f64,           // For drag &amp; drop ordering
+    created<em>at/updated</em>at: DateTime&lt;Utc&gt;
+}</code></pre>
+
+<h2>API Endpoints</h2>
+
+<strong>Base URL</strong>: <code>http://localhost:8000/api/v1</code>
+
+<h3>Board Management</h3>
+<pre><code class="language-http">POST   /boards                           # Create board (simplified UX)
+GET    /views/board/{view_id}           # Get complete board data
+PUT    /views/board/{view_id}           # Update board settings
+DELETE /views/board/{view_id}           # Delete board view</code></pre>
+
+<h3>Card Operations</h3>
+<pre><code class="language-http">POST   /views/board/{view_id}/cards     # Create new card
+PUT    /views/board/cards/{card_id}/move # Move card between groups
+PUT    /views/board/cards/{card_id}     # Update card properties
+DELETE /views/board/cards/{card_id}     # Delete card</code></pre>
+
+<h3>Group Management</h3>
+<pre><code class="language-http">GET    /views/board/{view_id}/groups    # Get all groups
+POST   /views/board/{view_id}/groups    # Create new group
+PUT    /views/board/groups/{group_id}   # Update group
+PUT    /views/board/{view_id}/groups/reorder # Reorder groups</code></pre>
+
+<h3>Bulk Operations</h3>
+<pre><code class="language-http">POST   /views/board/cards/bulk-move     # Move multiple cards
+DELETE /views/board/cards/bulk-delete   # Delete multiple cards</code></pre>
+
+<h2>Request/Response Examples</h2>
+
+<h3>Create Board (Simplified)</h3>
+<pre><code class="language-javascript">POST /api/v1/boards
+{
+  &quot;name&quot;: &quot;My Project Board&quot;
+}
+
+<p>// Response
+{
+  &quot;data&quot;: {
+    &quot;view&quot;: { &quot;id&quot;: &quot;uuid&quot;, &quot;name&quot;: &quot;My Project Board&quot;, ... },
+    &quot;groups&quot;: [
+      { &quot;id&quot;: &quot;todo&quot;, &quot;name&quot;: &quot;To Do&quot;, &quot;color&quot;: &quot;#e2e8f0&quot;, &quot;cards&quot;: [] },
+      { &quot;id&quot;: &quot;in_progress&quot;, &quot;name&quot;: &quot;In Progress&quot;, &quot;color&quot;: &quot;#3b82f6&quot;, &quot;cards&quot;: [] },
+      { &quot;id&quot;: &quot;done&quot;, &quot;name&quot;: &quot;Done&quot;, &quot;color&quot;: &quot;#10b981&quot;, &quot;cards&quot;: [] }
+    ]
+  },
+  &quot;correlation_id&quot;: &quot;uuid&quot;
+}</code></pre></p>
+
+<h3>Create Card</h3>
+<pre><code class="language-javascript">POST /api/v1/views/board/{view_id}/cards
+{
+  &quot;title&quot;: &quot;Implement user authentication&quot;,
+  &quot;group_id&quot;: &quot;todo&quot;,
+  &quot;properties&quot;: {
+    &quot;field_uuid&quot;: &quot;High priority task&quot;
+  }
+}</code></pre>
+
+<h3>Move Card</h3>
+<pre><code class="language-javascript">PUT /api/v1/views/board/cards/{card_id}/move
+{
+  &quot;target<em>group</em>id&quot;: &quot;in_progress&quot;,
+  &quot;before<em>card</em>id&quot;: &quot;other<em>card</em>uuid&quot;  // Optional positioning
+}</code></pre>
+
+<h2>Service Layer Architecture</h2>
+
+<strong>Location</strong>: <code>databases/src/</code>
+
+<pre><code class="language-">main.rs                    # Server setup &amp; routing
+├── handlers/             # HTTP request handlers
+│   └── board/handlers.rs # Board-specific endpoints
+├── services/            # Business logic
+│   ├── database_service.rs
+│   ├── field_service.rs
+│   ├── row_service.rs
+│   └── board/service.rs
+├── models/              # Data structures
+│   ├── board.rs         # Board-specific models
+│   ├── database.rs      # Core database models
+│   └── field.rs         # Field type definitions
+└── views/               # View-specific logic
+    └── board/           # Board view implementation</code></pre>
+
+<h2>Production Features</h2>
+
+<h3>Error Handling</h3>
+<ul>
+  <li>Structured error responses with correlation IDs</li>
+  <li>Input validation using <code>validator</code> crate</li>
+  <li>Proper HTTP status codes (400, 404, 500)</li>
+  <li>Comprehensive logging with <code>log</code> crate</li>
+</ul>
+
+<h3>Database Features</h3>
+<ul>
+  <li>ACID transactions for data consistency</li>
+  <li>Automatic schema migrations with SQLx</li>
+  <li>GIN indexes on JSONB columns for performance</li>
+  <li>Trigger-based timestamp updates</li>
+</ul>
+
+<h3>API Features</h3>
+<ul>
+  <li>CORS enabled for frontend integration</li>
+  <li>Request correlation tracking</li>
+  <li>Structured JSON responses</li>
+  <li>Bulk operations for performance</li>
+</ul>
+
+<h2>Integration Readiness Assessment</h2>
+
+<h3>✅ <strong>READY FOR INTEGRATION</strong></h3>
+
+<strong>Existing Frontend Components</strong>:
+<ul>
+  <li><code>appflowy-frontend/src/api/BoardAPIClient.ts</code></li>
+  <li><code>appflowy-frontend/src/hooks/useBoardAPI.ts</code></li>
+  <li><code>appflowy-frontend/src/pages/BoardTestPage.tsx</code></li>
+</ul>
+
+<strong>Sample Data Available</strong>:
+<ul>
+  <li>Default database created automatically</li>
+  <li>Sample cards via <code>004<em>seed</em>data.sql</code></li>
+  <li>Status field with todo/in_progress/done options</li>
+</ul>
+
+<strong>Deployment Ready</strong>:
+<ul>
+  <li>Docker Compose setup (<code>docker-compose-simple.yml</code>)</li>
+  <li>Environment configuration (<code>.env.local</code>)</li>
+  <li>Startup scripts (<code>script/start<em>simple</em>backend.sh</code>)</li>
+</ul>
+
+<h3>Quick Start Commands</h3>
+<pre><code class="language-bash"><h1>Start database + API</h1>
+./script/start<em>simple</em>backend.sh --reset
+
+<h1>API available at: http://localhost:8000</h1>
+<h1>Health check: GET /health</h1>
+<h1>API documentation: GET /</h1></code></pre>
+
+<h2>Next Steps for Frontend Integration</h2>
+
+<ol>
+  <li><strong>Test API Connection</strong>: Use existing <code>BoardAPIClient.ts</code> to verify endpoints</li>
+  <li><strong>Implement Board UI</strong>: Connect <code>BoardTestPage.tsx</code> to live API</li>
+  <li><strong>Add Real-time Updates</strong>: Consider WebSocket integration for collaboration</li>
+  <li><strong>Error Handling</strong>: Implement proper error boundaries and user feedback</li>
+</ol>
+
+<p>---</p>
+
+<strong>Backend Status</strong>: ✅ Production Ready  
+<strong>API Documentation</strong>: Available at <code>http://localhost:8000/</code>  
+<strong>Sample Data</strong>: Pre-loaded via migrations  
+<strong>CORS</strong>: Enabled for frontend development
+
+<p>---</p>
+
+<h1>AppFlowy Backend Software Architecture Design Document</h1>
+
+<h2>Executive Summary</h2>
+
+<p>AppFlowy Cloud is a Rust-based backend service that provides the server-side infrastructure for the AppFlowy productivity platform. It delivers secure authentication, real-time collaboration, file storage, AI integration, and WebSocket communication, following a modular monolith architecture with cloud-native deployment practices.</p>
+
+<h2>Architecture Overview</h2>
+
+<h3>Technology Stack</h3>
+
+<p><table><tr><td> Component </td><td> Technology </td><td> Purpose </td></tr></table>
+<table><tr><td>-----------</td><td>------------</td><td>---------</td></tr></table>
+<table><tr><td> <strong>Core Language</strong> </td><td> Rust </td><td> Type-safe, performant backend development </td></tr></table>
+<table><tr><td> <strong>Web Framework</strong> </td><td> Actix Web </td><td> Async HTTP server with WebSocket support </td></tr></table>
+<table><tr><td> <strong>Database</strong> </td><td> PostgreSQL + pgvector </td><td> Primary data store with vector search </td></tr></table>
+<table><tr><td> <strong>Cache</strong> </td><td> Redis </td><td> Session management and collaboration cache </td></tr></table>
+<table><tr><td> <strong>Object Storage</strong> </td><td> AWS S3 / MinIO </td><td> File and document storage </td></tr></table>
+<table><tr><td> <strong>Authentication</strong> </td><td> GoTrue (Supabase) </td><td> JWT-based auth with OAuth providers </td></tr></table>
+<table><tr><td> <strong>Collaboration</strong> </td><td> Yrs (Y.js CRDT) </td><td> Real-time collaborative editing </td></tr></table>
+<table><tr><td> <strong>Containerization</strong> </td><td> Docker + Docker Compose </td><td> Deployment and orchestration </td></tr></table>
+<table><tr><td> <strong>API Protocol</strong> </td><td> REST + WebSocket </td><td> Client communication </td></tr></table>
+<table><tr><td> <strong>Serialization</strong> </td><td> Protocol Buffers </td><td> Efficient data encoding </td></tr></table></p>
+
+<h3>High-Level Architecture</h3>
+
+<pre><code class="language-">┌─────────────────────────────────────────────────────────────┐
+│                    Client Applications                      │
+│         (Desktop, Mobile, Web, API Clients)                 │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ HTTPS/WSS
+┌──────────────────────┴──────────────────────────────────────┐
+│                    API Gateway (Nginx)                      │
+│              SSL Termination, Load Balancing                │
+└──────┬───────────────┬───────────────┬──────────────────────┘
+       │               │               │
+┌──────┴────────┐  ┌───┴────────┐  ┌──┴──────────────────────┐
+│  REST API     │  │ WebSocket  │  │  Authentication         │
+│  Endpoints    │  │  Server    │  │  (GoTrue)               │
+└───────────────┘  └────────────┘  └─────────────────────────┘
+       │                   │                    │
+┌──────┴───────────────────┴────────────────────┴─────────────┐
+│                 AppFlowy Cloud Core Services                │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │ Workspace   │  │Collaboration│  │     AI      │          │
+│  │ Management  │  │   Engine    │  │  Services   │          │
+│  └─────────────┘  └─────────────┘  └─────────────┘          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │    File     │  │   Search    │  │  Background │          │
+│  │  Storage    │  │   Service   │  │   Workers   │          │
+│  └─────────────┘  └─────────────┘  └─────────────┘          │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+┌──────────────────────┴──────────────────────────────────────┐
+│                    Data Layer                               │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │ PostgreSQL  │  │    Redis    │  │  S3/MinIO   │          │
+│  │ + pgvector  │  │    Cache    │  │   Storage   │          │
+│  └─────────────┘  └─────────────┘  └─────────────┘          │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+<h2>Core Architectural Patterns</h2>
+
+<h3>1. Modular Monolith Architecture</h3>
+
+<p>AppFlowy Cloud follows a modular monolith pattern with clear service boundaries:</p>
+
+<pre><code class="language-">appflowy-backend/
+├── services/
+│   ├── appflowy-cloud/        # Main application service
+│   ├── appflowy-collaborate/  # Real-time collaboration
+│   └── appflowy-worker/       # Background processing
+├── libs/                      # Shared libraries
+│   ├── database/              # Database abstractions
+│   ├── access-control/        # Authorization logic
+│   ├── client-api/            # API implementations
+│   ├── gotrue/                # Auth integration
+│   ├── collab-rt-protocol/    # Collaboration protocol
+│   └── [15+ specialized libs]
+└── src/
+    ├── api/                   # HTTP endpoints
+    ├── biz/                   # Business logic
+    └── middleware/            # Request processing</code></pre>
+
+<h3>2. Multi-Tenant Workspace Model</h3>
+
+<p>The system is designed around workspaces as the primary organizational unit:</p>
+
+<ul>
+  <li><strong>Users</strong> → Many <strong>Workspaces</strong></li>
+  <li><strong>Workspaces</strong> → Many <strong>Collaborations</strong></li>
+  <li><strong>Collaborations</strong> → Many <strong>Documents/Databases</strong></li>
+  <li><strong>Role-Based Access Control</strong> at each level</li>
+</ul>
+
+<h3>3. Event-Driven Processing</h3>
+
+<p>Utilizes database triggers and message queues for async operations:</p>
+
+<ul>
+  <li>PostgreSQL triggers for data consistency</li>
+  <li>Redis streams for real-time events</li>
+  <li>Background workers for heavy processing</li>
+  <li>Email notification queues</li>
+</ul>
+
+<h3>4. Three-Tier Storage Strategy</h3>
+
+<pre><code class="language-">┌─────────────────┐
+│   Hot Storage   │ ← Redis (Active collaborations)
+├─────────────────┤
+│  Warm Storage   │ ← PostgreSQL (Metadata, recent data)
+├─────────────────┤
+│  Cold Storage   │ ← S3/MinIO (Archives, large objects)
+└─────────────────┘</code></pre>
+
+<h2>Key Components</h2>
+
+<h3>Authentication &amp; Authorization</h3>
+
+<h4>GoTrue Integration</h4>
+<ul>
+  <li><strong>JWT Authentication</strong>: Secure token-based auth</li>
+  <li><strong>OAuth Providers</strong>: Google, GitHub, Discord, Apple</li>
+  <li><strong>SAML 2.0</strong>: Enterprise SSO support</li>
+  <li><strong>Magic Links</strong>: Passwordless authentication</li>
+  <li><strong>Service Roles</strong>: Admin API access</li>
+</ul>
+
+<h4>Access Control System</h4>
+<ul>
+  <li><strong>Casbin Engine</strong>: Policy-based authorization</li>
+  <li><strong>Multi-level Permissions</strong>:</li>
+  <li>Workspace level (Owner, Member, Guest)</li>
+  <li>Collaboration level (Read, Write, Admin)</li>
+  <li>Resource level (File, Database, Document)</li>
+</ul>
+
+<h3>Real-time Collaboration Engine</h3>
+
+<h4>Architecture Components</h4>
+<pre><code class="language-rust">CollaborationServer {
+    realtime_server: RealtimeServerActor,
+    collab_manager: CollabManager,
+    collab_cache: CollabCache,
+    awareness_gossip: AwarenessGossip,
+    stream_router: StreamRouter,
+}</code></pre>
+
+<h4>Collaboration Features</h4>
+<ul>
+  <li><strong>CRDT-based Sync</strong>: Conflict-free collaborative editing</li>
+  <li><strong>User Awareness</strong>: Real-time presence indicators</li>
+  <li><strong>Optimistic Updates</strong>: Immediate UI feedback</li>
+  <li><strong>Snapshot Management</strong>: Periodic state snapshots</li>
+  <li><strong>Delta Compression</strong>: Efficient change propagation</li>
+</ul>
+
+<h3>API Layer</h3>
+
+<h4>RESTful Endpoints</h4>
+<pre><code class="language-">/api/workspace/*      # Workspace CRUD operations
+/api/collab/*         # Collaboration management
+/api/file/*           # File upload/download
+/api/ai/*             # AI-powered features
+/api/chat/*           # Chat functionality
+/api/search/*         # Full-text and vector search
+/api/user/*           # User profile management
+/api/template/*       # Template management
+/ws                   # WebSocket connections</code></pre>
+
+<h4>WebSocket Protocol</h4>
+<ul>
+  <li><strong>Binary Protocol</strong>: Protobuf-encoded messages</li>
+  <li><strong>Message Types</strong>:</li>
+  <li>Document updates</li>
+  <li>Awareness broadcasts</li>
+  <li>Collaboration events</li>
+  <li>System notifications</li>
+</ul>
+
+<h3>Data Architecture</h3>
+
+<h4>Database Schema</h4>
+
+<strong>Core Tables</strong>:
+<pre><code class="language-sql">-- User and authentication
+af_user                    -- User accounts
+af<em>user</em>profile_view       -- User profiles
+
+<p>-- Workspace organization
+af_workspace               -- Workspace definitions
+af<em>workspace</em>member        -- Membership and roles</p>
+
+-- Collaboration data (partitioned)
+af<em>collab</em>document         -- Document collaborations
+af<em>collab</em>database         -- Database collaborations
+af<em>collab</em>folder           -- Folder structures
+af<em>collab</em>database_row     -- Database row data
+
+<p>-- AI and search
+af<em>collab</em>embeddings       -- Vector embeddings
+af<em>ai</em>chat_message         -- Chat history</p>
+
+-- File storage
+af<em>blob</em>metadata           -- File metadata</code></pre>
+
+<h4>Data Partitioning Strategy</h4>
+Collaboration data is partitioned by type for performance:
+<ul>
+  <li>Document (0)</li>
+  <li>Database (1)</li>
+  <li>Workspace Database (2)</li>
+  <li>Folder (3)</li>
+  <li>Database Row (4)</li>
+  <li>User Awareness (5)</li>
+</ul>
+
+<h3>Background Processing</h3>
+
+<h4>Worker Services</h4>
+<ul>
+  <li><strong>Import Worker</strong>: Handles bulk data imports</li>
+  <li><strong>Indexer Worker</strong>: Generates document embeddings</li>
+  <li><strong>Email Worker</strong>: Async notification delivery</li>
+  <li><strong>Cleanup Worker</strong>: Data retention and cleanup</li>
+  <li><strong>Snapshot Worker</strong>: Periodic collaboration snapshots</li>
+</ul>
+
+<h3>AI Integration</h3>
+
+<h4>Capabilities</h4>
+<ul>
+  <li><strong>Document Embeddings</strong>: Semantic search using pgvector</li>
+  <li><strong>Chat Interface</strong>: AI-powered document assistant</li>
+  <li><strong>Content Summarization</strong>: Automatic summaries</li>
+  <li><strong>Smart Search</strong>: Vector-based similarity search</li>
+</ul>
+
+<h4>Integration Points</h4>
+<ul>
+  <li>OpenAI API</li>
+  <li>Azure OpenAI Service</li>
+  <li>Custom AI endpoints</li>
+  <li>Local embeddings generation</li>
+</ul>
+
+<h2>Deployment Architecture</h2>
+
+<h3>Container Orchestration</h3>
+<pre><code class="language-yaml">services:
+  nginx:              # Reverse proxy, SSL, load balancing
+  postgres:           # Primary database with pgvector
+  redis:              # Cache and session store
+  gotrue:             # Authentication service
+  appflowy_cloud:     # Main application
+  appflowy_worker:    # Background workers
+  appflowy_web:       # Web frontend
+  admin_frontend:     # Admin dashboard
+  ai:                 # AI service proxy
+  minio:              # S3-compatible storage (optional)</code></pre>
+
+<h3>Routing Configuration</h3>
+<ul>
+  <li><code>/</code> → Web application</li>
+  <li><code>/api/*</code> → REST API</li>
+  <li><code>/ws</code> → WebSocket endpoint</li>
+  <li><code>/gotrue/*</code> → Authentication</li>
+  <li><code>/console/*</code> → Admin interface</li>
+  <li><code>/minio/*</code> → Object storage UI</li>
+</ul>
+
+<h2>Security Architecture</h2>
+
+<h3>Authentication Security</h3>
+<ul>
+  <li><strong>JWT Tokens</strong>: Short-lived access tokens</li>
+  <li><strong>Refresh Tokens</strong>: Secure token rotation</li>
+  <li><strong>Session Management</strong>: Redis-backed sessions</li>
+  <li><strong>Password Policy</strong>: Configurable requirements</li>
+</ul>
+
+<h3>Data Security</h3>
+<ul>
+  <li><strong>Encryption at Rest</strong>: Database encryption</li>
+  <li><strong>Encryption in Transit</strong>: TLS 1.2+</li>
+  <li><strong>Access Control</strong>: Fine-grained permissions</li>
+  <li><strong>Audit Logging</strong>: Comprehensive activity logs</li>
+</ul>
+
+<h3>API Security</h3>
+<ul>
+  <li><strong>CORS Policy</strong>: Configurable origins</li>
+  <li><strong>Rate Limiting</strong>: Per-user and global limits</li>
+  <li><strong>Request Validation</strong>: Input sanitization</li>
+  <li><strong>CSRF Protection</strong>: Token-based protection</li>
+</ul>
+
+<h2>Performance Optimization</h2>
+
+<h3>Caching Strategy</h3>
+<ul>
+  <li><strong>Redis Cache</strong>: Hot collaboration data</li>
+  <li><strong>Database Cache</strong>: Query result caching</li>
+  <li><strong>CDN Integration</strong>: Static asset delivery</li>
+  <li><strong>Browser Cache</strong>: Client-side caching headers</li>
+</ul>
+
+<h3>Database Optimization</h3>
+<ul>
+  <li><strong>Connection Pooling</strong>: Efficient connection reuse</li>
+  <li><strong>Query Optimization</strong>: Indexed queries</li>
+  <li><strong>Partition Pruning</strong>: Type-based partitioning</li>
+  <li><strong>Vacuum Strategy</strong>: Automated maintenance</li>
+</ul>
+
+<h3>Scalability Features</h3>
+<ul>
+  <li><strong>Horizontal Scaling</strong>: Stateless application design</li>
+  <li><strong>Load Balancing</strong>: Nginx reverse proxy</li>
+  <li><strong>Async Processing</strong>: Non-blocking operations</li>
+  <li><strong>Resource Quotas</strong>: Per-workspace limits</li>
+</ul>
+
+<h2>Monitoring &amp; Observability</h2>
+
+<h3>Metrics Collection</h3>
+<ul>
+  <li><strong>Prometheus Integration</strong>: Performance metrics</li>
+  <li><strong>Custom Metrics</strong>:</li>
+  <li>Request latency</li>
+  <li>WebSocket connections</li>
+  <li>Collaboration activity</li>
+  <li>Storage usage</li>
+</ul>
+
+<h3>Logging Strategy</h3>
+<ul>
+  <li><strong>Structured Logging</strong>: JSON-formatted logs</li>
+  <li><strong>Log Levels</strong>: Configurable verbosity</li>
+  <li><strong>Request Tracing</strong>: Correlation IDs</li>
+  <li><strong>Error Tracking</strong>: Exception monitoring</li>
+</ul>
+
+<h2>Integration Points</h2>
+
+<h3>External Services</h3>
+<ul>
+  <li><strong>Email Providers</strong>: SMTP integration</li>
+  <li><strong>Object Storage</strong>: S3-compatible APIs</li>
+  <li><strong>AI Services</strong>: OpenAI, Azure AI</li>
+  <li><strong>OAuth Providers</strong>: Social login</li>
+</ul>
+
+<h3>Client SDKs</h3>
+<ul>
+  <li><strong>REST API Clients</strong>: HTTP-based integration</li>
+  <li><strong>WebSocket Clients</strong>: Real-time communication</li>
+  <li><strong>Admin API</strong>: Service-to-service communication</li>
+</ul>
+
+<h2>Future Considerations</h2>
+
+<h3>Planned Enhancements</h3>
+<ul>
+  <li><strong>Kubernetes Support</strong>: Container orchestration</li>
+  <li><strong>Multi-region Deployment</strong>: Geographic distribution</li>
+  <li><strong>Advanced Analytics</strong>: Usage insights</li>
+  <li><strong>Plugin System</strong>: Extensible architecture</li>
+</ul>
+
+<h3>Scalability Roadmap</h3>
+<ul>
+  <li><strong>Database Sharding</strong>: Horizontal data partitioning</li>
+  <li><strong>Microservices Migration</strong>: Service decomposition</li>
+  <li><strong>Event Streaming</strong>: Kafka/Pulsar integration</li>
+  <li><strong>Edge Computing</strong>: CDN-based processing</li>
+</ul>
+
+<h2>Conclusion</h2>
+
+<p>AppFlowy Cloud represents a sophisticated backend architecture that successfully balances real-time collaboration requirements with enterprise-grade security and scalability. The modular monolith approach provides a solid foundation for current needs while maintaining flexibility for future evolution. The use of Rust ensures memory safety and performance, while the comprehensive feature set supports the full spectrum of modern collaborative productivity applications.</p>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Space Architecture Analysis & Implementation Status - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Project Space Architecture Analysis &amp; Implementation Status</h1>
+
+<h2>Executive Summary</h2>
+
+<p>This document analyzes the architectural decision for implementing Project Spaces in AppFlowy Cloud and provides the current implementation status. <strong>Recommendation: Use separate tables approach</strong> - this aligns with the product vision and provides clean separation between document management and project task management.</p>
+
+<h2>Product Vision &amp; Requirements</h2>
+
+<h3>User&#x27;s Vision</h3>
+<ul>
+  <li><strong>Existing Spaces</strong>: Manage documents with nested hierarchy and member permissions</li>
+  <li><strong>New Project Management Extension</strong>: Manage databases of tasks in project contexts</li>
+  <li><strong>Key Distinction</strong>: Spaces manage nested pages; Projects manage task databases</li>
+</ul>
+
+<h3>Core Differences</h3>
+<table><tr><td> Aspect </td><td> Document Spaces </td><td> Project Spaces </td></tr></table>
+<table><tr><td>--------</td><td>----------------</td><td>----------------</td></tr></table>
+<table><tr><td> <strong>Purpose</strong> </td><td> Document collaboration </td><td> Task management </td></tr></table>
+<table><tr><td> <strong>Structure</strong> </td><td> Nested page hierarchy </td><td> Task database with boards </td></tr></table>
+<table><tr><td> <strong>Permissions</strong> </td><td> Document-level access control </td><td> Project-level roles </td></tr></table>
+<table><tr><td> <strong>Data Model</strong> </td><td> Folder/page relationships </td><td> Sprint/story point tracking </td></tr></table>
+<table><tr><td> <strong>User Interaction</strong> </td><td> Create/edit documents </td><td> Plan sprints, track tasks </td></tr></table>
+
+<h2>Architectural Decision: Separate Tables ✅</h2>
+
+<h3>Recommended Approach</h3>
+<pre><code class="language-">af_workspace (existing AppFlowy)
+├── af_folder (existing - document spaces) 
+└── af<em>project</em>space_metadata (new - project spaces)</code></pre>
+
+<h3>Why Separate Tables?</h3>
+
+<ol>
+  <li><strong>Clean Separation of Concerns</strong></li>
+<ul>
+  <li>Document management vs. project management are fundamentally different domains</li>
+</ol>
+  <li>Different data requirements, user workflows, and permission models</li>
+  <li>Avoids polluting document management with project-specific fields</li>
+</ul>
+
+<ol>
+  <li><strong>Extensibility</strong></li>
+<ul>
+  <li>Project-specific features (sprints, story points, burndown charts) without affecting documents</li>
+</ol>
+  <li>Document-specific features (page nesting, content collaboration) without affecting projects</li>
+  <li>Independent evolution of both systems</li>
+</ul>
+
+<ol>
+  <li><strong>Performance &amp; Queries</strong></li>
+<ul>
+  <li>Optimized indexes for each use case</li>
+</ol>
+  <li>Avoid complex filtering on mixed entity types</li>
+  <li>Clear query patterns for each domain</li>
+</ul>
+
+<ol>
+  <li><strong>Development &amp; Maintenance</strong></li>
+<ul>
+  <li>Clear code boundaries and responsibilities</li>
+</ol>
+  <li>Easier testing and debugging</li>
+  <li>Independent deployment of features</li>
+</ul>
+
+<h3>Alternative Considered: Unified Table</h3>
+<strong>Rejected</strong> because:
+<ul>
+  <li>Would require nullable columns for project-specific settings</li>
+  <li>Complex entity discrimination logic</li>
+  <li>Conflates two different business domains</li>
+  <li>Harder to optimize queries and indexes</li>
+</ul>
+
+<h2>Current Implementation Status</h2>
+
+<h3>✅ Completed (Fully Working)</h3>
+
+<h4>1. Database Schema</h4>
+<ul>
+  <li><strong>Table</strong>: <code>af<em>project</em>space_metadata</code> ✅ <strong>Applied</strong></li>
+  <li><strong>Structure</strong>: </li>
+</ul>
+  <pre><code class="language-sql">  space_id UUID PRIMARY KEY
+  workspace_id UUID NOT NULL
+  name VARCHAR(100) NOT NULL
+  description VARCHAR(500)
+  space_type VARCHAR(50) DEFAULT &#x27;project&#x27;
+  icon VARCHAR(10)
+  primary<em>board</em>id UUID
+  project_settings JSONB DEFAULT &#x27;{}&#x27;
+  created<em>at/updated</em>at TIMESTAMP WITH TIME ZONE
+  created_by BIGINT NOT NULL
+  ``<code>
+<ul>
+  <li><strong>Indexes</strong>: workspace<em>id, created</em>by, space<em>type, created</em>at</li>
+  <li><strong>Triggers</strong>: Auto-update updated_at timestamp</li>
+</ul>
+
+<h4>2. Backend Infrastructure</h4>
+<ul>
+  <li><strong>Service Layer</strong>: </code>ProjectSpaceService<code> with full CRUD operations</li>
+  <li><strong>API Endpoints</strong>: Complete REST API in </code>/api/database/project-spaces<code></li>
+  <li><strong>DTOs</strong>: Type-safe request/response structures</li>
+  <li><strong>Validation</strong>: Input validation with proper error handling</li>
+  <li><strong>Database Queries</strong>: Real PostgreSQL operations (no mock data)</li>
+</ul>
+
+<h4>3. Frontend Implementation</h4>
+<ul>
+  <li><strong>API Client</strong>: Typed API client with all operations</li>
+  <li><strong>React Hooks</strong>: Custom hooks for data fetching and mutations</li>
+  <li><strong>UI Components</strong>: </li>
+  <li>Project creation modal with template selection</li>
+  <li>Project list view with search/filter/sort</li>
+  <li>Sidebar integration with expandable project list</li>
+  <li><strong>State Management</strong>: Event-driven refresh system</li>
+  <li><strong>Navigation</strong>: Routing to project boards</li>
+</ul>
+
+<h3>🚧 Critical Gap: Board Integration</h3>
+
+<h4>Current Issue</h4>
+<strong>Problem</strong>: Project spaces create <strong>placeholder board IDs</strong> instead of real AppFlowy collaborative boards.
+
+<strong>Location</strong>: </code>src/biz/project/project_space.rs:356-358<code></code></pre>rust
+// Currently:
+let board<em>id = Uuid::new</em>v4();  // Placeholder!
+info!(&quot;Created placeholder board {} for project space&quot;, board_id);
+<pre><code class="language-">
+<strong>Should be</strong>: Real AppFlowy collaborative board creation</code></pre>rust
+// Target implementation:
+create<em>database</em>page(
+    &amp;self.state,                    // Needs AppState access
+    RealtimeUser { uid, uuid, ...}, // User context
+    workspace_id,                   // Workspace
+    &amp;space_id,                      // Parent space
+    &amp;view_id,                       // Board view
+    ViewLayout::Board,              // Board layout
+    Some(page_name),                // Board name
+    &amp;encoded_database,              // Template-based database
+).await?;
+</code>`<code>
+
+<h4>Integration Requirements</h4>
+<ol>
+  <li><strong>AppState Access</strong>: </code>ProjectSpaceService<code> needs access to </code>AppState<code> for:</li>
+<ul>
+  <li></code>collab_storage<code> - Collaborative storage system</li>
+</ol>
+  <li></code>ws_server<code> - WebSocket server for real-time updates</li>
+  <li>Database creation utilities</li>
+</ul>
+
+<ol>
+  <li><strong>Template Processing</strong>: Convert project templates to </code>EncodedDatabase<code></li>
+<ul>
+  <li>Extract fields from template configuration</li>
+</ol>
+  <li>Create board groups (columns) from template</li>
+  <li>Set up default views and settings</li>
+</ul>
+
+<ol>
+  <li><strong>User Context</strong>: Proper </code>RealtimeUser<code> construction with JWT claims</li>
+</ol>
+
+<h2>Implementation Roadmap</h2>
+
+<h3>Phase 1: Board Creation Integration 🎯 <strong>NEXT</strong></h3>
+<strong>Priority</strong>: High
+<strong>Effort</strong>: Medium
+<strong>Dependency</strong>: Refactor </code>ProjectSpaceService<code> to accept </code>AppState<code>
+
+<h4>Tasks:</h4>
+<ol>
+  <li><strong>Modify ProjectSpaceService Constructor</strong></li>
+</ol>
+   </code>`<code>rust
+   pub struct ProjectSpaceService&lt;&#x27;a&gt; {
+       pub pool: &amp;&#x27;a PgPool,
+       pub app_state: &amp;&#x27;a AppState,  // Add this
+   }
+   </code>`<code>
+
+<ol>
+  <li><strong>Implement Real Board Creation</strong></li>
+<ul>
+  <li>Replace </code>create<em>default</em>board_page()<code> implementation</li>
+</ol>
+  <li>Use AppFlowy&#x27;s existing </code>create<em>database</em>page()<code> function</li>
+  <li>Process templates into </code>EncodedDatabase<code> format</li>
+</ul>
+
+<ol>
+  <li><strong>Update API Layer</strong></li>
+<ul>
+  <li>Pass </code>AppState<code> to service initialization</li>
+</ol>
+  <li>Ensure proper user context in API handlers</li>
+</ul>
+
+<h3>Phase 2: Template System Enhancement</h3>
+<strong>Priority</strong>: Medium
+<strong>Effort</strong>: Low
+<strong>Dependency</strong>: Phase 1 complete
+
+<h4>Tasks:</h4>
+<ol>
+  <li><strong>Enhanced Template Processing</strong></li>
+<ul>
+  <li>More sophisticated field type mapping</li>
+</ol>
+  <li>Custom board layouts beyond basic kanban</li>
+  <li>Project-specific automation rules</li>
+</ul>
+
+<ol>
+  <li><strong>Template Management</strong></li>
+<ul>
+  <li>Admin interface for custom templates</li>
+</ol>
+  <li>Template versioning and updates</li>
+  <li>Organization-specific templates</li>
+</ul>
+
+<h3>Phase 3: Advanced Project Features</h3>
+<strong>Priority</strong>: Low
+<strong>Effort</strong>: High
+<strong>Dependency</strong>: Phases 1-2 complete
+
+<h4>Tasks:</h4>
+<ol>
+  <li><strong>Project Analytics</strong></li>
+<ul>
+  <li>Sprint burndown charts</li>
+</ol>
+  <li>Velocity tracking</li>
+  <li>Progress reporting</li>
+</ul>
+
+<ol>
+  <li><strong>Advanced Permissions</strong></li>
+<ul>
+  <li>Project-specific roles (PM, Developer, QA)</li>
+</ol>
+  <li>Task-level assignments</li>
+  <li>Sprint access control</li>
+</ul>
+
+<h2>Technical Integration Points</h2>
+
+<h3>AppFlowy Integration Touchpoints</h3>
+<ol>
+  <li><strong>Authentication</strong>: Already integrated via JWT/UserUuid</li>
+  <li><strong>Workspace Context</strong>: Uses existing workspace_id pattern</li>
+  <li><strong>Database Creation</strong>: Needs integration with </code>create<em>database</em>page()<code></li>
+  <li><strong>Collaborative Storage</strong>: Needs access to </code>collab_storage<code></li>
+  <li><strong>Real-time Updates</strong>: Needs access to </code>ws_server<code></li>
+</ol>
+
+<h3>API Compatibility</h3>
+<ul>
+  <li><strong>Endpoints</strong>: </code>/api/database/project-spaces/*<code> (following AppFlowy patterns)</li>
+  <li><strong>Authentication</strong>: AppFlowy JWT middleware</li>
+  <li><strong>Error Handling</strong>: AppFlowy </code>AppError<code> types</li>
+  <li><strong>Response Format</strong>: AppFlowy </code>AppResponse<code> wrapper</li>
+</ul>
+
+<h2>Testing Strategy</h2>
+
+<h3>Integration Testing Required</h3>
+<ol>
+  <li><strong>End-to-End Project Creation</strong></li>
+<ul>
+  <li>Create project space → Verify database entry → Navigate to real board</li>
+</ol>
+  <li>Template application → Board structure matches template</li>
+  <li>Permission verification → User can access created project</li>
+</ul>
+
+<ol>
+  <li><strong>Data Consistency</strong></li>
+<ul>
+  <li>Project metadata matches board configuration</li>
+</ol>
+  <li>Workspace scoping works correctly</li>
+  <li>User permissions flow through to boards</li>
+</ul>
+
+<ol>
+  <li><strong>Performance Testing</strong></li>
+<ul>
+  <li>Project list loading with many projects</li>
+</ol>
+  <li>Board creation time with complex templates</li>
+  <li>Concurrent project creation</li>
+</ul>
+
+<h2>Future Considerations</h2>
+
+<h3>Scalability</h3>
+<ul>
+  <li><strong>Project Count</strong>: Table design supports millions of projects</li>
+  <li><strong>Board Complexity</strong>: Template system can handle complex board layouts  </li>
+  <li><strong>User Load</strong>: Indexed queries support high user counts</li>
+</ul>
+
+<h3>Migration Path</h3>
+<ul>
+  <li><strong>Existing Users</strong>: No impact on existing document spaces</li>
+  <li><strong>Feature Rollout</strong>: Can be enabled per workspace/organization</li>
+  <li><strong>Data Migration</strong>: Clean separation means no data migration needed</li>
+</ul>
+
+<h3>Integration Opportunities</h3>
+<ul>
+  <li><strong>AppFlowy AI</strong>: Project insights and automation</li>
+  <li><strong>Third-party Tools</strong>: Jira, GitHub, Slack integrations</li>
+  <li><strong>Reporting</strong>: Cross-project analytics and dashboards</li>
+</ul>
+
+<h2>Conclusion</h2>
+
+<strong>The separate tables architecture is the correct choice</strong> and is largely implemented. The critical remaining work is integrating placeholder board creation with AppFlowy&#x27;s real collaborative board system.
+
+<strong>Next Session Priority</strong>: Implement real board creation in </code>ProjectSpaceService<code> by adding </code>AppState<code> access and replacing placeholder UUID generation with calls to AppFlowy&#x27;s </code>create<em>database</em>page()` function.
+
+<p>---</p>
+
+<em>Last Updated: 2025-08-18</em>  
+<em>Status: Database ✅ <table><tr><td> Backend Infrastructure ✅ </td><td> Frontend ✅ </td></tr></table> Board Integration 🚧</em>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

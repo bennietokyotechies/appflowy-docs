@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remove Mock Data - Show Actual Project Spaces from Database - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Remove Mock Data - Show Actual Project Spaces from Database</h1>
+
+<h2>Overview</h2>
+Successfully removed mock data and implemented real database operations for project spaces. Users now see actual project spaces created and stored in the database.
+
+<h2>Changes Made</h2>
+
+<h3>🗄️ Database Layer</h3>
+
+<h4>1. New Migration: <code>20250817120000<em>create</em>project<em>space</em>metadata.sql</code></h4>
+<ul>
+  <li><strong>Created Table</strong>: <code>af<em>project</em>space_metadata</code></li>
+  <li><strong>Columns</strong>:</li>
+  <li><code>space_id</code> (UUID, Primary Key)</li>
+  <li><code>workspace_id</code> (UUID, for workspace scoping)</li>
+  <li><code>name</code> (VARCHAR 100, project name)</li>
+  <li><code>description</code> (VARCHAR 500, optional)</li>
+  <li><code>space_type</code> (VARCHAR 50, default &#x27;project&#x27;)</li>
+  <li><code>icon</code> (VARCHAR 10, emoji icon)</li>
+  <li><code>primary<em>board</em>id</code> (UUID, reference to main board)</li>
+  <li><code>project_settings</code> (JSONB, project configuration)</li>
+  <li><code>created<em>at/updated</em>at</code> (Timestamps)</li>
+  <li><code>created_by</code> (BIGINT, user ID)</li>
+</ul>
+
+<ul>
+  <li><strong>Indexes Added</strong>:</li>
+  <li><code>workspace_id</code> for workspace queries</li>
+  <li><code>created_by</code> for user-specific queries  </li>
+  <li><code>space_type</code> for filtering</li>
+  <li><code>created_at</code> for sorting</li>
+</ul>
+
+<ul>
+  <li><strong>Auto-update Trigger</strong>: Updates <code>updated_at</code> on record changes</li>
+</ul>
+
+<h3>🔧 Backend Implementation</h3>
+
+<h4>2. Database Record Structure</h4>
+<pre><code class="language-rust">#[derive(Debug, sqlx::FromRow)]
+struct ProjectSpaceRecord {
+    space_id: Uuid,
+    workspace_id: Uuid,
+    name: String,
+    description: Option&lt;String&gt;,
+    space_type: String,
+    icon: Option&lt;String&gt;,
+    primary<em>board</em>id: Option&lt;Uuid&gt;,
+    project<em>settings: serde</em>json::Value,
+    created_at: chrono::DateTime&lt;chrono::Utc&gt;,
+    updated_at: chrono::DateTime&lt;chrono::Utc&gt;,
+    created_by: i64,
+}</code></pre>
+
+<h4>3. Fixed <code>store<em>project</em>space_metadata()</code> Method</h4>
+<strong>Before (Mock Data)</strong>:
+<pre><code class="language-rust">// TODO: This will require a new table af<em>project</em>space_metadata
+// For now, create the response object manually
+Ok(ProjectSpace {
+    space_id,
+    name: name.to_string(),
+    // ... hardcoded mock response
+})</code></pre>
+
+<strong>After (Real Database)</strong>:
+<pre><code class="language-rust">let result = sqlx::query_as!(
+    ProjectSpaceRecord,
+    r#&quot;
+    INSERT INTO af<em>project</em>space_metadata 
+    (space<em>id, workspace</em>id, name, description, space<em>type, icon, primary</em>board<em>id, project</em>settings, created_by)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    RETURNING space<em>id, workspace</em>id, name, description, space<em>type, icon, primary</em>board_id, 
+             project<em>settings, created</em>at, updated<em>at, created</em>by
+    &quot;#,
+    space<em>id, workspace</em>id, name, description, space<em>type.to</em>string(),
+    icon, primary<em>board</em>id, project<em>settings</em>json, created_by
+)
+.fetch_one(self.pool)
+.await?;</code></pre>
+
+<h4>4. Fixed <code>list<em>project</em>spaces()</code> Method  </h4>
+<strong>Before (Empty List)</strong>:
+<pre><code class="language-rust">// Project space listing not fully implemented - returning empty list
+Ok(ProjectSpaceList {
+    spaces: vec![],
+    total_count: 0,
+})</code></pre>
+
+<strong>After (Database Query)</strong>:
+<pre><code class="language-rust">let spaces<em>query = sqlx::query</em>as!(
+    ProjectSpaceRecord,
+    r#&quot;
+    SELECT space<em>id, workspace</em>id, name, description, space_type, icon, 
+           primary<em>board</em>id, project<em>settings, created</em>at, updated<em>at, created</em>by
+    FROM af<em>project</em>space_metadata 
+    WHERE workspace<em>id = $1 AND created</em>by = $2
+    ORDER BY created_at DESC
+    LIMIT $3 OFFSET $4
+    &quot;#,
+    workspace_id, uid, limit, offset
+);</code></pre>
+
+<h4>5. Features Implemented</h4>
+<ul>
+  <li>✅ <strong>Real Database Storage</strong>: Project spaces saved to PostgreSQL</li>
+  <li>✅ <strong>Workspace Scoping</strong>: Projects belong to specific workspaces  </li>
+  <li>✅ <strong>User-Specific</strong>: Only shows projects created by current user</li>
+  <li>✅ <strong>Search Support</strong>: Search by name and description with ILIKE</li>
+  <li>✅ <strong>Pagination</strong>: Proper limit/offset with total count</li>
+  <li>✅ <strong>Sorting</strong>: Orders by creation date (newest first)</li>
+  <li>✅ <strong>Type Safety</strong>: Full Rust type safety with sqlx macros</li>
+</ul>
+
+<h3>🎨 Frontend Integration</h3>
+
+<h4>6. Auto-Refresh After Creation</h4>
+<strong>ProjectListPage</strong>: Added event listener for real-time updates
+<pre><code class="language-typescript">useEffect(() =&gt; {
+  const handleProjectSpaceCreated = () =&gt; {
+    refetch();
+  };
+
+<p>  window.addEventListener(&#x27;projectSpaceCreated&#x27;, handleProjectSpaceCreated);
+  return () =&gt; {
+    window.removeEventListener(&#x27;projectSpaceCreated&#x27;, handleProjectSpaceCreated);
+  };
+}, [refetch]);</code></pre></p>
+
+<strong>ProjectSpaces Sidebar</strong>: Already had event listener working
+
+<h4>7. Data Flow Now Working</h4>
+<ol>
+  <li><strong>Create</strong>: User creates project → Saved to database → Success event fired</li>
+  <li><strong>Refresh</strong>: Event listener catches creation → Calls <code>refetch()</code> → Updates UI</li>
+  <li><strong>Display</strong>: Shows actual database records in both sidebar and project list view</li>
+</ol>
+
+<h2>Before vs After</h2>
+
+<h3>Before (Mock Data) ❌</h3>
+<ul>
+  <li>Project creation returned fake ProjectSpace object</li>
+  <li>List always returned empty array</li>
+  <li>No persistence between sessions</li>
+  <li>No real data in UI</li>
+  <li>Comments: &quot;TODO: implement database table&quot;</li>
+</ul>
+
+<h3>After (Real Database) ✅</h3>
+<ul>
+  <li>Project creation saves to <code>af<em>project</em>space_metadata</code> table</li>
+  <li>List queries actual database records  </li>
+  <li>Full persistence across sessions</li>
+  <li>Real project data displayed in UI</li>
+  <li>Search, filter, sort all working with real data</li>
+</ul>
+
+<h2>User Experience Impact</h2>
+
+<h3>What Users See Now:</h3>
+<ol>
+  <li><strong>Create Project Space</strong> → Actually saved to database</li>
+  <li><strong>Project List View</strong> → Shows real project spaces with:</li>
+<ul>
+  <li>Actual project names and descriptions</li>
+</ol>
+  <li>Real creation dates  </li>
+  <li>Proper project settings (auto-archive, time tracking, etc.)</li>
+  <li>Real space type badges (Project/Team/Wiki)</li>
+</ul>
+<ol>
+  <li><strong>Sidebar Project Spaces</strong> → Shows real list of user&#x27;s projects</li>
+  <li><strong>Search &amp; Filter</strong> → Works on actual database data</li>
+  <li><strong>Refresh</strong> → Immediately shows newly created projects</li>
+  <li><strong>Persistence</strong> → Projects persist across browser sessions</li>
+</ol>
+
+<h2>Database Verification</h2>
+
+<p>To verify the implementation works:</p>
+
+<pre><code class="language-sql">-- Check created project spaces
+SELECT space<em>id, name, description, space</em>type, icon, created<em>at, created</em>by 
+FROM af<em>project</em>space_metadata 
+ORDER BY created_at DESC;
+
+<p>-- Count total project spaces  
+SELECT COUNT(*) FROM af<em>project</em>space_metadata;</p>
+
+-- Check project settings are stored correctly
+SELECT name, project<em>settings FROM af</em>project<em>space</em>metadata;</code></pre>
+
+<h2>Summary</h2>
+
+<p>✅ <strong>Complete Implementation</strong>: Removed all mock data, implemented real database operations  
+✅ <strong>Database Table</strong>: Created properly indexed table with all needed fields  
+✅ <strong>Backend CRUD</strong>: Full create and list operations with error handling  
+✅ <strong>Frontend Integration</strong>: Auto-refresh and real-time updates working  
+✅ <strong>Data Persistence</strong>: Projects now persist across sessions  
+✅ <strong>Search/Filter</strong>: All features work with real database data  </p>
+
+Users now see their actual project spaces from the database instead of mock data!
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

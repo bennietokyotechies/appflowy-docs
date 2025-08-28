@@ -104,14 +104,20 @@ body {
 .docs-main {
   flex: 1;
   margin-left: 280px;
-  max-width: 1200px;
-  padding: 0 48px;
+  max-width: 100%;
+  padding: 0px;
 }
 
 /* Header */
 .docs-header {
-  padding: 24px 0;
+  position: fixed;
+  /* background: var(--bg-white); */
+  width: 100%;
+  padding: 12px;
   border-bottom: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.3); /* semi-transparent */
+  backdrop-filter: blur(5px); /* blurs background behind */
+  -webkit-backdrop-filter: blur(10px); /* for Safari */
 }
 
 .breadcrumb {
@@ -137,8 +143,10 @@ body {
 
 /* Content */
 .docs-content {
-  padding: 48px 0;
-  max-width: 900px;
+  margin: 0 auto;
+  margin-top: 60px;
+  padding: 12px;
+  max-width: 1000px;
 }
 
 .docs-content h1 {

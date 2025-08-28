@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workspace Invitations API Specification - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Workspace Invitations API Specification</h1>
+
+<p>This document specifies the backend API endpoints needed to support the workspace invitations feature in the AppFlowy frontend.</p>
+
+<h2>Overview</h2>
+
+<p>The workspace invitations system allows workspace owners to:
+<ul>
+  <li>Send invitations to new members via email</li>
+  <li>View pending invitations</li>
+  <li>Cancel pending invitations  </li>
+  <li>Resend invitations</li>
+  <li>Manage member roles and permissions</li>
+</ul></p>
+
+<h2>API Endpoints</h2>
+
+<h3>1. Get Workspace Invitations</h3>
+
+<strong>Endpoint:</strong> <code>GET /api/workspace/{workspaceId}/invitations</code>
+
+<strong>Description:</strong> Retrieves all invitations for a specific workspace.
+
+<strong>Headers:</strong>
+<pre><code class="language-">Authorization: Bearer {jwt_token}
+Content-Type: application/json</code></pre>
+
+<strong>Path Parameters:</strong>
+<ul>
+  <li><code>workspaceId</code> (string): The unique identifier of the workspace</li>
+</ul>
+
+<strong>Response Format:</strong>
+<pre><code class="language-json">{
+  &quot;code&quot;: 0,
+  &quot;message&quot;: &quot;Success&quot;,
+  &quot;data&quot;: [
+    {
+      &quot;invite_id&quot;: &quot;uuid-string&quot;,
+      &quot;workspace_id&quot;: &quot;workspace-uuid&quot;,
+      &quot;workspace_name&quot;: &quot;My Workspace&quot;,
+      &quot;inviter_email&quot;: &quot;owner@example.com&quot;,
+      &quot;inviter_name&quot;: &quot;John Doe&quot;,
+      &quot;inviter_icon&quot;: &quot;url-or-empty-string&quot;,
+      &quot;workspace_icon&quot;: &quot;url-or-empty-string&quot;,
+      &quot;member_count&quot;: 5,
+      &quot;invitee_email&quot;: &quot;newuser@example.com&quot;,
+      &quot;status&quot;: &quot;Pending&quot;,
+      &quot;created_at&quot;: &quot;2023-12-01T10:00:00Z&quot;,
+      &quot;expires_at&quot;: &quot;2023-12-08T10:00:00Z&quot;
+    }
+  ]
+}</code></pre>
+
+<strong>Error Responses:</strong>
+<ul>
+  <li><code>403</code>: User doesn&#x27;t have permission to view invitations</li>
+  <li><code>404</code>: Workspace not found</li>
+  <li><code>500</code>: Internal server error</li>
+</ul>
+
+<h3>2. Cancel Workspace Invitation</h3>
+
+<strong>Endpoint:</strong> <code>POST /api/workspace/{workspaceId}/invitation/{invitationId}/cancel</code>
+
+<strong>Description:</strong> Cancels a pending workspace invitation.
+
+<strong>Headers:</strong>
+<pre><code class="language-">Authorization: Bearer {jwt_token}
+Content-Type: application/json</code></pre>
+
+<strong>Path Parameters:</strong>
+<ul>
+  <li><code>workspaceId</code> (string): The unique identifier of the workspace</li>
+  <li><code>invitationId</code> (string): The unique identifier of the invitation</li>
+</ul>
+
+<strong>Response Format:</strong>
+<pre><code class="language-json">{
+  &quot;code&quot;: 0,
+  &quot;message&quot;: &quot;Invitation cancelled successfully&quot;
+}</code></pre>
+
+<strong>Error Responses:</strong>
+<ul>
+  <li><code>403</code>: User doesn&#x27;t have permission to cancel invitations</li>
+  <li><code>404</code>: Invitation or workspace not found</li>
+  <li><code>409</code>: Invitation already accepted/cancelled</li>
+  <li><code>500</code>: Internal server error</li>
+</ul>
+
+<h3>3. Resend Workspace Invitation</h3>
+
+<strong>Endpoint:</strong> <code>POST /api/workspace/{workspaceId}/invitation/{invitationId}/resend</code>
+
+<strong>Description:</strong> Resends a workspace invitation email.
+
+<strong>Headers:</strong>
+<pre><code class="language-">Authorization: Bearer {jwt_token}
+Content-Type: application/json</code></pre>
+
+<strong>Path Parameters:</strong>
+<ul>
+  <li><code>workspaceId</code> (string): The unique identifier of the workspace</li>
+  <li><code>invitationId</code> (string): The unique identifier of the invitation</li>
+</ul>
+
+<strong>Response Format:</strong>
+<pre><code class="language-json">{
+  &quot;code&quot;: 0,
+  &quot;message&quot;: &quot;Invitation resent successfully&quot;
+}</code></pre>
+
+<strong>Error Responses:</strong>
+<ul>
+  <li><code>403</code>: User doesn&#x27;t have permission to resend invitations</li>
+  <li><code>404</code>: Invitation or workspace not found</li>
+  <li><code>409</code>: Invitation already accepted/cancelled</li>
+  <li><code>429</code>: Rate limit exceeded for sending emails</li>
+  <li><code>500</code>: Internal server error</li>
+</ul>
+
+<h3>4. Enhanced Invite Members (Modification)</h3>
+
+<strong>Endpoint:</strong> <code>POST /api/workspace/{workspaceId}/invite</code>
+
+<strong>Description:</strong> The existing endpoint should be enhanced to return created invitation IDs.
+
+<strong>Current Request Format:</strong>
+<pre><code class="language-json">[
+  {
+    &quot;email&quot;: &quot;user1@example.com&quot;,
+    &quot;role&quot;: &quot;Member&quot;
+  },
+  {
+    &quot;email&quot;: &quot;user2@example.com&quot;, 
+    &quot;role&quot;: &quot;Member&quot;
+  }
+]</code></pre>
+
+<strong>Enhanced Response Format:</strong>
+<pre><code class="language-json">{
+  &quot;code&quot;: 0,
+  &quot;message&quot;: &quot;Invitations sent successfully&quot;,
+  &quot;data&quot;: {
+    &quot;invited_count&quot;: 2,
+    &quot;invitations&quot;: [
+      {
+        &quot;invite_id&quot;: &quot;uuid-1&quot;,
+        &quot;invitee_email&quot;: &quot;user1@example.com&quot;,
+        &quot;status&quot;: &quot;Pending&quot;
+      },
+      {
+        &quot;invite_id&quot;: &quot;uuid-2&quot;, 
+        &quot;invitee_email&quot;: &quot;user2@example.com&quot;,
+        &quot;status&quot;: &quot;Pending&quot;
+      }
+    ]
+  }
+}</code></pre>
+
+<h3>5. Remove Member (New Endpoint)</h3>
+
+<strong>Endpoint:</strong> <code>DELETE /api/workspace/{workspaceId}/member/{memberEmail}</code>
+
+<strong>Description:</strong> Removes a member from the workspace.
+
+<strong>Headers:</strong>
+<pre><code class="language-">Authorization: Bearer {jwt_token}</code></pre>
+
+<strong>Path Parameters:</strong>
+<ul>
+  <li><code>workspaceId</code> (string): The unique identifier of the workspace</li>
+  <li><code>memberEmail</code> (string): URL-encoded email of the member to remove</li>
+</ul>
+
+<strong>Response Format:</strong>
+<pre><code class="language-json">{
+  &quot;code&quot;: 0,
+  &quot;message&quot;: &quot;Member removed successfully&quot;
+}</code></pre>
+
+<strong>Error Responses:</strong>
+<ul>
+  <li><code>403</code>: User doesn&#x27;t have permission to remove members</li>
+  <li><code>404</code>: Member or workspace not found</li>
+  <li><code>409</code>: Cannot remove workspace owner</li>
+  <li><code>500</code>: Internal server error</li>
+</ul>
+
+<h3>6. Update Member Role (New Endpoint)</h3>
+
+<strong>Endpoint:</strong> <code>PUT /api/workspace/{workspaceId}/member/{memberEmail}/role</code>
+
+<strong>Description:</strong> Updates a member&#x27;s role in the workspace.
+
+<strong>Headers:</strong>
+<pre><code class="language-">Authorization: Bearer {jwt_token}
+Content-Type: application/json</code></pre>
+
+<strong>Path Parameters:</strong>
+<ul>
+  <li><code>workspaceId</code> (string): The unique identifier of the workspace</li>
+  <li><code>memberEmail</code> (string): URL-encoded email of the member</li>
+</ul>
+
+<strong>Request Body:</strong>
+<pre><code class="language-json">{
+  &quot;role&quot;: &quot;Member&quot; // or &quot;Owner&quot;, &quot;Guest&quot;
+}</code></pre>
+
+<strong>Response Format:</strong>
+<pre><code class="language-json">{
+  &quot;code&quot;: 0,
+  &quot;message&quot;: &quot;Member role updated successfully&quot;
+}</code></pre>
+
+<strong>Error Responses:</strong>
+<ul>
+  <li><code>403</code>: User doesn&#x27;t have permission to change roles</li>
+  <li><code>404</code>: Member or workspace not found</li>
+  <li><code>409</code>: Cannot change role of workspace owner</li>
+  <li><code>500</code>: Internal server error</li>
+</ul>
+
+<h2>Data Models</h2>
+
+<h3>Invitation Object</h3>
+<pre><code class="language-typescript">interface Invitation {
+  invite_id: string;          // UUID of the invitation
+  workspace_id: string;       // UUID of the workspace
+  workspace_name: string;     // Name of the workspace
+  inviter_email: string;      // Email of the person who sent the invitation
+  inviter_name: string;       // Name of the inviter
+  inviter_icon: string;       // Avatar URL of the inviter (can be empty)
+  workspace_icon: string;     // Workspace icon URL (can be empty)
+  member_count: number;       // Current member count of the workspace
+  invitee_email: string;      // Email of the person being invited
+  status: &#x27;Pending&#x27; <table><tr><td> &#x27;Accepted&#x27; </td><td> &#x27;Cancelled&#x27; </td></tr></table> &#x27;Expired&#x27;;
+  created_at: string;         // ISO timestamp when invitation was created
+  expires_at: string;         // ISO timestamp when invitation expires
+}</code></pre>
+
+<h3>Role Enum</h3>
+<pre><code class="language-typescript">enum Role {
+  Owner = &quot;Owner&quot;,     // Full permissions
+  Member = &quot;Member&quot;,   // Standard permissions
+  Guest = &quot;Guest&quot;      // Limited permissions
+}</code></pre>
+
+<h2>Permission Requirements</h2>
+
+<h3>Who can access these endpoints:</h3>
+<ul>
+  <li><strong>Get Invitations</strong>: Workspace owners and members</li>
+  <li><strong>Cancel Invitation</strong>: Only workspace owners</li>
+  <li><strong>Resend Invitation</strong>: Only workspace owners  </li>
+  <li><strong>Remove Member</strong>: Only workspace owners</li>
+  <li><strong>Update Member Role</strong>: Only workspace owners</li>
+</ul>
+
+<h3>Business Rules:</h3>
+<ol>
+  <li>Only workspace owners can manage invitations and members</li>
+  <li>Cannot remove or change role of workspace owner</li>
+  <li>Invitations should expire after 7 days</li>
+  <li>Cannot invite someone who is already a member</li>
+  <li>Cannot invite the same email twice (must cancel first)</li>
+  <li>Email validation should be performed</li>
+  <li>Rate limiting should be applied to invitation sending</li>
+</ol>
+
+<h2>Error Handling</h2>
+
+<p>All endpoints should return consistent error responses:</p>
+
+<pre><code class="language-json">{
+  &quot;code&quot;: &lt;error_code&gt;,
+  &quot;message&quot;: &quot;&lt;human<em>readable</em>error_message&gt;&quot;,
+  &quot;details&quot;: &quot;&lt;optional<em>detailed</em>error_info&gt;&quot;
+}</code></pre>
+
+<p>Common error codes:
+<ul>
+  <li><code>0</code>: Success</li>
+  <li><code>400</code>: Bad Request (invalid input)</li>
+  <li><code>401</code>: Unauthorized (invalid/missing token)</li>
+  <li><code>403</code>: Forbidden (insufficient permissions)</li>
+  <li><code>404</code>: Not Found</li>
+  <li><code>409</code>: Conflict (business rule violation)</li>
+  <li><code>429</code>: Too Many Requests (rate limiting)</li>
+  <li><code>500</code>: Internal Server Error</li>
+</ul></p>
+
+<h2>Implementation Notes</h2>
+
+<ol>
+  <li><strong>Email Notifications</strong>: When invitations are sent/resent, email notifications should be triggered</li>
+  <li><strong>Database Schema</strong>: Store invitations in a separate table linked to workspaces</li>
+  <li><strong>Cleanup</strong>: Implement cleanup job to remove expired invitations</li>
+  <li><strong>Rate Limiting</strong>: Implement rate limiting on invitation sending (e.g., max 10 per hour per user)</li>
+  <li><strong>Audit Logging</strong>: Log all invitation and member management actions for security</li>
+  <li><strong>Validation</strong>: Validate email formats and workspace permissions on all endpoints</li>
+</ol>
+
+<h2>Frontend Integration</h2>
+
+<p>The frontend is already implemented and ready to consume these APIs. Once the backend endpoints are available:</p>
+
+<ol>
+  <li>Remove the mock implementations from <code>/src/application/services/js-services/http/http_api.ts</code></li>
+  <li>The UI will automatically start showing real pending invitations</li>
+  <li>All invitation management features will work seamlessly</li>
+</ol>
+
+<p>The frontend handles:
+<ul>
+  <li>Loading states and error states</li>
+  <li>Optimistic UI updates</li>
+  <li>Form validation</li>
+  <li>User permissions and role-based UI rendering</li>
+  <li>Real-time updates after actions</li>
+</ul></p>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

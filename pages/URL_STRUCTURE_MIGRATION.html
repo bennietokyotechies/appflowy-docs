@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppFlowy Multi-Org URL Structure Migration - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>AppFlowy Multi-Org URL Structure Migration</h1>
+
+<h2>Overview</h2>
+
+<p>This document records the complete transformation of AppFlowy&#x27;s URL structure from an inconsistent pattern to a unified multi-organizational structure using <code>/{workspace_id}/{resource}</code> format.</p>
+
+<strong>Migration Date</strong>: August 19, 2025  
+<strong>Purpose</strong>: Enable true multi-organizational workspace isolation with clear, bookmarkable URLs
+
+<h2>URL Structure Transformation</h2>
+
+<h3>Before (Inconsistent Structure)</h3>
+<pre><code class="language-">/                              → Landing/empty page
+/:workspaceId                  → AppPage (generic workspace)
+/:workspaceId/:viewId          → AppPage (specific view)
+/app/board/:boardId            → BoardPage (standalone, no workspace context)
+/projects                      → ProjectListPage (global, no workspace)
+/trash                         → TrashPage (global, no workspace)</code></pre>
+
+<strong>Problems with Old Structure:</strong>
+<ul>
+  <li>Inconsistent workspace scoping (some routes had workspace context, others didn&#x27;t)</li>
+  <li>Route conflicts (generic <code>:workspaceId</code> pattern matched before specific routes)</li>
+  <li>No clear workspace isolation for multi-org use cases</li>
+  <li>BoardPage rendered outside MainLayout structure</li>
+  <li>Ambiguous URLs that were hard to bookmark meaningfully</li>
+</ul>
+
+<h3>After (Unified Multi-Org Structure)</h3>
+<pre><code class="language-"><h1>Auth/Marketing routes (no workspace context)</h1>
+/login                         → Login page
+/signup                        → Signup page
+/invited/:code                 → Invite handling
+/approve-request               → Request approval
+
+<h1>Workspace-scoped app routes</h1>
+/{workspace<em>id}/               → Default page (redirects to default</em>page_id)
+/{workspace<em>id}/pages/{page</em>id} → Document/Database views
+/{workspace<em>id}/boards/{board</em>id} → Project board pages
+/{workspace_id}/projects       → Project management list
+/{workspace_id}/trash          → Workspace trash
+/{workspace_id}/settings       → Workspace settings</code></pre>
+
+<strong>Benefits of New Structure:</strong>
+<ul>
+  <li><strong>Top-level workspace isolation</strong>: Each workspace gets its own URL namespace</li>
+  <li><strong>Clear resource hierarchy</strong>: RESTful structure that&#x27;s intuitive</li>
+  <li><strong>Bookmarkable URLs</strong>: Full context preserved in every URL</li>
+  <li><strong>Multi-org ready</strong>: Easy migration to subdomains later (<code>acme-corp.appflowy.com/</code>)</li>
+  <li><strong>API alignment</strong>: URLs match backend API structure (<code>/api/workspace/{workspace_id}/...</code>)</li>
+</ul>
+
+<h2>Implementation Details</h2>
+
+<h3>1. Route Architecture Changes</h3>
+
+<strong>File</strong>: <code>src/components/app/AppRouter.tsx</code>
+
+<pre><code class="language-typescript">// NEW STRUCTURE
+function AppRouter() {
+  return (
+    &lt;Routes&gt;
+      {/<em> Auth/Marketing routes (no workspace context) </em>/}
+      &lt;Route path={&#x27;login&#x27;} element={&lt;div&gt;Login Page&lt;/div&gt;} /&gt;
+      &lt;Route path={&#x27;signup&#x27;} element={&lt;div&gt;Signup Page&lt;/div&gt;} /&gt;
+      &lt;Route path={&#x27;invited/:code&#x27;} element={&lt;InviteCode /&gt;} /&gt;
+      &lt;Route path={&#x27;approve-request&#x27;} element={&lt;ApproveRequestPage /&gt;} /&gt;
+      
+      {/<em> Workspace-scoped app routes </em>/}
+      &lt;Route path={&#x27;:workspaceId&#x27;} element={&lt;AuthLayout /&gt;}&gt;
+        &lt;Route index element={&lt;AppPage /&gt;} /&gt;
+        &lt;Route path={&#x27;pages/:viewId&#x27;} element={&lt;AppPage /&gt;} /&gt;
+        &lt;Route path={&#x27;boards/:boardId&#x27;} element={&lt;BoardPage /&gt;} /&gt;
+        &lt;Route path={&#x27;projects&#x27;} element={&lt;ProjectListPage /&gt;} /&gt;
+        &lt;Route path={&#x27;trash&#x27;} element={&lt;TrashPage /&gt;} /&gt;
+        &lt;Route path={&#x27;settings&#x27;} element={&lt;div&gt;Workspace Settings&lt;/div&gt;} /&gt;
+      &lt;/Route&gt;
+      
+      &lt;Route index element={&lt;RecordNotFound noContent /&gt;} /&gt;
+    &lt;/Routes&gt;
+  );
+}</code></pre>
+
+<strong>Key Changes:</strong>
+<ul>
+  <li>Workspace routes now properly nested under <code>:workspaceId</code> parameter</li>
+  <li>BoardPage integrated into MainLayout structure (AppHeader + SideBar + Main)</li>
+  <li>Clear separation between auth routes and workspace-scoped routes</li>
+  <li>Route ordering fixed to prevent conflicts</li>
+</ul>
+
+<h3>2. State Management Updates</h3>
+
+<strong>File</strong>: <code>src/components/app/app.hooks.tsx</code>
+
+<pre><code class="language-typescript">// Updated workspace ID extraction
+const currentWorkspaceId = useMemo(() =&gt; {
+  // With new URL structure /{workspaceId}/boards/{boardId}, we can use params.workspaceId for both
+  return params.workspaceId || userWorkspaceInfo?.selectedWorkspace.id;
+}, [params.workspaceId, userWorkspaceInfo?.selectedWorkspace.id]);
+
+<p>// Updated board route detection
+const isBoardRoute = useMemo(() =&gt; {
+  return window.location.pathname.includes(&#x27;/boards/&#x27;);
+}, []);</p>
+
+// Updated navigation URLs
+const toView = useCallback(async(viewId: string, blockId?: string, keepSearch?: boolean) =&gt; {
+  let url = <code>/${currentWorkspaceId}/pages/${viewId}</code>;
+  // ... rest of navigation logic
+}, [currentWorkspaceId, ...]);</code></pre>
+
+<strong>Key Changes:</strong>
+<ul>
+  <li>Simplified workspace ID extraction (no special case for board routes)</li>
+  <li>Updated board route detection pattern from <code>/board/</code> to <code>/boards/</code></li>
+  <li>All navigation now uses workspace-scoped URLs</li>
+</ul>
+
+<h3>3. Navigation Component Updates</h3>
+
+<h4>Projects.tsx</h4>
+<pre><code class="language-typescript">// OLD
+navigate(<code>/app/board/${project.primary<em>board</em>id}</code>);
+
+<p>// NEW
+navigate(<code>/${workspaceId}/boards/${project.primary<em>board</em>id}</code>);</code></pre></p>
+
+<h4>NewProjectSpace.tsx</h4>
+<pre><code class="language-typescript">// OLD
+navigate(<code>/app/board/${projectSpace.primary<em>board</em>id}</code>);
+
+<p>// NEW
+if (projectSpace.primary<em>board</em>id &amp;&amp; workspaceId) {
+  navigate(<code>/${workspaceId}/boards/${projectSpace.primary<em>board</em>id}</code>);
+}</code></pre></p>
+
+<h4>BoardPage.tsx</h4>
+<pre><code class="language-typescript">// OLD
+const { boardId } = useParams&lt;{ boardId: string }&gt;();
+const handleGoBack = () =&gt; navigate(&#x27;/app/projects&#x27;);
+
+<p>// NEW
+const { boardId, workspaceId } = useParams&lt;{ boardId: string; workspaceId: string }&gt;();
+const handleGoBack = () =&gt; {
+  if (workspaceId) {
+    navigate(<code>/${workspaceId}/projects</code>);
+  }
+};</code></pre></p>
+
+<strong>Updated Components:</strong>
+<ul>
+  <li><code>Projects.tsx</code> - Main project navigation</li>
+  <li><code>NewProject.tsx</code> - Project creation</li>
+  <li><code>NewProjectSpace.tsx</code> - Project space creation</li>
+  <li><code>ProjectSpaceCard.tsx</code> - Project card navigation</li>
+  <li><code>ProjectSpaces.tsx</code> - Project space navigation</li>
+</ul>
+
+<h3>4. URL Pattern Updates</h3>
+
+<h4>Active Item Highlighting</h4>
+<pre><code class="language-typescript">// OLD - Board URL pattern
+const match = location.pathname.match(/\/board\/([^/]+)/);
+
+<p>// NEW - Boards URL pattern  
+const match = location.pathname.match(/\/boards\/([^/]+)/);</code></pre></p>
+
+<h2>Testing and Validation</h2>
+
+<h3>URL Examples</h3>
+
+<strong>Document Pages:</strong>
+<pre><code class="language-">/acme-corp/pages/getting-started
+/startup-xyz/pages/product-roadmap</code></pre>
+
+<strong>Project Boards:</strong>
+<pre><code class="language-">/acme-corp/boards/sprint-planning-board
+/startup-xyz/boards/kanban-board</code></pre>
+
+<strong>Project Management:</strong>
+<pre><code class="language-">/acme-corp/projects
+/startup-xyz/projects</code></pre>
+
+<strong>Workspace Features:</strong>
+<pre><code class="language-">/acme-corp/trash
+/acme-corp/settings</code></pre>
+
+<h3>Navigation Flow</h3>
+<ol>
+  <li>User logs in → Redirected to <code>/{default<em>workspace</em>id}/</code> </li>
+  <li>Workspace index → AppPage handles default page redirection</li>
+  <li>Project click → Navigate to <code>/{workspace<em>id}/boards/{board</em>id}</code></li>
+  <li>Board displays within MainLayout (AppHeader + SideBar + Main content)</li>
+</ol>
+
+<h2>Migration Considerations</h2>
+
+<h3>Backward Compatibility</h3>
+<ul>
+  <li>Old URLs will result in 404s (no automatic redirects implemented)</li>
+  <li>Users with bookmarked old URLs will need to re-bookmark</li>
+  <li>Could implement URL migration logic if needed</li>
+</ul>
+
+<h3>Performance Impact</h3>
+<ul>
+  <li>No significant performance impact</li>
+  <li>Route matching is more predictable with clear hierarchy</li>
+</ul>
+
+<h3>Security Benefits</h3>
+<ul>
+  <li>Clear workspace isolation prevents cross-workspace resource access</li>
+  <li>URL structure makes workspace context obvious for debugging</li>
+</ul>
+
+<h2>Multi-Org Scalability</h2>
+
+<h3>Current Implementation</h3>
+Supports path-based multi-tenancy: <code>/{workspace_id}/resource</code>
+
+<h3>Future Subdomain Migration</h3>
+Easy migration path to subdomain-based multi-tenancy:
+<pre><code class="language-"><h1>Current</h1>
+acme-corp.example.com/boards/sprint-board
+
+<h1>Future (when ready)</h1>
+acme-corp.appflowy.com/boards/sprint-board</code></pre>
+
+<h3>API Alignment</h3>
+Frontend URL structure now matches backend API patterns:
+<pre><code class="language-">Frontend: /{workspace<em>id}/boards/{board</em>id}
+Backend:  /api/workspace/{workspace<em>id}/boards/{board</em>id}</code></pre>
+
+<h2>Development Guidelines</h2>
+
+<h3>Adding New Routes</h3>
+Always scope new routes under workspace:
+<pre><code class="language-typescript">// ✅ CORRECT
+&lt;Route path={&#x27;new-feature&#x27;} element={&lt;NewFeature /&gt;} /&gt;
+// Results in: /{workspace_id}/new-feature
+
+<p>// ❌ WRONG - Don&#x27;t add routes outside workspace scope
+&lt;Route path={&#x27;/global-feature&#x27;} element={&lt;GlobalFeature /&gt;} /&gt;</code></pre></p>
+
+<h3>Navigation Best Practices</h3>
+<pre><code class="language-typescript">// ✅ Always include workspace context
+const workspaceId = useCurrentWorkspaceId();
+navigate(<code>/${workspaceId}/target-resource</code>);
+
+<p>// ❌ Don&#x27;t use hardcoded paths
+navigate(&#x27;/target-resource&#x27;);</code></pre></p>
+
+<h3>URL Construction</h3>
+<pre><code class="language-typescript">// ✅ Use workspace-scoped URLs
+const url = <code>/${workspaceId}/boards/${boardId}</code>;
+
+<p>// ✅ For pages, use the pages namespace
+const url = <code>/${workspaceId}/pages/${pageId}</code>;</code></pre></p>
+
+<h2>Future Enhancements</h2>
+
+<h3>1. Default Page Redirection</h3>
+Implement workspace-specific default pages:
+<pre><code class="language-typescript">// Redirect /{workspace<em>id}/ to /{workspace</em>id}/pages/{default<em>page</em>id}
+const defaultPageId = userPreferences.defaultPageId || workspace.defaultPageId;
+navigate(<code>/${workspaceId}/pages/${defaultPageId}</code>);</code></pre>
+
+<h3>2. Workspace Access Validation</h3>
+Add route guards to validate workspace access:
+<pre><code class="language-typescript">const WorkspaceGuard = ({ children }) =&gt; {
+  const { workspaceId } = useParams();
+  const hasAccess = useWorkspaceAccess(workspaceId);
+  
+  if (!hasAccess) {
+    return &lt;AccessDenied /&gt;;
+  }
+  
+  return children;
+};</code></pre>
+
+<h3>3. Workspace Switching</h3>
+Implement smooth workspace transitions:
+<pre><code class="language-typescript">const switchWorkspace = (newWorkspaceId: string) =&gt; {
+  const currentPath = location.pathname.split(&#x27;/&#x27;).slice(2).join(&#x27;/&#x27;); // Remove /{workspace_id}
+  navigate(<code>/${newWorkspaceId}/${currentPath}</code>);
+};</code></pre>
+
+<h2>Conclusion</h2>
+
+<p>This URL structure transformation establishes AppFlowy as a true multi-organizational platform with:</p>
+
+<ul>
+  <li><strong>Clear workspace boundaries</strong> in URLs</li>
+  <li><strong>Intuitive navigation</strong> that matches user mental models  </li>
+  <li><strong>Scalable architecture</strong> for future multi-tenancy features</li>
+  <li><strong>Consistent developer experience</strong> with predictable URL patterns</li>
+</ul>
+
+<p>The new structure provides a solid foundation for building collaborative workspace features while maintaining clarity for both users and developers.</p>
+
+---
+
+<em>This migration establishes the foundation for AppFlowy&#x27;s evolution into a comprehensive multi-organizational platform with workspace-centric navigation and clear resource hierarchy.</em>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

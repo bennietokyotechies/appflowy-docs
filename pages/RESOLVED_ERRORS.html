@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frontend Project Space Error Resolutions - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Frontend Project Space Error Resolutions</h1>
+
+<h2>Issue: Cannot find module &#x27;@tanstack/react-query&#x27;</h2>
+
+<h3>Problem</h3>
+The <code>useProjectSpace.ts</code> hook was using React Query (<code>@tanstack/react-query</code>) which is not installed in this AppFlowy frontend project.
+
+<h3>Solution</h3>
+✅ <strong>Completely rewrote the hooks using standard React hooks pattern</strong>
+
+<strong>Before:</strong>
+<pre><code class="language-typescript">import { useQuery, useMutation, useQueryClient } from &#x27;@tanstack/react-query&#x27;;
+
+<p>export function useProjectSpaces(...) {
+  return useQuery({
+    queryKey: [...],
+    queryFn: () =&gt; projectSpaceClient.listProjectSpaces(...),
+    staleTime: 30000,
+  });
+}</code></pre></p>
+
+<strong>After:</strong>
+<pre><code class="language-typescript">import { useState, useEffect, useCallback } from &#x27;react&#x27;;
+
+<p>export function useProjectSpaces(...) {
+  const [data, setData] = useState&lt;ProjectSpaceList | null&gt;(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState&lt;string | null&gt;(null);</p>
+
+  const fetchProjectSpaces = useCallback(async () =&gt; {
+    // ... implementation with try/catch
+  }, [workspaceId, params, options?.enabled]);
+
+<p>  useEffect(() =&gt; {
+    fetchProjectSpaces();
+  }, [fetchProjectSpaces]);</p>
+
+  return { data, isLoading, error, refetch };
+}</code></pre>
+
+<h3>Changes Made</h3>
+
+<ol>
+  <li><strong>Removed React Query dependency</strong>: Replaced all React Query hooks with standard React hooks</li>
+  <li><strong>Maintained API compatibility</strong>: All hook interfaces remain the same for components</li>
+  <li><strong>Added proper error handling</strong>: Each hook has proper try/catch with error states</li>
+  <li><strong>Loading states</strong>: Consistent loading state management across all hooks</li>
+  <li><strong>Manual cache management</strong>: Replaced query cache with manual refetch functions</li>
+</ol>
+
+<h3>Hooks Converted</h3>
+
+<ul>
+  <li>✅ <code>useProjectSpaces()</code> - List project spaces with refetch capability</li>
+  <li>✅ <code>useProjectSpace()</code> - Get individual project space</li>
+  <li>✅ <code>useCreateProjectSpace()</code> - Create with success/error callbacks</li>
+  <li>✅ <code>useUpdateProjectSpace()</code> - Update project spaces</li>
+  <li>✅ <code>useDeleteProjectSpace()</code> - Delete with callbacks</li>
+  <li>✅ <code>useTemplatesByType()</code> - Fetch templates by type</li>
+  <li>✅ <code>useDefaultTemplate()</code> - Get default template</li>
+</ul>
+
+<h3>Additional Fixes</h3>
+
+<ol>
+  <li><strong>Fixed EmojiPicker import</strong>: Updated to correct import path from existing component</li>
+  <li><strong>Simplified NormalModal props</strong>: Removed problematic <code>classes</code> prop, used standard MUI props</li>
+  <li><strong>Maintained backward compatibility</strong>: All components using these hooks continue to work</li>
+</ol>
+
+<h2>Benefits of the New Approach</h2>
+
+<ol>
+  <li><strong>No external dependencies</strong>: Uses only React&#x27;s built-in hooks</li>
+  <li><strong>Consistent with existing codebase</strong>: Matches the pattern used in <code>useBoardAPI.ts</code></li>
+  <li><strong>Better error handling</strong>: More explicit error states and handling</li>
+  <li><strong>Lighter bundle</strong>: No React Query library needed</li>
+  <li><strong>Simpler debugging</strong>: Standard React state flow</li>
+</ol>
+
+<h2>Testing</h2>
+
+<p>The components should now work without any module resolution errors:</p>
+
+<pre><code class="language-bash"><h1>No longer needed:</h1>
+npm install @tanstack/react-query
+
+<h1>Components will work with existing React installation</h1></code></pre>
+
+<p>All project space functionality is now ready to use with the standard React hooks pattern!</p>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

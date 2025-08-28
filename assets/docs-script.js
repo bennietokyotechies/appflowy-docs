@@ -33,6 +33,45 @@ const navigation = [
       { name: 'Test Cases', path: 'pages/test-cases.html' },
       { name: 'Compilation Fixes', path: 'pages/compilation-fixes.html' },
     ]
+  },
+  {
+    title: 'Technical Design Documents',
+    items: [
+      { name: 'Spaces & Tasks Alignment', path: 'pages/SPACES_AND_TASKS_ALIGNMENT_ANALYSIS.html' },
+      { name: 'Task Page Extension Design', path: 'pages/TASK_PAGE_EXTENSION_DESIGN.html' },
+      { name: 'Desktop Architecture', path: 'pages/appflowy-architecture.html' },
+      { name: 'Backend Architecture', path: 'pages/appflowy-backend-architecture.html' },
+      { name: 'Board Implementation Plan', path: 'pages/appflowy-board-implementation-prompts.html' },
+      { name: 'Implementation Scenarios', path: 'pages/appflowy-database-implementation-scenarios.html' },
+      { name: 'Local Board Implementation', path: 'pages/appflowy-database-local-board-implementation.html' },
+      { name: 'Frontend Integration Plan', path: 'pages/appflowy-frontend-integration-plan.html' },
+      { name: 'Backend Comparison', path: 'pages/backend-implementation-comparison.html' },
+    ]
+  },
+  {
+    title: 'Backend Development',
+    items: [
+      { name: 'Development Guide', path: 'pages/DEVELOPMENT_GUIDE.html' },
+      { name: 'Board Integration Analysis', path: 'pages/BOARD_INTEGRATION_ANALYSIS.html' },
+      { name: 'Project Space Architecture', path: 'pages/PROJECT_SPACE_ARCHITECTURE_ANALYSIS.html' },
+      { name: 'Remove Mock Data Guide', path: 'pages/REMOVE_MOCK_DATA_IMPLEMENTATION.html' },
+      { name: 'Space ACL Backend', path: 'pages/SPACE_ACL_BACKEND_ANALYSIS.html' },
+      { name: 'Space ACL Frontend Guide', path: 'pages/SPACE_ACL_FRONTEND_INTEGRATION_GUIDE.html' },
+      { name: 'Space ACL Implementation', path: 'pages/SPACE_ACL_IMPLEMENTATION_ANALYSIS.html' },
+    ]
+  },
+  {
+    title: 'Frontend Development',
+    items: [
+      { name: 'Project Space Integration', path: 'pages/FRONTEND_PROJECT_SPACE_INTEGRATION.html' },
+      { name: 'Project List Implementation', path: 'pages/PROJECT_LIST_IMPLEMENTATION.html' },
+      { name: 'Board API Testing', path: 'pages/BOARD_API_TEST_README.html' },
+      { name: 'URL Structure Migration', path: 'pages/URL_STRUCTURE_MIGRATION.html' },
+      { name: 'Workspace Invitations API', path: 'pages/WORKSPACE_INVITATIONS_API_SPEC.html' },
+      { name: 'Icon Fixes', path: 'pages/ICON_FIXES.html' },
+      { name: 'Outline Item Error Fix', path: 'pages/ERROR_FIX_OUTLINE_ITEM.html' },
+      { name: 'Resolved Errors', path: 'pages/RESOLVED_ERRORS.html' },
+    ]
   }
 ];
 
@@ -210,7 +249,7 @@ function createSharedLayout(title, content) {
       </article>
 
       <footer class="docs-footer">
-        <p>© 2024 AppFlowy. Built with ❤️ for developers.</p>
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
       </footer>
     </main>
   </div>

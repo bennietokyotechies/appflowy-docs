@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fix: OutlineItem TypeError - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Fix: OutlineItem TypeError</h1>
+
+<h2>Issue</h2>
+<pre><code class="language-">Uncaught TypeError: Cannot read properties of undefined (reading &#x27;view_id&#x27;)
+    at OutlineItem (OutlineItem.tsx:16:44)</code></pre>
+
+<h2>Root Cause</h2>
+The <code>OutlineItem</code> component expects a <code>view</code> prop that conforms to the <code>View</code> interface:
+
+<pre><code class="language-typescript">interface View {
+  view_id: string;
+  name: string;
+  icon: ViewIcon | null;
+  layout: ViewLayout;
+  extra: ViewExtra | null;
+  children: View[];
+  is_published: boolean;
+  is_private: boolean;
+  // ... other properties
+}</code></pre>
+
+<p>But in <code>ProjectSpaces.tsx</code>, we were passing individual props like <code>label</code>, <code>leftIcon</code>, etc., which don&#x27;t match this interface.</p>
+
+<h2>Solution</h2>
+✅ <strong>Replaced OutlineItem with custom components</strong>
+
+<h3>Before (Problematic):</h3>
+<pre><code class="language-typescript">&lt;OutlineItem
+  variant={UIVariant.Sidebar}
+  label={space.name}
+  level={1}
+  isActive={isActive}
+  leftIcon={...}
+  onClick={...}
+  rightContent={...}
+/&gt;</code></pre>
+
+<h3>After (Working):</h3>
+<pre><code class="language-typescript">&lt;Box
+  className=&quot;group&quot;
+  sx={{
+    display: &#x27;flex&#x27;,
+    alignItems: &#x27;center&#x27;,
+    px: 2,
+    py: 0.5,
+    mx: 1,
+    borderRadius: 1,
+    cursor: &#x27;pointer&#x27;,
+    backgroundColor: isActive ? &#x27;action.selected&#x27; : &#x27;transparent&#x27;,
+    &#x27;&amp;:hover&#x27;: {
+      backgroundColor: &#x27;action.hover&#x27;,
+    },
+  }}
+  onClick={() =&gt; handleNavigateToSpace(space)}
+&gt;
+  {/<em> Custom icon, text, and badge components </em>/}
+&lt;/Box&gt;</code></pre>
+
+<h2>Changes Made</h2>
+
+<ol>
+  <li><strong>Removed OutlineItem dependency</strong> - No longer uses the problematic component</li>
+  <li><strong>Custom header component</strong> - Created collapsible header with expand/collapse functionality</li>
+  <li><strong>Custom project space items</strong> - Direct MUI Box-based components with proper styling</li>
+  <li><strong>Maintained functionality</strong> - All hover effects, active states, and interactions preserved</li>
+  <li><strong>Better styling control</strong> - More direct control over appearance and responsive behavior</li>
+</ol>
+
+<h2>Benefits</h2>
+
+<ul>
+  <li>✅ <strong>No more TypeError</strong> - Components receive correct props</li>
+  <li>✅ <strong>Better performance</strong> - Direct MUI components instead of complex OutlineItem</li>
+  <li>✅ <strong>Easier customization</strong> - Direct control over styling and behavior</li>
+  <li>✅ <strong>Consistent with project</strong> - Uses standard MUI patterns used elsewhere</li>
+  <li>✅ <strong>Maintains UX</strong> - All visual feedback and interactions preserved</li>
+</ul>
+
+<h2>Visual Features Maintained</h2>
+
+<ul>
+  <li>Hover effects with background color changes</li>
+  <li>Active state indication for current project</li>
+  <li>Expand/collapse functionality for the section</li>
+  <li>Icon display and project names</li>
+  <li>Space type badges on hover</li>
+  <li>Loading states and empty states</li>
+</ul>
+
+<p>The ProjectSpaces component should now work without any undefined property errors!</p>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

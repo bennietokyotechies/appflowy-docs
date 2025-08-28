@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Board API Testing System - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Board API Testing System</h1>
+
+<p>This document describes the minimal UI system created to verify the kanban board backend functionality implemented in the Rust backend.</p>
+
+<h2>Overview</h2>
+
+<p>The board testing system provides a complete integration between the React frontend and the Rust/Actix-Web backend API, enabling verification of the kanban board functionality without relying on the existing Yjs-based real-time collaboration system.</p>
+
+<h2>Architecture</h2>
+
+<pre><code class="language-">┌─────────────────────────────────────────────────────────────┐
+│                     Frontend (React)                        │
+├─────────────────────────────────────────────────────────────┤
+│  BoardTestPage.tsx      │  SimpleBoard.tsx                  │
+│  ├── API Testing UI    │  ├── Drag &amp; Drop Board UI         │
+│  ├── Board Creation    │  ├── SimpleBoardGroup.tsx         │
+│  ├── Debug Console     │  └── SimpleBoardCard.tsx          │
+│  └── Real-time Polling │                                    │
+├─────────────────────────────────────────────────────────────┤
+│  BoardAPIClient.ts      │  useBoardAPI.ts Hook              │
+│  ├── HTTP Client       │  ├── State Management             │
+│  ├── Error Handling    │  ├── Loading States               │
+│  └── Type Safety       │  └── Event Handlers               │
+├─────────────────────────────────────────────────────────────┤
+│                 TypeScript Interfaces                       │
+│  BoardTypes.ts - API contracts matching Rust backend       │
+└─────────────────────────────────────────────────────────────┘
+                               │
+                               ▼ HTTP REST API
+┌─────────────────────────────────────────────────────────────┐
+│                   Backend (Rust/Actix-Web)                 │
+├─────────────────────────────────────────────────────────────┤
+│  Board API Endpoints    │  Services &amp; Database              │
+│  ├── /api/v1/databases │  ├── BoardService                 │
+│  ├── /api/v1/views     │  ├── DatabaseService              │
+│  ├── /api/v1/cards     │  ├── RowService                   │
+│  └── /api/v1/groups    │  └── FieldService                 │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+<h2>File Structure</h2>
+
+<pre><code class="language-">src/
+├── api/
+│   ├── BoardAPIClient.ts          # HTTP client for board API
+│   └── types/BoardTypes.ts        # TypeScript interfaces
+├── components/board/
+│   ├── SimpleBoard.tsx            # Main board component  
+│   ├── SimpleBoardGroup.tsx       # Kanban column component
+│   └── SimpleBoardCard.tsx        # Kanban card component
+├── hooks/
+│   └── useBoardAPI.ts             # React hook for board operations
+├── pages/
+│   └── BoardTestPage.tsx          # Integration test page
+└── components/main/
+    └── App.tsx                    # Updated with /board-test route</code></pre>
+
+<h2>Features</h2>
+
+<h3>✅ Core Board Operations</h3>
+<ul>
+  <li><strong>Create Board View</strong>: Create kanban boards for existing databases</li>
+  <li><strong>Load Board View</strong>: Fetch and display board data with groups and cards</li>
+  <li><strong>Add Cards</strong>: Create new cards in specific groups</li>
+  <li><strong>Move Cards</strong>: Drag-and-drop cards between groups</li>
+  <li><strong>Delete Cards</strong>: Remove cards from the board</li>
+  <li><strong>Refresh Board</strong>: Update board data from backend</li>
+</ul>
+
+<h3>✅ UI Components</h3>
+<ul>
+  <li><strong>Drag &amp; Drop</strong>: Built with @dnd-kit for smooth interactions</li>
+  <li><strong>Material-UI</strong>: Consistent design with existing app</li>
+  <li><strong>Real-time Updates</strong>: Optional polling-based refresh</li>
+  <li><strong>Error Handling</strong>: User-friendly error messages</li>
+  <li><strong>Loading States</strong>: Visual feedback during API operations</li>
+</ul>
+
+<h3>✅ Developer Tools</h3>
+<ul>
+  <li><strong>API Connection Testing</strong>: Verify backend connectivity</li>
+  <li><strong>Debug Console</strong>: Real-time operation logging</li>
+  <li><strong>Board Information</strong>: Detailed metadata display</li>
+  <li><strong>Environment Configuration</strong>: Configurable API endpoints</li>
+</ul>
+
+<h2>API Endpoints Tested</h2>
+
+<p><table><tr><td> Method </td><td> Endpoint </td><td> Description </td></tr></table>
+<table><tr><td>--------</td><td>----------</td><td>-------------</td></tr></table>
+<table><tr><td> POST </td><td> <code>/api/v1/databases/{id}/views/board</code> </td><td> Create board view </td></tr></table>
+<table><tr><td> GET </td><td> <code>/api/v1/views/board/{view_id}</code> </td><td> Get board data </td></tr></table>
+<table><tr><td> PUT </td><td> <code>/api/v1/views/board/{view_id}</code> </td><td> Update board settings </td></tr></table>
+<table><tr><td> DELETE </td><td> <code>/api/v1/views/board/{view_id}</code> </td><td> Delete board view </td></tr></table>
+<table><tr><td> POST </td><td> <code>/api/v1/views/board/{view_id}/cards</code> </td><td> Create card </td></tr></table>
+<table><tr><td> PUT </td><td> <code>/api/v1/views/board/cards/{card_id}/move</code> </td><td> Move card </td></tr></table>
+<table><tr><td> PUT </td><td> <code>/api/v1/views/board/cards/{card_id}</code> </td><td> Update card </td></tr></table>
+<table><tr><td> DELETE </td><td> <code>/api/v1/views/board/cards/{card_id}</code> </td><td> Delete card </td></tr></table>
+<table><tr><td> GET </td><td> <code>/api/v1/views/board/{view_id}/groups</code> </td><td> Get groups </td></tr></table>
+<table><tr><td> POST </td><td> <code>/api/v1/views/board/cards/bulk-move</code> </td><td> Bulk move cards </td></tr></table>
+<table><tr><td> DELETE </td><td> <code>/api/v1/views/board/cards/bulk-delete</code> </td><td> Bulk delete cards </td></tr></table></p>
+
+<h2>Setup &amp; Usage</h2>
+
+<h3>1. Environment Configuration</h3>
+
+<p>Ensure your <code>.env</code> file contains:</p>
+
+<pre><code class="language-bash"><h1>Board API Configuration</h1>
+VITE<em>API</em>BASE_URL=http://localhost:8000
+VITE<em>WS</em>URL=ws://localhost:8000</code></pre>
+
+<h3>2. Start Backend</h3>
+
+<pre><code class="language-bash">cd /Users/bennie/Dev/klever/appflowy-backend/databases
+cargo run</code></pre>
+
+<p>Backend runs on <code>http://localhost:8000</code></p>
+
+<h3>3. Start Frontend</h3>
+
+<pre><code class="language-bash">cd /Users/bennie/Dev/klever/appflowy-frontend
+pnpm run dev</code></pre>
+
+<p>Frontend runs on <code>http://localhost:3000</code></p>
+
+<h3>4. Access Test Page</h3>
+
+<p>Navigate to: <code>http://localhost:3000/board-test</code></p>
+
+<h2>Testing Workflow</h2>
+
+<h3>Step 1: Test API Connection</h3>
+<ol>
+  <li>Page automatically tests API connectivity on load</li>
+  <li>Green &quot;Connected&quot; status indicates backend is running</li>
+  <li>Red &quot;Disconnected&quot; means backend is not accessible</li>
+</ol>
+
+<h3>Step 2: Create Board View</h3>
+<ol>
+  <li>Enter a valid Database UUID in &quot;Database ID&quot; field</li>
+  <li>Click &quot;Create Board View&quot;</li>
+  <li>Enter board name in dialog</li>
+  <li>New board view will be created with default groups</li>
+</ol>
+
+<h3>Step 3: Load Board View  </h3>
+<ol>
+  <li>Copy the View ID from creation response</li>
+  <li>Enter View ID in &quot;Board View ID&quot; field</li>
+  <li>Click &quot;Load Board View&quot;</li>
+  <li>Board interface will appear with groups and cards</li>
+</ol>
+
+<h3>Step 4: Test Board Operations</h3>
+<ol>
+  <li><strong>Add Cards</strong>: Click &quot;Add Card&quot; in any group</li>
+  <li><strong>Move Cards</strong>: Drag cards between groups</li>
+  <li><strong>Delete Cards</strong>: Click delete icon on cards</li>
+  <li><strong>Refresh</strong>: Click refresh button to sync with backend</li>
+</ol>
+
+<h3>Step 5: Monitor Results</h3>
+<ul>
+  <li>Watch &quot;Test Results&quot; panel for API operation logs</li>
+  <li>Check for any error messages in red alerts</li>
+  <li>Verify operations complete successfully</li>
+</ul>
+
+<h2>Configuration Options</h2>
+
+<h3>Auto-refresh</h3>
+Enable &quot;Auto-refresh (5s)&quot; to poll backend every 5 seconds for changes.
+
+<h3>Debug Mode</h3>
+In development, components show additional debug information:
+<ul>
+  <li>Card IDs and positions</li>
+  <li>Group metadata</li>
+  <li>API response details</li>
+</ul>
+
+<h2>Integration with Existing System</h2>
+
+<h3>Coexistence with Yjs</h3>
+<ul>
+  <li>Simple board components are completely separate from existing Yjs-based board</li>
+  <li>No conflicts with existing real-time collaboration</li>
+  <li>Can be used alongside existing database views</li>
+  <li>Uses different component namespaces</li>
+</ul>
+
+<h3>Shared Dependencies</h3>
+<ul>
+  <li>Reuses existing @dnd-kit for drag-and-drop</li>
+  <li>Uses same Material-UI components for consistency</li>
+  <li>Leverages existing routing and app structure</li>
+</ul>
+
+<h2>Backend Compatibility</h2>
+
+<h3>Rust Model Mapping</h3>
+TypeScript interfaces in <code>BoardTypes.ts</code> exactly match Rust structs:
+<ul>
+  <li><code>BoardView</code> ↔ <code>BoardView</code></li>
+  <li><code>BoardGroup</code> ↔ <code>BoardGroup</code> </li>
+  <li><code>BoardCard</code> ↔ <code>BoardCard</code></li>
+  <li>Request/Response types maintained</li>
+</ul>
+
+<h3>Error Handling</h3>
+<ul>
+  <li>API errors are properly propagated and displayed</li>
+  <li>Validation errors from backend shown to user</li>
+  <li>Network errors handled gracefully</li>
+</ul>
+
+<h2>Troubleshooting</h2>
+
+<h3>Common Issues</h3>
+
+<strong>&quot;API Connection: FAILED&quot;</strong>
+<ul>
+  <li>Check backend is running on port 8000</li>
+  <li>Verify no firewall blocking localhost:8000</li>
+  <li>Ensure database is connected and migrations run</li>
+</ul>
+
+<strong>&quot;Database not found&quot; error</strong>
+<ul>
+  <li>Verify database UUID is correct</li>
+  <li>Check database exists in backend</li>
+  <li>Ensure proper permissions</li>
+</ul>
+
+<strong>Cards not moving</strong>
+<ul>
+  <li>Check network tab for API errors</li>
+  <li>Verify move operation completes in test results</li>
+  <li>Try refreshing board manually</li>
+</ul>
+
+<strong>Page not loading</strong>
+<ul>
+  <li>Clear browser cache</li>
+  <li>Check browser console for JavaScript errors</li>
+  <li>Verify all dependencies installed</li>
+</ul>
+
+<h3>Debug Steps</h3>
+<ol>
+  <li>Check browser Network tab for failed requests</li>
+  <li>Look at Test Results panel for detailed error logs</li>
+  <li>Enable auto-refresh to see if polling works</li>
+  <li>Test API connection first before other operations</li>
+</ol>
+
+<h2>Development Notes</h2>
+
+<h3>Future Enhancements</h3>
+<ul>
+  <li>Add WebSocket support for real-time updates</li>
+  <li>Implement bulk operations UI</li>
+  <li>Add board configuration options</li>
+  <li>Integrate with existing authentication</li>
+  <li>Add keyboard shortcuts</li>
+  <li>Implement undo/redo operations</li>
+</ul>
+
+<h3>Performance Considerations</h3>
+<ul>
+  <li>Polling mode adds network overhead</li>
+  <li>Large boards may need virtualization</li>
+  <li>Consider implementing optimistic updates</li>
+  <li>Add caching for repeated API calls</li>
+</ul>
+
+<h2>Success Criteria ✅</h2>
+
+<ul>
+  <li>[x] Create board view via API</li>
+  <li>[x] Display cards grouped by status  </li>
+  <li>[x] Drag-and-drop cards between groups</li>
+  <li>[x] Add new cards via API</li>
+  <li>[x] Delete cards via API</li>
+  <li>[x] Real-time updates (polling-based)</li>
+  <li>[x] No conflicts with existing Yjs system</li>
+  <li>[x] Complete error handling and user feedback</li>
+  <li>[x] Developer-friendly testing interface</li>
+  <li>[x] Type-safe API integration</li>
+</ul>
+
+<p>The board testing system successfully validates the backend kanban board API and provides a foundation for future REST API integration or Yjs system migration.</p>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

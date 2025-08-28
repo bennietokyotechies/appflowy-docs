@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppFlowy Backend Development Guide - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>AppFlowy Backend Development Guide</h1>
+
+<h2>🚀 Quick Start Checklist</h2>
+
+<p>Before starting development, always run:
+<pre><code class="language-bash">./script/check_environment.sh</code></pre></p>
+
+<h2>📋 Development Workflow</h2>
+
+<h3>1. <strong>Starting Fresh</strong></h3>
+<pre><code class="language-bash"><h1>Always use --reset for a clean start when in doubt</h1>
+./script/run<em>local</em>server.sh --reset</code></pre>
+
+<h3>2. <strong>Adding Database Migrations</strong></h3>
+
+<p>When adding new SQL migrations:</p>
+
+<ol>
+  <li>Create migration file:</li>
+</ol>
+   <pre><code class="language-bash">   # Use proper timestamp format: YYYYMMDDHHMMSS
+   touch migrations/$(date +%Y%m%d%H%M%S)<em>your</em>migration_name.sql
+   ``<code>
+
+<ol>
+  <li>After adding migration, update SQLx cache:</li>
+</ol>
+   </code>`<code>bash
+   # With database running:
+   SQLX_OFFLINE=false cargo sqlx prepare
+   </code>`<code>
+
+<ol>
+  <li>Commit BOTH the migration AND .sqlx cache:</li>
+</ol>
+   </code>`<code>bash
+   git add migrations/your<em>new</em>migration.sql
+   git add .sqlx/
+   git commit -m &quot;Add migration for X feature&quot;
+   </code>`<code>
+
+<h3>3. <strong>Adding New SQL Queries in Rust</strong></h3>
+
+<p>When using </code>sqlx::query!<code> macros:</p>
+
+<ol>
+  <li>Write your query</li>
+  <li>Run with database online first:</li>
+</ol>
+   </code>`<code>bash
+   SQLX_OFFLINE=false cargo check
+   </code>`<code>
+<ol>
+  <li>Once it compiles, prepare offline cache:</li>
+</ol>
+   </code>`<code>bash
+   SQLX_OFFLINE=false cargo sqlx prepare
+   </code>`<code>
+<ol>
+  <li>Commit the .sqlx changes</li>
+</ol>
+
+<h3>4. <strong>Common Issues &amp; Solutions</strong></h3>
+
+<h4>Issue: &quot;relation does not exist&quot;</h4>
+<strong>Cause</strong>: Migration not applied
+<strong>Fix</strong>: </code></pre>bash
+./script/run<em>local</em>server.sh --reset
+<pre><code class="language-">
+<h4>Issue: &quot;SQLX_OFFLINE=true but there is no cached data&quot;</h4>
+<strong>Cause</strong>: SQLx cache missing for new queries
+<strong>Fix</strong>: </code></pre>bash
+SQLX_OFFLINE=false cargo sqlx prepare
+git add .sqlx/
+<pre><code class="language-">
+<h4>Issue: &quot;pool timed out&quot;</h4>
+<strong>Cause</strong>: Database not running or connection issues
+<strong>Fix</strong>: </code></pre>bash
+docker compose -f docker-compose-dev.yml down
+./script/run<em>local</em>server.sh --reset
+<pre><code class="language-">
+<h4>Issue: Port already in use</h4>
+<strong>Cause</strong>: Previous instances still running
+<strong>Fix</strong>: </code></pre>bash
+<h1>Kill all AppFlowy processes</h1>
+pkill -f appflowy
+<h1>Stop all Docker containers</h1>
+docker compose -f docker-compose-dev.yml down
+<h1>Restart</h1>
+./script/run<em>local</em>server.sh --reset
+<pre><code class="language-">
+<h4>Issue: &quot;Verify token failed&quot; / JWT authentication errors</h4>
+<strong>Cause</strong>: JWT secret mismatch between GoTrue and AppFlowy Cloud
+<strong>Fix</strong>: </code></pre>bash
+<h1>Option 1: Add to .env.local (recommended for local development)</h1>
+echo &quot;GOTRUE<em>JWT</em>SECRET=hello456&quot; &gt;&gt; .env.local
+echo &quot;APPFLOWY<em>GOTRUE</em>JWT_SECRET=hello456&quot; &gt;&gt; .env.local
+
+<h1>Option 2: Add to .env file  </h1>
+echo &quot;GOTRUE<em>JWT</em>SECRET=hello456&quot; &gt;&gt; .env
+echo &quot;APPFLOWY<em>GOTRUE</em>JWT_SECRET=hello456&quot; &gt;&gt; .env
+
+<h1>Restart services</h1>
+./script/run<em>local</em>server.sh --reset
+<pre><code class="language-">
+<strong>Note</strong>: The script automatically loads both </code>.env<code> and </code>.env.local<code> (if present), with </code>.env.local<code> taking precedence.
+
+<h2>🛡️ Prevention Best Practices</h2>
+
+<h3>1. <strong>Always Work with Clean State</strong></h3>
+<ul>
+  <li>Use </code>--reset<code> flag when starting after significant changes</li>
+  <li>Don&#x27;t rely on existing Docker volumes between sessions</li>
+</ul>
+
+<h3>2. <strong>Version Control Discipline</strong></h3>
+<ul>
+  <li>Always commit .sqlx directory changes</li>
+  <li>Never commit with failing migrations</li>
+  <li>Test migrations on fresh database before committing</li>
+</ul>
+
+<h3>3. <strong>Environment Checks</strong></h3>
+<ul>
+  <li>Run </code>./script/check_environment.sh<code> before starting work</li>
+  <li>Ensure all ports are free</li>
+  <li>Verify Docker is running</li>
+</ul>
+
+<h3>4. <strong>Database Changes</strong></h3>
+<ul>
+  <li>Always run migrations in order</li>
+  <li>Test rollback scenarios</li>
+  <li>Document breaking changes</li>
+</ul>
+
+<h3>5. <strong>Team Collaboration</strong></h3>
+<ul>
+  <li>Pull .sqlx changes from main branch regularly</li>
+  <li>Coordinate database schema changes</li>
+  <li>Use feature branches for significant migrations</li>
+</ul>
+
+<h2>🔧 Useful Commands</h2>
+</code></pre>bash
+<h1>Check environment</h1>
+./script/check_environment.sh
+
+<h1>Clean start</h1>
+./script/run<em>local</em>server.sh --reset
+
+<h1>View logs</h1>
+docker compose -f docker-compose-dev.yml logs -f
+
+<h1>Database console</h1>
+psql postgres://postgres:password@localhost:5432/postgres
+
+<h1>List migrations</h1>
+cargo sqlx migrate info
+
+<h1>Revert last migration (careful!)</h1>
+cargo sqlx migrate revert
+
+<h1>Prepare SQLx for CI/CD</h1>
+SQLX_OFFLINE=false cargo sqlx prepare --check
+</code>`<code>
+
+<h2>📝 Pre-Commit Checklist</h2>
+
+<ul>
+  <li>[ ] All migrations tested on fresh database</li>
+  <li>[ ] SQLx cache updated (</code>cargo sqlx prepare<code>)</li>
+  <li>[ ] .sqlx directory changes committed</li>
+  <li>[ ] Environment check passes</li>
+  <li>[ ] No hardcoded credentials or secrets</li>
+  <li>[ ] Documentation updated for schema changes</li>
+</ul>
+
+<h2>🚨 Emergency Recovery</h2>
+
+<p>If everything is broken:</p>
+
+<ol>
+  <li>Stop everything:</li>
+</ol>
+   </code>`<code>bash
+   docker compose -f docker-compose-dev.yml down -v
+   pkill -f appflowy
+   </code>`<code>
+
+<ol>
+  <li>Clean Docker:</li>
+</ol>
+   </code>`<code>bash
+   docker system prune -a --volumes
+   </code>`<code>
+
+<ol>
+  <li>Fresh start:</li>
+</ol>
+   </code>`<code>bash
+   ./script/run<em>local</em>server.sh --reset
+   </code>`<code>
+
+<ol>
+  <li>Rebuild SQLx cache:</li>
+</ol>
+   </code>`<code>bash
+   SQLX_OFFLINE=false cargo sqlx prepare
+   </code>``
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

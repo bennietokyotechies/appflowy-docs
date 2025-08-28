@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space ACL Backend Analysis and API Documentation - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Space ACL Backend Analysis and API Documentation</h1>
+
+<h2>Table of Contents</h2>
+<ol>
+  <li><a href="#overview">Overview</a></li>
+  <li><a href="#architecture">Architecture</a></li>
+  <li><a href="#api-endpoints">API Endpoints</a></li>
+  <li><a href="#implementation-details">Implementation Details</a></li>
+  <li><a href="#database-schema">Database Schema</a></li>
+  <li><a href="#permission-model">Permission Model</a></li>
+  <li><a href="#integration-points">Integration Points</a></li>
+  <li><a href="#configuration">Configuration</a></li>
+</ol>
+
+<h2>Overview</h2>
+
+<p>The Space ACL (Access Control List) system provides fine-grained access control at the <strong>space level</strong> within AppFlowy workspaces. This system enables:</p>
+
+<ul>
+  <li><strong>Hierarchical Permissions</strong>: Workspace → Space → View hierarchy</li>
+  <li><strong>Role-Based Access</strong>: Owner, Member, and Guest roles with different permissions</li>
+  <li><strong>Email-Based Invitations</strong>: Invite users who don&#x27;t have accounts yet</li>
+  <li><strong>Public/Private Spaces</strong>: Different access rules based on space visibility</li>
+</ul>
+
+<h3>Key Features</h3>
+<ul>
+  <li>Fine-grained permissions separate from workspace-level access</li>
+  <li>Database-backed with PostgreSQL tables and triggers</li>
+  <li>Plugin-based architecture for extensibility</li>
+  <li>Real-time collaboration integration</li>
+  <li>Feature flag controlled (<code>SPACE<em>ACL</em>ENABLED</code>)</li>
+</ul>
+
+<h2>Architecture</h2>
+
+<h3>System Components</h3>
+
+<pre><code class="language-">┌─────────────────────┐
+│   API Endpoints     │
+│  (/api/space/...)   │
+└──────────┬──────────┘
+           │
+┌──────────▼──────────┐
+│  Business Logic     │
+│  (src/biz/space.rs) │
+└──────────┬──────────┘
+           │
+┌──────────▼──────────┐
+│  Database Layer     │
+│ (SpaceMemberDB,     │
+│  SpaceInvitationDB) │
+└──────────┬──────────┘
+           │
+┌──────────▼──────────┐
+│  PostgreSQL Tables  │
+│ - af<em>space</em>member   │
+│ - af<em>space</em>invitation│
+└─────────────────────┘</code></pre>
+
+<h3>Plugin Architecture</h3>
+
+<p>The Space ACL system integrates with AppFlowy&#x27;s plugin-based access control:</p>
+
+<pre><code class="language-rust">pub struct SpaceAclPlugin {
+    space<em>access</em>control: Arc&lt;dyn SpaceAccessControl&gt;,
+    ws_server: Option&lt;Addr&lt;WsServer&gt;&gt;,
+    workspace<em>access</em>control: Option&lt;Arc&lt;dyn WorkspaceAccessControl&gt;&gt;,
+}</code></pre>
+
+<h2>API Endpoints</h2>
+
+<h3>Health Check</h3>
+<pre><code class="language-http">GET /api/space/health</code></pre>
+<strong>Response</strong>: 
+<ul>
+  <li>200: &quot;Space api registered successfully&quot;</li>
+  <li>404: &quot;Space ACL is disabled&quot; (when <code>SPACE<em>ACL</em>ENABLED=false</code>)</li>
+</ul>
+
+<h3>Member Management</h3>
+
+<h4>List Space Members</h4>
+<pre><code class="language-http">GET /api/space/{space_id}/members</code></pre>
+<strong>Authorization</strong>: Requires authentication  
+<strong>Response</strong>: Array of members with roles
+
+<h4>Invite Member to Space</h4>
+<pre><code class="language-http">POST /api/space/{space_id}/members</code></pre>
+<strong>Authorization</strong>: Must be space owner  
+<strong>Request Body</strong>:
+<pre><code class="language-json">{
+  &quot;email&quot;: &quot;user@example.com&quot;,
+  &quot;role&quot;: &quot;member&quot;  // &quot;owner&quot; <table><tr><td> &quot;member&quot; </td></tr></table> &quot;guest&quot;
+}</code></pre>
+<strong>Response</strong>: 200 OK (currently empty, should return invitation details)
+
+<h4>Update Member Role</h4>
+<pre><code class="language-http">PATCH /api/space/{space<em>id}/members/{member</em>id}</code></pre>
+<strong>Authorization</strong>: Must be space owner  
+<strong>Request Body</strong>:
+<pre><code class="language-json">{
+  &quot;role&quot;: &quot;member&quot;  // New role
+}</code></pre>
+<strong>Response</strong>: 200 OK
+
+<h4>Remove Member from Space</h4>
+<pre><code class="language-http">DELETE /api/space/{space<em>id}/members/{member</em>id}</code></pre>
+<strong>Authorization</strong>: Must be space owner  
+<strong>Restrictions</strong>: Cannot remove yourself  
+<strong>Response</strong>: 200 OK
+
+<h3>Invitation Management</h3>
+
+<h4>List Space Invitations</h4>
+<pre><code class="language-http">GET /api/space/{space_id}/invitations?status=pending</code></pre>
+<strong>Authorization</strong>: Must be space owner  
+<strong>Query Parameters</strong>:
+<ul>
+  <li><code>status</code>: Filter by invitation status (optional)</li>
+</ul>
+
+<strong>Response</strong>: Array of invitations
+
+<h4>Accept Space Invitation</h4>
+<pre><code class="language-http">POST /api/space/{space_id}/invitations</code></pre>
+<strong>Authorization</strong>: Requires authentication  
+<strong>Request Body</strong>:
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;invitation-uuid&quot;,
+  &quot;redirect_url&quot;: &quot;https://app.appflowy.io/...&quot;  // Optional
+}</code></pre>
+<strong>Response</strong>: 200 OK
+
+<h4>Decline Space Invitation</h4>
+<pre><code class="language-http">DELETE /api/space/{space<em>id}/invitations/{invite</em>id}</code></pre>
+<strong>Authorization</strong>: Requires authentication  
+<strong>Response</strong>: 200 OK
+
+<h2>Implementation Details</h2>
+
+<h3>Business Logic Layer (<code>src/biz/space.rs</code>)</h3>
+
+<h4>Core Functions</h4>
+
+<ol>
+  <li><strong>Workspace Resolution</strong></li>
+</ol>
+<pre><code class="language-rust">async fn resolve<em>workspace</em>and<em>space</em>view_ids(
+    pool: &amp;PgPool,
+    space_id: &amp;str,
+) -&gt; Result&lt;(Uuid, Uuid), AppError&gt;</code></pre>
+Resolves the workspace ID from a space view ID by querying the <code>af_collab</code> table.
+
+<ol>
+  <li><strong>Permission Checks</strong></li>
+<ul>
+  <li><strong>Owner-only operations</strong>: Invite members, update roles, remove members, view invitations</li>
+</ol>
+  <li><strong>Self-protection</strong>: Cannot invite yourself, cannot remove yourself</li>
+  <li><strong>Duplicate prevention</strong>: Cannot invite existing members or create duplicate invitations</li>
+</ul>
+
+<ol>
+  <li><strong>Invitation Workflow</strong></li>
+</ol>
+<pre><code class="language-rust">// Step 1: Create invitation
+let invite<em>id = SpaceInvitationDB::create</em>invitation(...).await?;
+
+<p>// Step 2: User accepts invitation
+SpaceInvitationDB::accept<em>invitation(pool, &amp;invite</em>uuid).await?;</p>
+
+// Step 3: Database trigger automatically creates af<em>space</em>member record</code></pre>
+
+<h3>Database Access Layer</h3>
+
+<h4>SpaceMemberDB (<code>libs/database/src/space.rs</code>)</h4>
+<ul>
+  <li><code>is_member()</code> - Check if user is a space member</li>
+  <li><code>is<em>space</em>owner()</code> - Check if user has owner role</li>
+  <li><code>get_members()</code> - List all space members</li>
+  <li><code>upsert<em>member</em>role()</code> - Add or update member role</li>
+  <li><code>delete_member()</code> - Remove member from space</li>
+  <li><code>ensure_owner()</code> - Idempotent owner assignment</li>
+</ul>
+
+<h4>SpaceInvitationDB</h4>
+<ul>
+  <li><code>find<em>by</em>space<em>and</em>email()</code> - Check for existing invitations</li>
+  <li><code>create_invitation()</code> - Create new invitation</li>
+  <li><code>accept_invitation()</code> - Accept invitation (triggers member creation)</li>
+  <li><code>get_invitations()</code> - List all invitations for a space</li>
+  <li><code>delete_invitation()</code> - Decline or cancel invitation</li>
+</ul>
+
+<h2>Database Schema</h2>
+
+<h3>af<em>space</em>member Table</h3>
+<pre><code class="language-sql">CREATE TABLE af<em>space</em>member (
+  workspace_id  UUID NOT NULL,
+  space<em>view</em>id UUID NOT NULL,
+  uid           BIGINT NOT NULL,
+  role_id       INTEGER NOT NULL,
+  created<em>at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT</em>TIMESTAMP,
+  updated<em>at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT</em>TIMESTAMP,
+  PRIMARY KEY (space<em>view</em>id, uid),
+  FOREIGN KEY (workspace<em>id) REFERENCES af</em>workspace(workspace_id) ON DELETE CASCADE,
+  FOREIGN KEY (uid) REFERENCES af_user(uid) ON DELETE CASCADE,
+  FOREIGN KEY (role<em>id) REFERENCES af</em>roles(id)
+);
+
+<p>-- Indexes
+CREATE INDEX idx<em>af</em>space<em>member</em>uid ON af<em>space</em>member(uid);
+CREATE INDEX idx<em>af</em>space<em>member</em>workspace<em>space ON af</em>space<em>member(workspace</em>id, space<em>view</em>id);</code></pre></p>
+
+<h3>af<em>space</em>invitation Table</h3>
+<pre><code class="language-sql">CREATE TABLE af<em>space</em>invitation (
+  id            UUID PRIMARY KEY DEFAULT uuid<em>generate</em>v4(),
+  workspace_id  UUID NOT NULL,
+  space<em>view</em>id UUID NOT NULL,
+  inviter       BIGINT NOT NULL,
+  role_id       INTEGER NOT NULL,
+  status        SMALLINT NOT NULL DEFAULT 0,  -- 0=Pending, 1=Accepted, 2=Declined
+  invitee_email TEXT NOT NULL,
+  updated<em>at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT</em>TIMESTAMP,
+  created<em>at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT</em>TIMESTAMP
+);
+
+<p>-- Indexes
+CREATE INDEX idx<em>af</em>space<em>invitation</em>invitee<em>email ON af</em>space<em>invitation(LOWER(invitee</em>email));
+CREATE INDEX idx<em>af</em>space<em>invitation</em>inviter ON af<em>space</em>invitation(inviter);
+CREATE INDEX idx<em>af</em>space<em>invitation</em>space ON af<em>space</em>invitation(space<em>view</em>id);
+CREATE INDEX idx<em>af</em>space<em>invitation</em>workspace ON af<em>space</em>invitation(workspace_id);</p>
+
+-- Triggers
+CREATE TRIGGER af<em>space</em>invitation_accepted 
+  BEFORE UPDATE ON af<em>space</em>invitation 
+  FOR EACH ROW 
+  WHEN (OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 1)
+  EXECUTE FUNCTION add<em>to</em>af<em>space</em>member();</code></pre>
+
+<h3>Database Triggers</h3>
+
+<strong>Invitation Acceptance Trigger</strong>: When an invitation&#x27;s status changes to 1 (Accepted), automatically:
+<ol>
+  <li>Looks up the invitee&#x27;s user ID by email</li>
+  <li>Creates an <code>af<em>space</em>member</code> record with the specified role</li>
+  <li>Links the invitation to the newly created membership</li>
+</ol>
+
+<h2>Permission Model</h2>
+
+<h3>Role Hierarchy</h3>
+<pre><code class="language-rust">pub enum SpaceMemberRole {
+    Owner,   // Full control
+    Member,  // Read/write access
+    Guest,   // Read-only access
+}</code></pre>
+
+<h3>Permission Matrix</h3>
+
+<p><table><tr><td> Action </td><td> Public Space </td><td> Private Space </td></tr></table>
+<table><tr><td>--------</td><td>--------------</td><td>---------------</td></tr></table>
+<table><tr><td> <strong>Read</strong> </td><td> Any workspace member </td><td> Space members only </td></tr></table>
+<table><tr><td> <strong>Write</strong> </td><td> Space Member or Owner </td><td> Space Member or Owner </td></tr></table>
+<table><tr><td> <strong>Delete</strong> </td><td> Space Owner only </td><td> Space Owner only </td></tr></table>
+<table><tr><td> <strong>Invite</strong> </td><td> Space Owner only </td><td> Space Owner only </td></tr></table>
+<table><tr><td> <strong>Manage Members</strong> </td><td> Space Owner only </td><td> Space Owner only </td></tr></table></p>
+
+<h3>Access Control Rules</h3>
+
+<pre><code class="language-rust">fn required<em>role</em>for_action(action: &amp;Action) -&gt; AFRole {
+    match action {
+        Action::Delete =&gt; AFRole::Owner,
+        Action::Write =&gt; AFRole::Member,
+        Action::Read =&gt; AFRole::Guest,
+    }
+}</code></pre>
+
+<h3>Space Visibility</h3>
+
+<ul>
+  <li><strong>Public Spaces</strong>: </li>
+  <li>Any workspace member can read</li>
+  <li>Only space members can write</li>
+  <li>Visibility determined by folder metadata</li>
+</ul>
+  
+<ul>
+  <li><strong>Private Spaces</strong>:</li>
+  <li>Only space members can access (any operation)</li>
+  <li>No fallback to workspace permissions</li>
+  <li>Complete isolation from non-members</li>
+</ul>
+
+<h2>Integration Points</h2>
+
+<h3>1. Folder/View System Integration</h3>
+<pre><code class="language-rust">// Spaces are views in the folder hierarchy
+let folder = ws<em>server.get</em>folder(workspace_id).await?;
+let space<em>view = get</em>space<em>view</em>for<em>current</em>view(&amp;folder, &amp;view_id, uid);
+let is<em>private = check</em>if<em>space</em>is<em>private(&amp;folder, &amp;space</em>view.id);</code></pre>
+
+<h3>2. Real-time Collaboration</h3>
+<ul>
+  <li>Space membership affects real-time collab permissions</li>
+  <li>Integration with <code>WsServer</code> for folder data access</li>
+  <li>Plugin-based enforcement during collaboration operations</li>
+</ul>
+
+<h3>3. Workspace Access Control</h3>
+<ul>
+  <li>Fallback to workspace permissions for non-space views</li>
+  <li>Composable with existing <code>WorkspaceAccessControl</code></li>
+  <li>Space permissions override workspace permissions within spaces</li>
+</ul>
+
+<h3>4. Access Control Plugin System</h3>
+<pre><code class="language-rust">#[async_trait]
+impl AccessControlPlugin for SpaceAclPlugin {
+    async fn enforce<em>view</em>access(
+        &amp;self,
+        ctx: &amp;AccessContext,
+        view_id: &amp;Uuid,
+        action: &amp;Action,
+    ) -&gt; Result&lt;(), AppError&gt; {
+        // Resolve space context and enforce permissions
+    }
+}</code></pre>
+
+<h2>Configuration</h2>
+
+<h3>Environment Variables</h3>
+<pre><code class="language-bash"><h1>Enable/disable Space ACL feature</h1>
+SPACE<em>ACL</em>ENABLED=true  # Default: true</code></pre>
+
+<h3>Compilation</h3>
+<pre><code class="language-bash"><h1>Build with Space ACL support</h1>
+cargo build --features &quot;space_acl&quot;
+
+<h1>Build without Space ACL</h1>
+cargo build --no-default-features</code></pre>
+
+<h3>Runtime Configuration</h3>
+The feature can be toggled at runtime via environment variable without recompilation, but the code must be compiled with the <code>space_acl</code> feature flag.
+
+<h2>Error Handling</h2>
+
+<h3>Common Error Responses</h3>
+
+<p><table><tr><td> Error </td><td> HTTP Status </td><td> Message </td></tr></table>
+<table><tr><td>-------</td><td>-------------</td><td>---------</td></tr></table>
+<table><tr><td> Not space owner </td><td> 403 </td><td> &quot;User does not have permissions to execute this action&quot; </td></tr></table>
+<table><tr><td> Invalid space ID </td><td> 400 </td><td> &quot;invalid space_id, expected UUID&quot; </td></tr></table>
+<table><tr><td> User not found </td><td> 404 </td><td> &quot;Record not found&quot; </td></tr></table>
+<table><tr><td> Duplicate invitation </td><td> 400 </td><td> &quot;invitation already exists&quot; </td></tr></table>
+<table><tr><td> Self-invitation </td><td> 400 </td><td> &quot;cannot invite yourself&quot; </td></tr></table>
+<table><tr><td> Already member </td><td> 400 </td><td> &quot;user is already a member&quot; </td></tr></table>
+<table><tr><td> Feature disabled </td><td> 404 </td><td> &quot;Space ACL is disabled&quot; </td></tr></table></p>
+
+<h2>Security Considerations</h2>
+
+<ol>
+  <li><strong>Email Validation</strong>: Invitations use email addresses, ensure proper validation</li>
+  <li><strong>Permission Escalation</strong>: Only space owners can modify roles</li>
+  <li><strong>Cascade Deletion</strong>: Removing users or workspaces cascades to space memberships</li>
+  <li><strong>Case-Insensitive Emails</strong>: Database uses LOWER() for email comparisons</li>
+  <li><strong>Rate Limiting</strong>: Should be implemented at API gateway level</li>
+</ol>
+
+<h2>Future Enhancements</h2>
+
+<ol>
+  <li><strong>Batch Operations</strong>: Invite multiple members in one request</li>
+  <li><strong>Invitation Expiry</strong>: Add expiration timestamps to invitations</li>
+  <li><strong>Audit Logging</strong>: Track all permission changes</li>
+  <li><strong>Notification System</strong>: Email notifications for invitations</li>
+  <li><strong>Role Templates</strong>: Custom roles beyond Owner/Member/Guest</li>
+  <li><strong>Space Templates</strong>: Pre-configured permission sets</li>
+</ol>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

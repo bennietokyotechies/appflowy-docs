@@ -1,195 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unified Space & Project Management Implementation Plan</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-            background-color: #f8fafc;
-            color: #334155;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        
-        h1 {
-            color: #1e293b;
-            text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #3b82f6;
-        }
-        
-        h2 {
-            color: #1e293b;
-            margin-top: 40px;
-            margin-bottom: 20px;
-            padding-left: 15px;
-            border-left: 4px solid #3b82f6;
-        }
-        
-        h3 {
-            color: #475569;
-            margin-top: 30px;
-            margin-bottom: 15px;
-        }
-        
-        h4 {
-            color: #64748b;
-            margin-top: 25px;
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-        
-        .emoji {
-            font-size: 1.2em;
-            margin-right: 8px;
-        }
-        
-        .architecture-box {
-            background: #f1f5f9;
-            border: 2px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            font-family: monospace;
-            white-space: pre-line;
-        }
-        
-        .code-block {
-            background: #1e293b;
-            color: #e2e8f0;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 15px 0;
-            overflow-x: auto;
-            font-family: 'Fira Code', monospace;
-            font-size: 14px;
-        }
-        
-        .sql-block {
-            background: #0f172a;
-            color: #94a3b8;
-        }
-        
-        .typescript-block {
-            background: #1e293b;
-            color: #e2e8f0;
-        }
-        
-        .rust-block {
-            background: #2d1b69;
-            color: #e0e7ff;
-        }
-        
-        .phase-card {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: white;
-            border-radius: 12px;
-            padding: 25px;
-            margin: 25px 0;
-            box-shadow: 0 8px 25px -5px rgba(59, 130, 246, 0.3);
-        }
-        
-        .phase-title {
-            font-size: 1.5em;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-        
-        .benefits-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
-        }
-        
-        .benefit-item {
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 8px;
-            padding: 20px;
-        }
-        
-        .timeline-item {
-            background: #fefefe;
-            border-left: 4px solid #10b981;
-            padding: 15px 20px;
-            margin: 10px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .warning {
-            background: #fef3cd;
-            border: 1px solid #facc15;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-        }
-        
-        .success {
-            background: #dcfce7;
-            border: 1px solid #22c55e;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-        }
-        
-        ul, ol {
-            padding-left: 25px;
-        }
-        
-        li {
-            margin-bottom: 8px;
-        }
-        
-        .toc {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        
-        .toc ul {
-            list-style: none;
-            padding-left: 20px;
-        }
-        
-        .toc a {
-            text-decoration: none;
-            color: #3b82f6;
-            font-weight: 500;
-        }
-        
-        .toc a:hover {
-            text-decoration: underline;
-        }
-        
-        .status-complete {
-            color: #22c55e;
-            font-weight: bold;
-        }
-        
-        .status-pending {
-            color: #f59e0b;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unified Space & Project Management Implementation Plan - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
 </head>
 <body>
-    <div class="container">
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
         <h1><span class="emoji">🚀</span>Unified Space & Project Management Implementation Plan</h1>
         
         <div class="success">
@@ -393,7 +236,7 @@ export enum SpacePermission {
   ViewReports = 'view_reports'
 }
 
-export const DEFAULT_ROLE_PERMISSIONS: Record&lt;SpaceRole, SpacePermission[]&gt; = {
+export const DEFAULT_ROLE_PERMISSIONS: Record<SpaceRole, SpacePermission[]> = {
   [SpaceRole.Owner]: [
     // All permissions
     ...Object.values(SpacePermission)
@@ -441,7 +284,7 @@ impl SpaceMemberHandler {
         space_id: Uuid,
         inviter_uid: i32,
         req: SpaceMemberRequest
-    ) -> Result&lt;SpaceInvitation&gt; {
+    ) -> Result<SpaceInvitation> {
         // 1. Check if inviter has permission to invite
         let inviter_permissions = get_user_space_permissions(space_id, inviter_uid).await?;
         ensure_permission(&inviter_permissions, SpacePermission::InviteMembers)?;
@@ -455,7 +298,7 @@ impl SpaceMemberHandler {
         Ok(invitation)
     }
     
-    pub async fn list_members(space_id: Uuid, requester_uid: i32) -> Result&lt;Vec&lt;SpaceMember&gt;&gt; {
+    pub async fn list_members(space_id: Uuid, requester_uid: i32) -> Result<Vec<SpaceMember>> {
         // Check view members permission
         let permissions = get_user_space_permissions(space_id, requester_uid).await?;
         ensure_permission(&permissions, SpacePermission::ViewMembers)?;
@@ -468,7 +311,7 @@ impl SpaceMemberHandler {
         space_id: Uuid,
         user_uid: i32,
         permission: SpacePermission
-    ) -> Result&lt;bool&gt; {
+    ) -> Result<bool> {
         let permissions = get_user_space_permissions(space_id, user_uid).await?;
         Ok(permissions.contains(&permission))
     }
@@ -480,7 +323,7 @@ async fn create_task_with_document(
     workspace_id: Uuid,
     project_id: Uuid, 
     task_data: CreateTaskRequest
-) -> Result&lt;ProjectTask&gt; {
+) -> Result<ProjectTask> {
     let task_id = Uuid::new_v4();
     
     // 1. Create document view (inherits from existing page creation logic)
@@ -565,7 +408,7 @@ export class SpaceManagementService {
   async createSpace(
     workspaceId: string,
     data: CreateSpaceRequest
-  ): Promise&lt;EnhancedSpace&gt; {
+  ): Promise<EnhancedSpace> {
     const response = await api.post(`/api/workspace/${workspaceId}/spaces`, {
       ...data,
       space_type: data.space_type || SpaceType.DocumentSpace
@@ -577,12 +420,12 @@ export class SpaceManagementService {
   async inviteMember(
     spaceId: string,
     invitation: SpaceMemberRequest
-  ): Promise&lt;SpaceInvitation&gt; {
+  ): Promise<SpaceInvitation> {
     const response = await api.post(`/api/spaces/${spaceId}/members/invite`, invitation);
     return response.data;
   }
   
-  async getMembers(spaceId: string): Promise&lt;SpaceMember[]&gt; {
+  async getMembers(spaceId: string): Promise<SpaceMember[]> {
     const response = await api.get(`/api/spaces/${spaceId}/members`);
     return response.data;
   }
@@ -591,7 +434,7 @@ export class SpaceManagementService {
   async checkPermission(
     spaceId: string,
     permission: SpacePermission
-  ): Promise&lt;boolean&gt; {
+  ): Promise<boolean> {
     const response = await api.get(`/api/spaces/${spaceId}/permissions/${permission}`);
     return response.data.has_permission;
   }
@@ -600,72 +443,72 @@ export class SpaceManagementService {
             <h3>2.3 Space Member Management Component</h3>
             <div class="code-block typescript-block">// src/components/space/SpaceMemberManagement.tsx (NEW)
 
-export const SpaceMemberManagement: React.FC&lt;Props&gt; = ({ space, onUpdate }) => {
-  const [members, setMembers] = useState&lt;SpaceMember[]&gt;(space.members);
+export const SpaceMemberManagement: React.FC<Props> = ({ space, onUpdate }) => {
+  const [members, setMembers] = useState<SpaceMember[]>(space.members);
   const [showInviteModal, setShowInviteModal] = useState(false);
   
   const canManageMembers = space.my_permissions[SpacePermission.ManageRoles];
   const canInviteMembers = space.my_permissions[SpacePermission.InviteMembers];
   
   return (
-    &lt;Box&gt;
+    <Box>
       {/* Member Invitation */}
       {canInviteMembers && (
-        &lt;Box mb={3}&gt;
-          &lt;Button
+        <Box mb={3}>
+          <Button
             variant="contained"
-            startIcon={&lt;PersonAdd /&gt;}
+            startIcon={<PersonAdd />}
             onClick={() => setShowInviteModal(true)}
-          &gt;
+          >
             Invite Members
-          &lt;/Button&gt;
-        &lt;/Box&gt;
+          </Button>
+        </Box>
       )}
       
       {/* Current Members */}
-      &lt;Typography variant="h6" gutterBottom&gt;
+      <Typography variant="h6" gutterBottom>
         Members ({members.length})
-      &lt;/Typography&gt;
+      </Typography>
       
-      &lt;List&gt;
+      <List>
         {members.map((member) => (
-          &lt;ListItem key={member.user_uid}&gt;
-            &lt;ListItemAvatar&gt;
-              &lt;Avatar src={member.user?.avatar_url}&gt;
+          <ListItem key={member.user_uid}>
+            <ListItemAvatar>
+              <Avatar src={member.user?.avatar_url}>
                 {member.user?.name?.[0]}
-              &lt;/Avatar&gt;
-            &lt;/ListItemAvatar&gt;
+              </Avatar>
+            </ListItemAvatar>
             
-            &lt;ListItemText
+            <ListItemText
               primary={member.user?.name || member.user?.email}
               secondary={
-                &lt;Box display="flex" alignItems="center" gap={1}&gt;
-                  &lt;Chip
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Chip
                     label={member.role}
                     size="small"
                     color={getRoleColor(member.role)}
-                  /&gt;
-                  &lt;Typography variant="caption" color="textSecondary"&gt;
+                  />
+                  <Typography variant="caption" color="textSecondary">
                     {member.status === 'invited' ? 'Pending' : 'Active'}
-                  &lt;/Typography&gt;
-                &lt;/Box&gt;
+                  </Typography>
+                </Box>
               }
-            /&gt;
+            />
             
             {canManageMembers && member.user_uid !== space.created_by && (
-              &lt;ListItemSecondaryAction&gt;
-                &lt;IconButton
+              <ListItemSecondaryAction>
+                <IconButton
                   onClick={() => handleMemberAction(member)}
                   size="small"
-                &gt;
-                  &lt;MoreVert /&gt;
-                &lt;/IconButton&gt;
-              &lt;/ListItemSecondaryAction&gt;
+                >
+                  <MoreVert />
+                </IconButton>
+              </ListItemSecondaryAction>
             )}
-          &lt;/ListItem&gt;
+          </ListItem>
         ))}
-      &lt;/List&gt;
-    &lt;/Box&gt;
+      </List>
+    </Box>
   );
 };</div>
         </section>
@@ -689,7 +532,7 @@ export function DatabaseRowSubDocument({ rowId }: { rowId: string }) {
   const context = useDatabaseContext();
   const documentId = meta?.documentId;
   
-  const [doc, setDoc] = useState&lt;YDoc | null&gt;(null);
+  const [doc, setDoc] = useState<YDoc | null>(null);
   const [loading, setLoading] = useState(true);
   
   const handleOpenDocument = useCallback(async () => {
@@ -728,7 +571,7 @@ export function DatabaseRowSubDocument({ rowId }: { rowId: string }) {
             <h3>3.2 Enhanced Task Detail with Permissions</h3>
             <div class="code-block typescript-block">// src/components/project/task/EnhancedTaskDetailModal.tsx (ENHANCE EXISTING)
 
-export const EnhancedTaskDetailModal: React.FC&lt;Props&gt; = ({ 
+export const EnhancedTaskDetailModal: React.FC<Props> = ({ 
   task, 
   projectSpace, 
   open, 
@@ -746,49 +589,49 @@ export const EnhancedTaskDetailModal: React.FC&lt;Props&gt; = ({
   const canEditThisTask = canEditTasks || isAssignee || isCreator;
   
   return (
-    &lt;Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth&gt;
-      &lt;DialogTitle&gt;
-        &lt;Box display="flex" justifyContent="space-between" alignItems="flex-start"&gt;
-          &lt;Box flex={1}&gt;
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+      <DialogTitle>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+          <Box flex={1}>
             {canEditThisTask ? (
-              &lt;EditableTextField
+              <EditableTextField
                 value={task.title}
                 onSave={(title) => handleUpdateTask({ title })}
                 variant="h5"
-              /&gt;
+              />
             ) : (
-              &lt;Typography variant="h5"&gt;{task.title}&lt;/Typography&gt;
+              <Typography variant="h5">{task.title}</Typography>
             )}
-          &lt;/Box&gt;
-        &lt;/Box&gt;
-      &lt;/DialogTitle&gt;
+          </Box>
+        </Box>
+      </DialogTitle>
       
-      &lt;DialogContent&gt;
-        &lt;Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)}&gt;
-          &lt;Tab label="Details" /&gt;
-          &lt;Tab label="Content" /&gt;
-          &lt;Tab label="Activity" /&gt;
+      <DialogContent>
+        <Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)}>
+          <Tab label="Details" />
+          <Tab label="Content" />
+          <Tab label="Activity" />
           {projectSpace.my_permissions[SpacePermission.ViewReports] && (
-            &lt;Tab label="Time Tracking" /&gt;
+            <Tab label="Time Tracking" />
           )}
-        &lt;/Tabs&gt;
+        </Tabs>
         
-        &lt;TabPanel value={activeTab} index={1}&gt;
-          &lt;TaskContentPanel
+        <TabPanel value={activeTab} index={1}>
+          <TaskContentPanel
             task={task}
             canEdit={canEditThisTask}
             onDocumentChange={handleDocumentChange}
-          /&gt;
-        &lt;/TabPanel&gt;
-      &lt;/DialogContent&gt;
-    &lt;/Dialog&gt;
+          />
+        </TabPanel>
+      </DialogContent>
+    </Dialog>
   );
 };</div>
 
             <h3>3.3 Task Document Editor Component</h3>
             <div class="code-block typescript-block">// src/components/project/task/TaskDocumentEditor.tsx (NEW)
 
-export const TaskDocumentEditor: React.FC&lt;Props&gt; = ({ 
+export const TaskDocumentEditor: React.FC<Props> = ({ 
   taskId, 
   document, 
   onDocumentChange 
@@ -796,9 +639,9 @@ export const TaskDocumentEditor: React.FC&lt;Props&gt; = ({
   const { workspaceId } = useAppSelector(state => state.workspace);
   
   return (
-    &lt;div className="task-document-editor"&gt;
+    <div className="task-document-editor">
       {document ? (
-        &lt;Editor
+        <Editor
           workspaceId={workspaceId}
           viewId={taskId}  // Task ID serves as view ID
           doc={document}
@@ -806,18 +649,18 @@ export const TaskDocumentEditor: React.FC&lt;Props&gt; = ({
           loadView={ProjectExtensionService.getTaskDocument}
           onDocumentChange={onDocumentChange}
           placeholder="Add task details, notes, or documentation..."
-        /&gt;
+        />
       ) : (
-        &lt;div className="p-8 text-center"&gt;
-          &lt;Button 
+        <div className="p-8 text-center">
+          <Button 
             onClick={() => ProjectExtensionService.createTaskDocument(taskId)}
             variant="outlined"
-          &gt;
+          >
             Add Content to Task
-          &lt;/Button&gt;
-        &lt;/div&gt;
+          </Button>
+        </div>
       )}
-    &lt;/div&gt;
+    </div>
   );
 };</div>
         </section>
@@ -868,12 +711,12 @@ WHERE view_id IN (
 export class BackwardCompatibilityService {
   
   // Ensure existing project API calls still work
-  async getProject(projectId: string): Promise&lt;ProjectSpace&gt; {
+  async getProject(projectId: string): Promise<ProjectSpace> {
     // Map old project API to new space API
     return await SpaceManagementService.getSpaceWithPermissions(projectId);
   }
   
-  async createProject(workspaceId: string, data: CreateProjectRequest): Promise&lt;ProjectSpace&gt; {
+  async createProject(workspaceId: string, data: CreateProjectRequest): Promise<ProjectSpace> {
     // Map old project creation to new project space creation
     return await SpaceManagementService.createSpace(workspaceId, {
       ...data,
@@ -882,7 +725,7 @@ export class BackwardCompatibilityService {
   }
   
   // Ensure existing space functionality isn't broken
-  async migrateExistingSpace(spaceId: string): Promise&lt;EnhancedSpace&gt; {
+  async migrateExistingSpace(spaceId: string): Promise<EnhancedSpace> {
     // Add member management to existing spaces
     const space = await SpaceManagementService.getSpaceWithPermissions(spaceId);
     
@@ -998,11 +841,14 @@ export class BackwardCompatibilityService {
                 <p><strong>The result:</strong> A unified platform that combines the best of both worlds - structured task management with rich collaborative document editing, all wrapped in a comprehensive permission system that scales from small teams to large organizations.</p>
             </div>
         </section>
+      </article>
 
-        <footer style="margin-top: 60px; padding-top: 20px; border-top: 2px solid #e2e8f0; text-align: center; color: #64748b;">
-            <p><strong>Plan Generated:</strong> January 2025 | <strong>Status:</strong> Ready for Implementation</p>
-            <p><em>This plan provides a comprehensive roadmap for implementing unified space and project management with enterprise-grade member access control.</em></p>
-        </footer>
-    </div>
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
 </body>
 </html>

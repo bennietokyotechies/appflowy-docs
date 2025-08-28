@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppFlowy Database Service Implementation - Revised Plan (Post-Optimization) - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>AppFlowy Database Service Implementation - Revised Plan (Post-Optimization)</h1>
+
+<h2>Implementation Overview</h2>
+
+<strong>Project</strong>: AppFlowy Database Service - Project Management Extension with Board View  
+<strong>Architecture</strong>: Optimized standalone microservice with cargo-chef build optimization  
+<strong>Total Estimated Time</strong>: 28-32 hours (44% reduction from original 50-60 hours)  
+<strong>Current Status</strong>: Phases 1-2 Complete (Models &amp; Database Schema Ready)  
+<strong>Remaining Time</strong>: 20-24 hours (Phases 3-8)  
+<strong>Approach</strong>: Sequential implementation building on validated models
+
+<h3>Extension-Based Architecture</h3>
+
+<p>This implementation follows an <strong>extension-based architecture</strong> where:</p>
+
+<ol>
+  <li><strong>Main Backend</strong>: Handles document management (spaces &amp; pages) - comes out of the box</li>
+  <li><strong>Project Management Extension</strong>: Standalone databases service - optional installation</li>
+  <li><strong>Shared Infrastructure</strong>: Both services can use the same PostgreSQL instance</li>
+  <li><strong>API Integration</strong>: Main backend can proxy requests to extension services</li>
+</ol>
+
+<h3>Deployment Strategy</h3>
+
+<strong>Development Environment:</strong>
+<pre><code class="language-yaml"><h1>Document management only</h1>
+docker-compose up appflowy-backend postgres redis gotrue
+
+<h1>With project management extension  </h1>
+docker-compose up  # All services including databases service</code></pre>
+
+<strong>Production Flexibility:</strong>
+<ul>
+  <li><strong>Basic Plan</strong>: Deploy only document management</li>
+  <li><strong>Pro Plan</strong>: Deploy with project management extension</li>
+  <li><strong>Enterprise</strong>: Deploy with multiple extensions</li>
+</ul>
+
+<h3>Integration Points</h3>
+
+<p>The databases service will be accessed through:
+<ul>
+  <li><strong>Direct API</strong>: <code>http://localhost:8080/api/v1/*</code> (databases service)</li>
+  <li><strong>Proxy API</strong>: <code>http://localhost:8000/api/projects/*</code> → Forward to databases service</li>
+  <li><strong>Extension Management</strong>: Main backend manages extension lifecycle</li>
+</ul></p>
+
+<h2>Project Structure Setup</h2>
+
+<p>The implementation will create this structure:
+<pre><code class="language-">databases/
+├── Cargo.toml                    # Database service workspace
+├── src/
+│   ├── main.rs                   # Database service entry point
+│   ├── lib.rs                    # Library exports
+│   ├── models/                   # Core database models
+│   │   ├── mod.rs
+│   │   ├── database.rs          # Database entity
+│   │   ├── field.rs             # Field types and definitions
+│   │   ├── row.rs               # Row and cell data
+│   │   └── view.rs              # Base view model
+│   ├── views/                   # View-specific implementations
+│   │   ├── mod.rs
+│   │   └── board/               # Board (Kanban) view
+│   │       ├── mod.rs
+│   │       ├── models.rs        # Board-specific models
+│   │       ├── service.rs       # Board business logic
+│   │       └── handlers.rs      # Board API endpoints
+│   ├── services/                # Core database services
+│   │   ├── mod.rs
+│   │   ├── database_service.rs  # Database CRUD
+│   │   ├── field_service.rs     # Field management
+│   │   └── row_service.rs       # Row operations
+│   ├── handlers/                # Common API handlers
+│   │   ├── mod.rs
+│   │   ├── database_handlers.rs
+│   │   └── health_handlers.rs
+│   ├── db/                      # Database layer
+│   │   ├── mod.rs
+│   │   ├── connection.rs
+│   │   └── migrations.rs
+│   ├── utils/                   # Utilities
+│   │   ├── mod.rs
+│   │   └── test_data.rs
+│   └── config.rs                # Configuration
+├── migrations/                  # SQL migrations
+│   ├── 001<em>initial</em>schema.sql
+│   ├── 002<em>board</em>tables.sql
+│   └── 003<em>seed</em>data.sql
+├── docker-compose.yml           # Local development setup
+├── Dockerfile                   # Container configuration
+├── .env.example                 # Environment template
+├── scripts/
+│   ├── setup.sh                 # Development setup
+│   ├── test-api.sh              # API testing
+│   └── seed-data.sh             # Sample data
+├── tests/                       # Integration tests
+│   ├── board_tests.rs
+│   └── api_tests.rs
+└── README.md                    # Documentation</code></pre></p>
+
+<h2>✅ COMPLETED PHASES</h2>
+
+<h3>Phase 1: Advanced Project Setup and Optimization (COMPLETE)</h3>
+
+<h3>Phase 2: Data Models and Database Schema (COMPLETE)</h3>
+
+<strong>🚀 ACHIEVEMENTS COMPLETED:</strong>
+
+<h4>✅ 1.1 - Optimized Project Structure (COMPLETE)</h4>
+<ul>
+  <li><strong>Standalone Cargo.toml</strong>: Converted from workspace dependencies to explicit versions</li>
+  <li><strong>73% Build Context Reduction</strong>: 679KB+ → 184KB for faster builds</li>
+  <li><strong>Core Dependencies</strong>: actix-web, sqlx, serde, chrono, uuid, tokio, anyhow configured</li>
+  <li><strong>Health Check</strong>: Working endpoint at GET /health</li>
+  <li><strong>Logging</strong>: env_logger and structured logging setup</li>
+</ul>
+
+<h4>✅ 1.2 - Advanced Docker and Database Setup (COMPLETE) </h4>
+<ul>
+  <li><strong>cargo-chef Optimization</strong>: Multi-stage Docker with efficient dependency caching</li>
+  <li><strong>PostgreSQL 15</strong>: Isolated database &quot;appflowy_databases&quot; </li>
+  <li><strong>Production Docker</strong>: Security, health checks, non-root user, minimal runtime image</li>
+  <li><strong>Database Connection</strong>: Full connection pool with health checks in src/db/connection.rs</li>
+  <li><strong>Port 8080</strong>: No conflicts with main backend (port 8000)</li>
+</ul>
+
+<h4>✅ 1.3 - Build Optimization and Performance (COMPLETE)</h4>
+<ul>
+  <li><strong>Standalone Operation</strong>: No workspace coupling, true microservice architecture</li>
+  <li><strong>Fast Builds</strong>: cargo-chef eliminates rebuild time for dependencies</li>
+  <li><strong>Docker Layers</strong>: Optimized layer caching and .dockerignore</li>
+  <li><strong>Extension Ready</strong>: Complete isolation for independent deployment</li>
+</ul>
+
+<strong>🔍 VERIFICATION COMPLETE:</strong>
+<pre><code class="language-bash">✅ cargo check                    # Compiles in 1.14s
+✅ cargo run --bin databases      # Starts successfully
+✅ curl http://localhost:8080/health  # Returns {&quot;service&quot;:&quot;databases&quot;,&quot;status&quot;:&quot;ok&quot;}
+✅ docker-compose up              # Full environment ready
+✅ Build context: 184KB           # 73% reduction achieved</code></pre>
+
+<h2>🎯 REMAINING IMPLEMENTATION PHASES</h2>
+
+<h3>Phase 3: Enhanced Database Layer (6 hours)</h3>
+
+<em>Building on completed Phase 2 models and database schema</em>
+
+<h4>Prompt 3.1 - Database Service Implementation (3 hours)</h4>
+<pre><code class="language-">Build database service leveraging completed models from Phase 2 and existing optimized database connection:
+
+<ol>
+  <li>DatabaseService in src/services/database_service.rs:</li>
+<ul>
+  <li>Use existing PgPool from src/db/connection.rs</li>
+</ol>
+  <li>Integrate with completed Database, Field, Row models from Phase 2</li>
+  <li>Service struct with proper dependency injection</li>
+  <li>Connection pool management and health checks</li>
+</ul>
+
+<ol>
+  <li>Enhanced CRUD operations with validation:</li>
+<ul>
+  <li>create_database(request: CreateDatabaseRequest) -&gt; Result&lt;Database&gt;</li>
+</ol>
+  <li>get<em>database</em>with_fields(id: Uuid) -&gt; Result&lt;DatabaseResponse&gt;</li>
+  <li>list<em>databases</em>paginated(page: i32, limit: i32) -&gt; Result&lt;Vec&lt;Database&gt;&gt;</li>
+  <li>update_database(id: Uuid, updates: UpdateDatabaseRequest) -&gt; Result&lt;Database&gt;</li>
+  <li>delete<em>database</em>cascade(id: Uuid) -&gt; Result&lt;()&gt; // with related data</li>
+</ul>
+
+<ol>
+  <li>Field management with type validation:</li>
+<ul>
+  <li>create<em>field</em>with<em>validation(database</em>id: Uuid, field: CreateFieldRequest) -&gt; Result&lt;Field&gt;</li>
+</ol>
+  <li>get<em>fields</em>ordered(database_id: Uuid) -&gt; Result&lt;Vec&lt;Field&gt;&gt;</li>
+  <li>update<em>field</em>with<em>migration(field</em>id: Uuid, updates: UpdateFieldRequest) -&gt; Result&lt;Field&gt;</li>
+  <li>delete<em>field</em>with<em>data</em>cleanup(field_id: Uuid) -&gt; Result&lt;()&gt;</li>
+  <li>reorder<em>fields(database</em>id: Uuid, field_order: Vec&lt;Uuid&gt;) -&gt; Result&lt;()&gt;</li>
+</ul>
+
+<ol>
+  <li>Row operations with cell type handling:</li>
+<ul>
+  <li>create<em>row</em>with<em>defaults(database</em>id: Uuid, cells: HashMap&lt;Uuid, CellValue&gt;) -&gt; Result&lt;Row&gt;</li>
+</ol>
+  <li>get<em>row</em>with<em>formatted</em>cells(row_id: Uuid) -&gt; Result&lt;Option&lt;RowResponse&gt;&gt;</li>
+  <li>update<em>row</em>cells(row<em>id: Uuid, cell</em>updates: HashMap&lt;Uuid, CellValue&gt;) -&gt; Result&lt;Row&gt;</li>
+  <li>bulk<em>update</em>rows(updates: Vec&lt;RowUpdate&gt;) -&gt; Result&lt;Vec&lt;Row&gt;&gt;</li>
+  <li>delete<em>row</em>cascade(row_id: Uuid) -&gt; Result&lt;()&gt;</li>
+</ul>
+
+<ol>
+  <li>Advanced features:</li>
+<ul>
+  <li>Transaction support for complex operations</li>
+</ol>
+  <li>Proper error handling with specific error types</li>
+  <li>Logging with correlation IDs</li>
+  <li>Performance monitoring and query optimization</li>
+  <li>Connection pool health monitoring</code></pre></li>
+</ul>
+
+<strong>🔍 Verification Steps:</strong>
+<pre><code class="language-bash"><h1>1. Test database service compiles</h1>
+cargo check
+<h1>Should compile without errors</h1>
+
+<h1>2. Test CRUD operations</h1>
+cargo test database_service
+<h1>Should pass all service tests</h1>
+
+<h1>3. Test database creation</h1>
+curl -X POST http://localhost:8080/api/v1/databases \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;name&quot;: &quot;Test Database&quot;}&#x27;
+<h1>Should return created database with ID</h1>
+
+<h1>4. Test field operations</h1>
+curl -X POST http://localhost:8080/api/v1/databases/{database_id}/fields \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;name&quot;: &quot;Status&quot;, &quot;field_type&quot;: &quot;Status&quot;, &quot;options&quot;: {...}}&#x27;
+<h1>Should create field successfully</h1>
+
+<h1>5. Test row operations</h1>
+curl -X POST http://localhost:8080/api/v1/databases/{database_id}/rows \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;cells&quot;: {&quot;field_id&quot;: &quot;value&quot;}}&#x27;
+<h1>Should create row successfully</h1></code></pre>
+
+<h4>Prompt 3.2 - Board Service Implementation</h4>
+<pre><code class="language-">Build enhanced board service on top of completed board models from Phase 2.2:
+
+<ol>
+  <li>Enhanced BoardService struct building on existing simplified service:</li>
+<ul>
+  <li>Replace queries<em>simple.rs and service</em>simple.rs with full implementations</li>
+</ol>
+  <li>Integrate with completed BoardView, BoardGroup, BoardCard models</li>
+  <li>db_pool: Arc&lt;PgPool&gt;</li>
+  <li>database_service: Arc&lt;DatabaseService&gt;</li>
+</ul>
+
+<ol>
+  <li>Board view management:</li>
+<ul>
+  <li>create<em>board</em>view(database<em>id: Uuid, name: String, group</em>by<em>field</em>id: Uuid) -&gt; Result&lt;BoardView&gt;</li>
+</ol>
+  <li>get<em>board</em>view(view_id: Uuid) -&gt; Result&lt;BoardView&gt;</li>
+  <li>update<em>board</em>view(view_id: Uuid, updates: UpdateBoardView) -&gt; Result&lt;BoardView&gt;</li>
+  <li>delete<em>board</em>view(view_id: Uuid) -&gt; Result&lt;()&gt;</li>
+</ul>
+
+<ol>
+  <li>Board data operations:</li>
+<ul>
+  <li>get<em>board</em>data(view_id: Uuid) -&gt; Result&lt;BoardData&gt;</li>
+</ol>
+  <li>get<em>cards</em>for<em>group(view</em>id: Uuid, group_id: String) -&gt; Result&lt;Vec&lt;BoardCard&gt;&gt;</li>
+  <li>get<em>all</em>groups(view_id: Uuid) -&gt; Result&lt;Vec&lt;BoardGroup&gt;&gt;</li>
+</ul>
+
+<ol>
+  <li>Card operations:</li>
+<ul>
+  <li>add<em>card(database</em>id: Uuid, group_id: String, title: String) -&gt; Result&lt;BoardCard&gt;</li>
+</ol>
+  <li>move<em>card(row</em>id: Uuid, from<em>group: String, to</em>group: String, position: i32) -&gt; Result&lt;()&gt;</li>
+  <li>update<em>card(row</em>id: Uuid, updates: CardUpdates) -&gt; Result&lt;BoardCard&gt;</li>
+  <li>delete<em>card(row</em>id: Uuid) -&gt; Result&lt;()&gt;</li>
+</ul>
+
+<ol>
+  <li>Group management:</li>
+<ul>
+  <li>create<em>group(view</em>id: Uuid, name: String, color: String) -&gt; Result&lt;BoardGroup&gt;</li>
+</ol>
+  <li>update<em>group(group</em>id: String, updates: GroupUpdates) -&gt; Result&lt;BoardGroup&gt;</li>
+  <li>reorder<em>groups(view</em>id: Uuid, group_order: Vec&lt;String&gt;) -&gt; Result&lt;()&gt;</li>
+</ul>
+
+<ol>
+  <li>Advanced operations:</li>
+<ul>
+  <li>reorder<em>cards</em>in_group with proper position management</li>
+</ol>
+  <li>bulk<em>move</em>cards for multiple selections</li>
+  <li>get<em>board</em>statistics (card counts, etc.)</li>
+</ul>
+
+<ol>
+  <li>Add comprehensive error handling and logging</code></pre></li>
+</ol>
+
+<strong>🔍 Verification Steps:</strong>
+<pre><code class="language-bash"><h1>1. Test board service compiles</h1>
+cargo check
+<h1>Should compile without errors</h1>
+
+<h1>2. Test board service functions</h1>
+cargo test board_service
+<h1>Should pass all board operation tests</h1>
+
+<h1>3. Test board view creation</h1>
+curl -X POST http://localhost:8080/api/v1/databases/{database_id}/views/board \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;name&quot;: &quot;Sprint Board&quot;, &quot;group<em>by</em>field<em>id&quot;: &quot;{field</em>id}&quot;}&#x27;
+<h1>Should create board view successfully</h1>
+
+<h1>4. Test getting board data</h1>
+curl http://localhost:8080/api/v1/views/board/{view_id}
+<h1>Should return board with groups and cards</h1>
+
+<h1>5. Test card operations</h1>
+curl -X POST http://localhost:8080/api/v1/views/board/{view_id}/cards \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;group_id&quot;: &quot;todo&quot;, &quot;title&quot;: &quot;Test Card&quot;}&#x27;
+<h1>Should add card to board successfully</h1></code></pre>
+
+<h3>Phase 4: API Layer Implementation (8 hours)</h3>
+
+<em>Building on completed models and services from Phases 2-3</em>
+
+<h4>Prompt 4.1 - Database API Endpoints</h4>
+<pre><code class="language-">Create database API handlers in src/handlers/database_handlers.rs using completed models:
+
+<ol>
+  <li>Configure routes function that sets up:</li>
+<ul>
+  <li>POST /api/v1/databases (create database)</li>
+</ol>
+  <li>GET /api/v1/databases (list databases)</li>
+  <li>GET /api/v1/databases/{id} (get database with fields)</li>
+  <li>DELETE /api/v1/databases/{id} (delete database)</li>
+</ul>
+
+<ol>
+  <li>Field management endpoints:</li>
+<ul>
+  <li>POST /api/v1/databases/{id}/fields (add field)</li>
+</ol>
+  <li>GET /api/v1/databases/{id}/fields (list fields)</li>
+  <li>PUT /api/v1/databases/{id}/fields/{field_id} (update field)</li>
+  <li>DELETE /api/v1/databases/{id}/fields/{field_id} (delete field)</li>
+</ul>
+
+<ol>
+  <li>Row management endpoints:</li>
+<ul>
+  <li>GET /api/v1/databases/{id}/rows (list rows with pagination)</li>
+</ol>
+  <li>POST /api/v1/databases/{id}/rows (create row)</li>
+  <li>PUT /api/v1/databases/{id}/rows/{row_id} (update row)</li>
+  <li>DELETE /api/v1/databases/{id}/rows/{row_id} (delete row)</li>
+</ul>
+
+<ol>
+  <li>Implement proper request validation, error handling, and response formatting</li>
+</ol>
+
+<ol>
+  <li>Add CORS configuration for local development</li>
+</ol>
+
+<ol>
+  <li>Include request/response logging and timing middleware</code></pre></li>
+</ol>
+
+<strong>🔍 Verification Steps:</strong>
+<pre><code class="language-bash"><h1>1. Test API endpoints compile</h1>
+cargo check
+<h1>Should compile without errors</h1>
+
+<h1>2. Test all database endpoints</h1>
+curl -X POST http://localhost:8080/api/v1/databases -d &#x27;{&quot;name&quot;:&quot;Test DB&quot;}&#x27;
+curl http://localhost:8080/api/v1/databases
+curl http://localhost:8080/api/v1/databases/{id}
+<h1>Should all return appropriate responses</h1>
+
+<h1>3. Test field endpoints</h1>
+curl -X POST http://localhost:8080/api/v1/databases/{id}/fields -d &#x27;{...field data...}&#x27;
+curl http://localhost:8080/api/v1/databases/{id}/fields
+<h1>Should handle field operations</h1>
+
+<h1>4. Test request validation</h1>
+curl -X POST http://localhost:8080/api/v1/databases -d &#x27;{&quot;invalid&quot;:&quot;data&quot;}&#x27;
+<h1>Should return validation error with helpful message</h1>
+
+<h1>5. Check CORS and middleware</h1>
+curl -v http://localhost:8080/api/v1/databases
+<h1>Should include CORS headers and timing information</h1></code></pre>
+
+<h4>Prompt 4.2 - Board API Endpoints</h4>
+<pre><code class="language-">Create board API handlers in src/views/board/handlers.rs using completed board models:
+
+<ol>
+  <li>Board view endpoints:</li>
+<ul>
+  <li>POST /api/v1/databases/{id}/views/board (create board view)</li>
+</ol>
+  <li>GET /api/v1/views/board/{view_id} (get complete board data)</li>
+  <li>PUT /api/v1/views/board/{view_id} (update board settings)</li>
+  <li>DELETE /api/v1/views/board/{view_id} (delete board view)</li>
+</ul>
+
+<ol>
+  <li>Card operation endpoints:</li>
+<ul>
+  <li>POST /api/v1/views/board/{view_id}/cards (add new card)</li>
+</ol>
+  <li>PUT /api/v1/views/board/cards/{card_id}/move (move card between groups)</li>
+  <li>PUT /api/v1/views/board/cards/{card_id} (update card)</li>
+  <li>DELETE /api/v1/views/board/cards/{card_id} (delete card)</li>
+</ul>
+
+<ol>
+  <li>Group management endpoints:</li>
+<ul>
+  <li>GET /api/v1/views/board/{view_id}/groups (get groups)</li>
+</ol>
+  <li>POST /api/v1/views/board/{view_id}/groups (add group)</li>
+  <li>PUT /api/v1/views/board/groups/{group_id} (update group)</li>
+  <li>PUT /api/v1/views/board/{view_id}/groups/reorder (reorder groups)</li>
+</ul>
+
+<ol>
+  <li>Bulk operations:</li>
+<ul>
+  <li>POST /api/v1/views/board/cards/bulk-move (move multiple cards)</li>
+</ol>
+  <li>DELETE /api/v1/views/board/cards/bulk-delete (delete multiple cards)</li>
+</ul>
+
+<ol>
+  <li>Add proper JSON schema validation for all requests</li>
+</ol>
+
+<ol>
+  <li>Implement comprehensive error responses with helpful messages</li>
+</ol>
+
+<ol>
+  <li>Add API documentation comments for OpenAPI generation</code></pre></li>
+</ol>
+
+<strong>🔍 Verification Steps:</strong>
+<pre><code class="language-bash"><h1>1. Test board API compiles</h1>
+cargo check
+<h1>Should compile without errors</h1>
+
+<h1>2. Test complete board workflow</h1>
+<h1>Create database -&gt; Create board view -&gt; Add cards -&gt; Move cards</h1>
+./scripts/test-board-workflow.sh
+<h1>Should complete entire workflow successfully</h1>
+
+<h1>3. Test board view operations</h1>
+curl -X POST http://localhost:8080/api/v1/databases/{id}/views/board -d &#x27;{...board data...}&#x27;
+curl http://localhost:8080/api/v1/views/board/{view_id}
+<h1>Should create and retrieve board view</h1>
+
+<h1>4. Test card drag and drop</h1>
+curl -X PUT http://localhost:8080/api/v1/views/board/cards/{card_id}/move \
+  -d &#x27;{&quot;from<em>group&quot;:&quot;todo&quot;,&quot;to</em>group&quot;:&quot;in_progress&quot;,&quot;position&quot;:0}&#x27;
+<h1>Should move card successfully</h1>
+
+<h1>5. Test error handling</h1>
+curl -X POST http://localhost:8080/api/v1/views/board/{invalid_id}/cards
+<h1>Should return appropriate error message</h1>
+
+<h1>6. Test bulk operations</h1>
+curl -X POST http://localhost:8080/api/v1/views/board/cards/bulk-move \
+  -d &#x27;{&quot;card<em>ids&quot;:[&quot;id1&quot;,&quot;id2&quot;],&quot;target</em>group&quot;:&quot;done&quot;,&quot;position&quot;:0}&#x27;
+<h1>Should move multiple cards</h1></code></pre>
+
+<h3>Phase 5: Testing and Development Tools (6 hours)</h3>
+
+<h4>Prompt 5.1 - Test Data Generator and API Explorer</h4>
+<pre><code class="language-">Create testing utilities in src/utils/test<em>data.rs and src/handlers/test</em>handlers.rs:
+
+<ol>
+  <li>Test data generator functions:</li>
+<ul>
+  <li>create<em>sample</em>database() -&gt; creates database with status field</li>
+</ol>
+  <li>create<em>sample</em>board(database_id: Uuid) -&gt; creates board view</li>
+  <li>generate<em>sample</em>cards(board<em>view</em>id: Uuid, count: usize) -&gt; adds random cards</li>
+  <li>create<em>complete</em>test_setup() -&gt; full board with groups and cards</li>
+</ul>
+
+<ol>
+  <li>API testing endpoints:</li>
+<ul>
+  <li>POST /api/test/setup (create complete test environment)</li>
+</ol>
+  <li>POST /api/test/reset (clear all data)</li>
+  <li>GET /api/test/sample-board (get sample board ID)</li>
+  <li>POST /api/test/generate-cards/{count} (add random cards)</li>
+</ul>
+
+<ol>
+  <li>Create simple HTML board explorer at GET /explorer:</li>
+<ul>
+  <li>Visual board representation</li>
+</ol>
+  <li>Drag and drop interface using HTML5 drag API</li>
+  <li>Forms for adding cards and groups</li>
+  <li>Real-time API calls to backend</li>
+  <li>Simple CSS styling for board layout</li>
+</ul>
+
+<ol>
+  <li>API testing scripts in scripts/test-api.sh:</li>
+<ul>
+  <li>Test database creation</li>
+</ol>
+  <li>Test board creation</li>
+  <li>Test card operations</li>
+  <li>Test drag and drop simulation</li>
+</ul>
+
+<ol>
+  <li>Add debugging endpoints:</li>
+<ul>
+  <li>GET /api/debug/database/{id}/stats (database statistics)</li>
+</ol>
+  <li>GET /api/debug/views/board/{view_id}/structure (board structure info)</li>
+  <li>GET /api/debug/logs (recent application logs)</code></pre></li>
+</ul>
+
+<strong>🔍 Verification Steps:</strong>
+<pre><code class="language-bash"><h1>1. Test data generator works</h1>
+curl -X POST http://localhost:8080/api/test/setup
+<h1>Should create complete test environment</h1>
+
+<h1>2. Test API explorer interface</h1>
+open http://localhost:8080/explorer
+<h1>Should show visual board interface</h1>
+
+<h1>3. Test drag and drop in explorer</h1>
+<h1>Manually drag cards between columns in browser</h1>
+<h1>Should update board state via API calls</h1>
+
+<h1>4. Test sample data generation</h1>
+curl -X POST http://localhost:8080/api/test/generate-cards/10
+<h1>Should add 10 random cards to board</h1>
+
+<h1>5. Test API testing scripts</h1>
+./scripts/test-api.sh
+<h1>Should run complete API test suite</h1>
+
+<h1>6. Test debugging endpoints</h1>
+curl http://localhost:8080/api/debug/database/{id}/stats
+<h1>Should return database statistics</h1>
+
+<h1>7. Verify test data cleanup</h1>
+curl -X POST http://localhost:8080/api/test/reset
+<h1>Should clear all test data</h1></code></pre>
+
+<h4>Prompt 5.2 - Integration Tests</h4>
+<pre><code class="language-">Create comprehensive tests in tests/:
+
+<ol>
+  <li>In tests/board_tests.rs:</li>
+<ul>
+  <li>test<em>create</em>board_view() - create board with proper validation</li>
+</ol>
+  <li>test<em>add</em>cards<em>to</em>groups() - add cards to different groups</li>
+  <li>test<em>move</em>card<em>between</em>groups() - drag and drop simulation</li>
+  <li>test<em>reorder</em>cards<em>within</em>group() - position management</li>
+  <li>test<em>group</em>management() - add/update/delete groups</li>
+  <li>test<em>bulk</em>operations() - multiple card operations</li>
+</ul>
+
+<ol>
+  <li>In tests/api_tests.rs:</li>
+<ul>
+  <li>test<em>database</em>crud_operations() - complete CRUD workflow</li>
+</ol>
+  <li>test<em>field</em>management() - field operations</li>
+  <li>test<em>board</em>api_endpoints() - all board endpoints</li>
+  <li>test<em>error</em>handling() - error response validation</li>
+  <li>test<em>concurrent</em>operations() - multiple users simulation</li>
+</ul>
+
+<ol>
+  <li>Test utilities:</li>
+<ul>
+  <li>setup<em>test</em>database() - prepare test environment</li>
+</ol>
+  <li>create<em>test</em>client() - HTTP client setup</li>
+  <li>assert<em>board</em>state() - validate board structure</li>
+  <li>cleanup<em>test</em>data() - test data cleanup</li>
+</ul>
+
+<ol>
+  <li>Performance tests:</li>
+<ul>
+  <li>test<em>large</em>board_performance() - 1000+ cards</li>
+</ol>
+  <li>test<em>concurrent</em>card_moves() - race condition testing</li>
+  <li>test<em>database</em>queries() - query performance validation</li>
+</ul>
+
+<ol>
+  <li>Add test configuration and helper functions for easy test data management</code></pre></li>
+</ol>
+
+<strong>🔍 Verification Steps:</strong>
+<pre><code class="language-bash"><h1>1. Run all integration tests</h1>
+cargo test
+<h1>Should pass all tests with 90%+ coverage</h1>
+
+<h1>2. Run specific test suites</h1>
+cargo test board_tests
+cargo test api_tests
+<h1>Should pass all board and API tests</h1>
+
+<h1>3. Test concurrent operations</h1>
+cargo test test<em>concurrent</em>card_moves
+<h1>Should handle race conditions properly</h1>
+
+<h1>4. Test with large dataset</h1>
+cargo test test<em>large</em>board_performance
+<h1>Should handle 1000+ cards efficiently</h1>
+
+<h1>5. Test error scenarios</h1>
+cargo test test<em>error</em>handling
+<h1>Should validate error responses</h1>
+
+<h1>6. Check test coverage</h1>
+cargo tarpaulin --out html
+<h1>Should show high test coverage report</h1></code></pre>
+
+<h3>Phase 6: Advanced Board Features (8 hours)</h3>
+
+<h4>Prompt 6.1 - Advanced Card Operations</h4>
+<pre><code class="language-">Enhance board functionality with advanced features:
+
+<ol>
+  <li>Card positioning system:</li>
+<ul>
+  <li>implement<em>fractional</em>positions() - use fractional indexing for smooth reordering</li>
+</ol>
+  <li>optimize<em>card</em>positions() - periodic position cleanup</li>
+  <li>handle<em>position</em>conflicts() - resolve ordering conflicts</li>
+</ul>
+
+<ol>
+  <li>Enhanced card operations:</li>
+<ul>
+  <li>duplicate<em>card(card</em>id: Uuid) -&gt; Result&lt;BoardCard&gt;</li>
+</ol>
+  <li>bulk<em>move</em>cards(card<em>ids: Vec&lt;Uuid&gt;, target</em>group: String, position: i32) -&gt; Result&lt;()&gt;</li>
+  <li>copy<em>cards</em>to<em>group(card</em>ids: Vec&lt;Uuid&gt;, target_group: String) -&gt; Result&lt;Vec&lt;BoardCard&gt;&gt;</li>
+</ul>
+
+<ol>
+  <li>Card templates and quick actions:</li>
+<ul>
+  <li>create<em>card</em>template(template: CardTemplate) -&gt; Result&lt;CardTemplate&gt;</li>
+</ol>
+  <li>apply<em>template</em>to<em>card(card</em>id: Uuid, template_id: Uuid) -&gt; Result&lt;BoardCard&gt;</li>
+  <li>quick<em>add</em>card(group_id: String, title: String) -&gt; Result&lt;BoardCard&gt;</li>
+</ul>
+
+<ol>
+  <li>Card search and filtering:</li>
+<ul>
+  <li>search<em>cards(view</em>id: Uuid, query: String) -&gt; Result&lt;Vec&lt;BoardCard&gt;&gt;</li>
+</ol>
+  <li>filter<em>cards</em>by<em>field(view</em>id: Uuid, field_id: Uuid, value: CellValue) -&gt; Result&lt;Vec&lt;BoardCard&gt;&gt;</li>
+  <li>get<em>cards</em>by<em>criteria(view</em>id: Uuid, criteria: CardCriteria) -&gt; Result&lt;Vec&lt;BoardCard&gt;&gt;</li>
+</ul>
+
+<ol>
+  <li>Card metadata and history:</li>
+<ul>
+  <li>get<em>card</em>activity(card_id: Uuid) -&gt; Result&lt;Vec&lt;CardActivity&gt;&gt;</li>
+</ol>
+  <li>track<em>card</em>movements() - log all card position changes</li>
+  <li>calculate<em>card</em>metrics() - time in group, movement frequency</code></pre></li>
+</ul>
+
+<strong>🔍 Verification Steps:</strong>
+<pre><code class="language-bash"><h1>1. Test advanced card operations</h1>
+cargo test advanced<em>card</em>operations
+<h1>Should pass all advanced feature tests</h1>
+
+<h1>2. Test card positioning system</h1>
+curl -X PUT http://localhost:8080/api/v1/views/board/cards/{id}/move \
+  -d &#x27;{&quot;from<em>group&quot;:&quot;todo&quot;,&quot;to</em>group&quot;:&quot;done&quot;,&quot;position&quot;:1.5}&#x27;
+<h1>Should handle fractional positioning</h1>
+
+<h1>3. Test bulk operations</h1>
+curl -X POST http://localhost:8080/api/v1/views/board/cards/bulk-move \
+  -d &#x27;{&quot;card<em>ids&quot;:[&quot;id1&quot;,&quot;id2&quot;,&quot;id3&quot;],&quot;target</em>group&quot;:&quot;in_progress&quot;,&quot;position&quot;:0}&#x27;
+<h1>Should move multiple cards efficiently</h1>
+
+<h1>4. Test card search</h1>
+curl &quot;http://localhost:8080/api/v1/views/board/{view_id}/search?q=urgent&quot;
+<h1>Should return matching cards</h1>
+
+<h1>5. Test card templates</h1>
+curl -X POST http://localhost:8080/api/v1/templates/card \
+  -d &#x27;{&quot;name&quot;:&quot;Bug Template&quot;,&quot;fields&quot;:{&quot;priority&quot;:&quot;high&quot;,&quot;type&quot;:&quot;bug&quot;}}&#x27;
+<h1>Should create and apply templates</h1></code></pre>
+
+<h4>Prompt 6.2 - Board Customization and Views</h4>
+<pre><code class="language-">Add board customization and view management features:
+
+<ol>
+  <li>Board appearance customization:</li>
+<ul>
+  <li>update<em>board</em>theme(view_id: Uuid, theme: BoardTheme) -&gt; Result&lt;BoardView&gt;</li>
+</ol>
+  <li>set<em>group</em>colors(view<em>id: Uuid, color</em>map: HashMap&lt;String, String&gt;) -&gt; Result&lt;()&gt;</li>
+  <li>configure<em>card</em>display(view<em>id: Uuid, display</em>config: CardDisplayConfig) -&gt; Result&lt;()&gt;</li>
+</ul>
+
+<ol>
+  <li>Multiple board views per database:</li>
+<ul>
+  <li>create<em>board</em>view<em>from</em>template(database_id: Uuid, template: ViewTemplate) -&gt; Result&lt;BoardView&gt;</li>
+</ol>
+  <li>clone<em>board</em>view(source<em>view</em>id: Uuid, new_name: String) -&gt; Result&lt;BoardView&gt;</li>
+  <li>get<em>all</em>board<em>views(database</em>id: Uuid) -&gt; Result&lt;Vec&lt;BoardView&gt;&gt;</li>
+</ul>
+
+<ol>
+  <li>Board filtering and sorting:</li>
+<ul>
+  <li>apply<em>board</em>filters(view_id: Uuid, filters: Vec&lt;BoardFilter&gt;) -&gt; Result&lt;BoardData&gt;</li>
+</ol>
+  <li>sort<em>groups</em>by<em>criteria(view</em>id: Uuid, sort_config: GroupSortConfig) -&gt; Result&lt;()&gt;</li>
+  <li>hide<em>empty</em>groups(view_id: Uuid, hide: bool) -&gt; Result&lt;BoardView&gt;</li>
+</ul>
+
+<ol>
+  <li>Board statistics and analytics:</li>
+<ul>
+  <li>get<em>board</em>statistics(view_id: Uuid) -&gt; Result&lt;BoardStats&gt;</li>
+</ol>
+  <li>calculate<em>group</em>metrics(view_id: Uuid) -&gt; Result&lt;HashMap&lt;String, GroupMetrics&gt;&gt;</li>
+  <li>generate<em>board</em>report(view<em>id: Uuid, date</em>range: DateRange) -&gt; Result&lt;BoardReport&gt;</li>
+</ul>
+
+<ol>
+  <li>Board export and sharing:</li>
+<ul>
+  <li>export<em>board</em>to<em>json(view</em>id: Uuid) -&gt; Result&lt;serde_json::Value&gt;</li>
+</ol>
+  <li>import<em>board</em>from<em>json(database</em>id: Uuid, json<em>data: serde</em>json::Value) -&gt; Result&lt;BoardView&gt;</li>
+  <li>generate<em>board</em>snapshot(view_id: Uuid) -&gt; Result&lt;BoardSnapshot&gt;</code></pre></li>
+</ul>
+
+<strong>🔍 Verification Steps:</strong>
+<pre><code class="language-bash"><h1>1. Test board customization</h1>
+curl -X PUT http://localhost:8080/api/v1/views/board/{view_id}/theme \
+  -d &#x27;{&quot;primary_color&quot;:&quot;#3b82f6&quot;,&quot;background&quot;:&quot;#f8fafc&quot;}&#x27;
+<h1>Should update board appearance</h1>
+
+<h1>2. Test multiple board views</h1>
+curl -X POST http://localhost:8080/api/v1/databases/{id}/views/board \
+  -d &#x27;{&quot;name&quot;:&quot;Sprint Board&quot;,&quot;group<em>by</em>field<em>id&quot;:&quot;{field</em>id}&quot;}&#x27;
+curl -X POST http://localhost:8080/api/v1/databases/{id}/views/board \
+  -d &#x27;{&quot;name&quot;:&quot;Bug Board&quot;,&quot;group<em>by</em>field<em>id&quot;:&quot;{priority</em>field_id}&quot;}&#x27;
+<h1>Should create multiple views for same database</h1>
+
+<h1>3. Test board filtering</h1>
+curl &quot;http://localhost:8080/api/v1/views/board/{view_id}?filter=priority:high&quot;
+<h1>Should return filtered board data</h1>
+
+<h1>4. Test board export</h1>
+curl http://localhost:8080/api/v1/views/board/{view_id}/export
+<h1>Should return complete board data as JSON</h1>
+
+<h1>5. Test board statistics</h1>
+curl http://localhost:8080/api/v1/views/board/{view_id}/stats
+<h1>Should return card counts, group metrics, etc.</h1></code></pre>
+
+<h3>Phase 7: Performance and Optimization (5 hours)</h3>
+
+<h4>Prompt 7.1 - Performance Optimization</h4>
+<pre><code class="language-">Optimize the board backend for better performance:
+
+<ol>
+  <li>Database query optimization:</li>
+<ul>
+  <li>Add strategic indexes for board queries</li>
+</ol>
+  <li>Implement query result caching for frequently accessed data</li>
+  <li>Optimize the get<em>board</em>data query to minimize database calls</li>
+  <li>Add connection pooling configuration</li>
+</ul>
+
+<ol>
+  <li>Memory optimization:</li>
+<ul>
+  <li>Implement pagination for large boards</li>
+</ol>
+  <li>Add lazy loading for card details</li>
+  <li>Optimize JSON serialization for large datasets</li>
+  <li>Add memory usage monitoring</li>
+</ul>
+
+<ol>
+  <li>Caching layer:</li>
+<ul>
+  <li>Cache board structure data</li>
+</ol>
+  <li>Cache frequently accessed cards</li>
+  <li>Implement cache invalidation strategies</li>
+  <li>Add cache performance metrics</li>
+</ul>
+
+<ol>
+  <li>API performance:</li>
+<ul>
+  <li>Add request/response compression</li>
+</ol>
+  <li>Implement batch operations for bulk changes</li>
+  <li>Add response timing headers</li>
+  <li>Optimize JSON payload sizes</li>
+</ul>
+
+<ol>
+  <li>Load testing setup:</li>
+<ul>
+  <li>Create load test scenarios for board operations</li>
+</ol>
+  <li>Test concurrent card movements</li>
+  <li>Measure performance with large datasets</li>
+  <li>Add performance benchmarks</code></pre></li>
+</ul>
+
+<strong>🔍 Verification Steps:</strong>
+<pre><code class="language-bash"><h1>1. Test performance improvements</h1>
+cargo test performance_tests
+<h1>Should pass all performance benchmarks</h1>
+
+<h1>2. Test with large board (1000+ cards)</h1>
+curl -X POST http://localhost:8080/api/test/generate-large-board/1000
+curl http://localhost:8080/api/v1/views/board/{view_id}
+<h1>Should load large board in &lt; 2 seconds</h1>
+
+<h1>3. Test caching effectiveness</h1>
+curl http://localhost:8080/api/v1/views/board/{view_id}  # First call
+curl http://localhost:8080/api/v1/views/board/{view_id}  # Cached call
+<h1>Second call should be significantly faster</h1>
+
+<h1>4. Test concurrent operations</h1>
+./scripts/load-test.sh
+<h1>Should handle multiple concurrent users without issues</h1>
+
+<h1>5. Check memory usage</h1>
+curl http://localhost:8080/api/debug/memory
+<h1>Should show reasonable memory consumption</h1>
+
+<h1>6. Test pagination performance</h1>
+curl &quot;http://localhost:8080/api/v1/databases/{id}/rows?page=1&amp;limit=100&quot;
+<h1>Should handle pagination efficiently</h1></code></pre>
+
+<h4>Prompt 7.2 - Error Handling and Logging</h4>
+<pre><code class="language-">Enhance error handling and observability:
+
+<ol>
+  <li>Comprehensive error handling:</li>
+<ul>
+  <li>Create custom error types for different failure scenarios</li>
+</ol>
+  <li>Add proper error context and tracing</li>
+  <li>Implement graceful degradation for non-critical failures</li>
+  <li>Add error recovery mechanisms</li>
+</ul>
+
+<ol>
+  <li>Logging and observability:</li>
+<ul>
+  <li>Add structured logging with correlation IDs</li>
+</ol>
+  <li>Log all board operations for audit trail</li>
+  <li>Add performance metrics collection</li>
+  <li>Implement health check endpoints</li>
+</ul>
+
+<ol>
+  <li>Validation and data integrity:</li>
+<ul>
+  <li>Add comprehensive input validation</li>
+</ol>
+  <li>Implement data consistency checks</li>
+  <li>Add transaction rollback for complex operations</li>
+  <li>Validate board state integrity</li>
+</ul>
+
+<ol>
+  <li>Development and debugging tools:</li>
+<ul>
+  <li>Add debug endpoints for troubleshooting</li>
+</ol>
+  <li>Implement request tracing</li>
+  <li>Add performance profiling endpoints</li>
+  <li>Create diagnostic utilities</li>
+</ul>
+
+<ol>
+  <li>Production readiness:</li>
+<ul>
+  <li>Add graceful shutdown handling</li>
+</ol>
+  <li>Implement proper signal handling</li>
+  <li>Add resource cleanup mechanisms</li>
+  <li>Add monitoring and alerting hooks</code></pre></li>
+</ul>
+
+<strong>🔍 Verification Steps:</strong>
+<pre><code class="language-bash"><h1>1. Test error handling</h1>
+curl -X POST http://localhost:8080/api/v1/databases/{invalid_id}/views/board
+<h1>Should return proper error with correlation ID</h1>
+
+<h1>2. Test validation errors</h1>
+curl -X POST http://localhost:8080/api/v1/databases \
+  -d &#x27;{&quot;name&quot;:&quot;&quot;,&quot;invalid_field&quot;:&quot;value&quot;}&#x27;
+<h1>Should return detailed validation errors</h1>
+
+<h1>3. Test logging and tracing</h1>
+tail -f logs/app.log
+<h1>Should show structured logs with correlation IDs</h1>
+
+<h1>4. Test health checks</h1>
+curl http://localhost:8080/health
+curl http://localhost:8080/health/db
+curl http://localhost:8080/health/ready
+<h1>Should return comprehensive health status</h1>
+
+<h1>5. Test graceful shutdown</h1>
+kill -TERM &lt;app_pid&gt;
+<h1>Should gracefully close connections and cleanup resources</h1>
+
+<h1>6. Test debug endpoints</h1>
+curl http://localhost:8080/api/debug/metrics
+curl http://localhost:8080/api/debug/trace/{correlation_id}
+<h1>Should provide debugging information</h1></code></pre>
+
+<h3>Phase 8: Documentation and Final Polish (6 hours)</h3>
+
+<h4>Prompt 8.1 - API Documentation and Examples</h4>
+<pre><code class="language-">Create comprehensive documentation:
+
+<ol>
+  <li>API documentation in README.md:</li>
+<ul>
+  <li>Quick start guide with setup instructions</li>
+</ol>
+  <li>Complete API reference with request/response examples</li>
+  <li>Board concept explanation and use cases</li>
+  <li>Development workflow documentation</li>
+</ul>
+
+<ol>
+  <li>OpenAPI specification:</li>
+<ul>
+  <li>Generate OpenAPI 3.0 spec from code annotations</li>
+</ol>
+  <li>Include request/response schemas</li>
+  <li>Add example requests for all endpoints</li>
+  <li>Create interactive API documentation</li>
+</ul>
+
+<ol>
+  <li>Code examples and tutorials:</li>
+<ul>
+  <li>Frontend integration examples</li>
+</ol>
+  <li>JavaScript/TypeScript client examples</li>
+  <li>Common board operation workflows</li>
+  <li>Error handling best practices</li>
+</ul>
+
+<ol>
+  <li>Development guides:</li>
+<ul>
+  <li>Local development setup</li>
+</ol>
+  <li>Testing strategies</li>
+  <li>Database schema documentation</li>
+  <li>Deployment configuration</li>
+</ul>
+
+<ol>
+  <li>API client libraries:</li>
+<ul>
+  <li>Generate TypeScript client types</li>
+</ol>
+  <li>Create JavaScript SDK examples</li>
+  <li>Add curl command examples</li>
+  <li>Provide Postman collection</code></pre></li>
+</ul>
+
+<strong>🔍 Verification Steps:</strong>
+<pre><code class="language-bash"><h1>1. Check documentation is generated</h1>
+cargo doc --open
+<h1>Should open comprehensive API documentation</h1>
+
+<h1>2. Test OpenAPI spec</h1>
+curl http://localhost:8080/api/openapi.json
+<h1>Should return valid OpenAPI 3.0 specification</h1>
+
+<h1>3. Test interactive docs</h1>
+open http://localhost:8080/docs
+<h1>Should show Swagger UI with working examples</h1>
+
+<h1>4. Validate TypeScript types</h1>
+cd client-examples/typescript
+npm install &amp;&amp; npm run build
+<h1>Should compile TypeScript client without errors</h1>
+
+<h1>5. Test curl examples</h1>
+./examples/curl-examples.sh
+<h1>Should run all API examples successfully</h1>
+
+<h1>6. Test Postman collection</h1>
+<h1>Import postman-collection.json into Postman</h1>
+<h1>Should run all requests successfully</h1></code></pre>
+
+<h4>Prompt 8.2 - Final Integration and Testing</h4>
+<pre><code class="language-">Complete the implementation with final integration:
+
+<ol>
+  <li>End-to-end testing:</li>
+<ul>
+  <li>Create complete board workflow tests</li>
+</ol>
+  <li>Test error scenarios and edge cases</li>
+  <li>Validate API contract compliance</li>
+  <li>Add performance regression tests</li>
+</ul>
+
+<ol>
+  <li>Integration improvements:</li>
+<ul>
+  <li>Optimize startup time</li>
+</ol>
+  <li>Add configuration validation</li>
+  <li>Improve error messages</li>
+  <li>Add request validation middleware</li>
+</ul>
+
+<ol>
+  <li>Production readiness:</li>
+<ul>
+  <li>Add environment-specific configurations</li>
+</ol>
+  <li>Implement proper logging levels</li>
+  <li>Add security headers</li>
+  <li>Create deployment scripts</li>
+</ul>
+
+<ol>
+  <li>Final documentation:</li>
+<ul>
+  <li>Update README with complete setup instructions</li>
+</ol>
+  <li>Add troubleshooting guide</li>
+  <li>Document known limitations</li>
+  <li>Create migration guide from test to production</li>
+</ul>
+
+<ol>
+  <li>Quality assurance:</li>
+<ul>
+  <li>Run full test suite</li>
+</ol>
+  <li>Validate all API endpoints</li>
+  <li>Check error handling scenarios</li>
+  <li>Verify board functionality completeness</li>
+</ul>
+
+<ol>
+  <li>Deployment preparation:</li>
+<ul>
+  <li>Create production Docker configuration</li>
+</ol>
+  <li>Add environment variable documentation</li>
+  <li>Create backup and recovery procedures</li>
+  <li>Add monitoring and alerting setup</code></pre></li>
+</ul>
+
+<strong>🔍 Verification Steps:</strong>
+<pre><code class="language-bash"><h1>1. Run complete test suite</h1>
+cargo test --all
+<h1>Should pass all tests (unit, integration, performance)</h1>
+
+<h1>2. Run end-to-end workflow test</h1>
+./scripts/e2e-test.sh
+<h1>Should complete full board workflow without errors</h1>
+
+<h1>3. Test production build</h1>
+cargo build --release
+<h1>Should build optimized production binary</h1>
+
+<h1>4. Test complete API contract</h1>
+./scripts/api-contract-test.sh
+<h1>Should validate all API endpoints and responses</h1>
+
+<h1>5. Test deployment configuration</h1>
+docker-compose -f docker-compose.prod.yml up
+<h1>Should start production-ready containers</h1>
+
+<h1>6. Final system verification</h1>
+./scripts/system-health-check.sh
+<h1>Should verify all system components are working</h1>
+
+<h1>7. Performance validation</h1>
+./scripts/performance-test.sh
+<h1>Should meet all performance requirements</h1>
+
+<h1>8. Security validation</h1>
+./scripts/security-check.sh
+<h1>Should pass basic security checks</h1></code></pre>
+
+<strong>🎯 Final Success Criteria:</strong>
+<ul>
+  <li>All tests pass (unit, integration, e2e) - ✅ 51 tests currently passing</li>
+  <li>API responds within performance targets (&lt; 200ms)</li>
+  <li>Documentation is complete and accurate</li>
+  <li>Board workflow works end-to-end</li>
+  <li>Ready for frontend integration</li>
+</ul>
+
+<h2>Execution Instructions (Updated for Optimized Foundation)</h2>
+
+<h3>How to Use These Revised Prompts:</h3>
+
+<ol>
+  <li><strong>Start from Phase 3</strong>: Phases 1-2 are complete with models and database schema ready</li>
+</ol>
+
+<ol>
+  <li><strong>Leverage Completed Foundation</strong>: Each verification step benefits from:</li>
+<ul>
+  <li><strong>Fast compilation</strong>: ~1.5s with enhanced models loaded</li>
+</ol>
+  <li><strong>Comprehensive models</strong>: All database, field, row, and board models complete</li>
+  <li><strong>Validated data structures</strong>: 51 tests passing with full validation</li>
+  <li><strong>Database schema ready</strong>: Migrations and board models implemented</li>
+</ul>
+
+<ol>
+  <li><strong>Enhanced Development Strategy</strong>: Build on existing components:</li>
+</ol>
+   <pre><code class="language-bash">   cargo check                    # Fast compilation with all models
+   cargo test                     # 51 tests passing (models + board)
+   docker-compose up              # Optimized container with schema ready
+   curl http://localhost:8080/health  # Working health checks
+   ``<code>
+
+<ol>
+  <li><strong>Progressive Implementation</strong>: Next phases build on solid foundation:</li>
+<ul>
+  <li><strong>Phase 3</strong>: Service layer using completed models</li>
+</ol>
+  <li><strong>Phase 4</strong>: API handlers with validated request/response types</li>
+  <li><strong>Phase 5+</strong>: Advanced features on proven architecture</li>
+</ul>
+
+<ol>
+  <li><strong>Proven Architecture</strong>: Every remaining phase builds on validated models and optimized setup</li>
+</ol>
+
+<h3>Success Criteria for Remaining Phases:</h3>
+
+<ul>
+  <li><strong>✅ Phase 1</strong>: COMPLETE - Optimized foundation ready</li>
+  <li><strong>✅ Phase 2</strong>: COMPLETE - Enhanced models with comprehensive validation</li>
+  <li><strong>Phase 3</strong>: Services integrate with completed models and database connection</li>
+  <li><strong>Phase 4</strong>: API endpoints leverage validated request/response types</li>
+  <li><strong>Phase 5</strong>: Tests run efficiently with comprehensive model coverage</li>
+  <li><strong>Phase 6</strong>: Production features ready for deployment</li>
+</ul>
+
+<h3>Updated Final Deliverable:</h3>
+
+<p>A <strong>production-ready</strong> AppFlowy Database Service that achieves:</p>
+
+<strong>🚀 Performance Achievements:</strong>
+<ul>
+  <li><strong>73% faster builds</strong> (184KB vs 679KB+ context)</li>
+  <li><strong>cargo-chef optimization</strong> for dependency caching</li>
+  <li><strong>Standalone deployment</strong> with no workspace coupling</li>
+  <li><strong>Production Docker</strong> with security and monitoring</li>
+</ul>
+
+<strong>🏗️ Architecture Benefits:</strong>
+<ul>
+  <li><strong>True Microservice</strong>: Complete independence from main backend</li>
+  <li><strong>Extension Ready</strong>: Optional installation and lifecycle management</li>
+  <li><strong>Modern Stack</strong>: Optimized build system, security, observability</li>
+  <li><strong>Scalable Foundation</strong>: Ready for additional view types and features</li>
+</ul>
+
+<strong>🎯 Integration Advantages:</strong>
+<ul>
+  <li><strong>Direct API</strong>: </code>http://localhost:8080/api/v1/*<code> (optimized performance)</li>
+  <li><strong>Docker Ready</strong>: Production-ready containers with cargo-chef</li>
+  <li><strong>Development Friendly</strong>: Fast iteration with optimized build system</li>
+  <li><strong>Extension Model</strong>: Standalone operation with optional integration</li>
+</ul>
+
+<strong>📈 Development Efficiency:</strong>
+<ul>
+  <li><strong>44% time reduction</strong> (28-32 hours vs 50-60 hours original)</li>
+  <li><strong>33% work complete</strong> (Phases 1-2 finished: 8-12 hours completed)</li>
+  <li><strong>Faster feedback loops</strong> with optimized compilation and validated models</li>
+  <li><strong>Production readiness</strong> built-in from foundation</li>
+  <li><strong>Modern DevOps</strong> with optimized Docker and caching</li>
+</ul>
+
+<h4>✅ 2.1 - Enhanced Database Models (COMPLETE)</h4>
+<ul>
+  <li><strong>Complete database.rs</strong>: Database struct with validation, CreateDatabaseRequest, UpdateDatabaseRequest</li>
+  <li><strong>Comprehensive field.rs</strong>: 8 field types (Text, Number, Date, SingleSelect, MultiSelect, Status, Checkbox, Url)</li>
+  <li><strong>Enhanced row.rs</strong>: Row struct with JSONB cell storage, fractional positioning system</li>
+  <li><strong>Extensible view.rs</strong>: BaseView struct supporting multiple view types</li>
+  <li><strong>Validator Integration</strong>: Full validation with custom functions and error handling</li>
+  <li><strong>SQLx Integration</strong>: Models with proper derive macros and database compatibility</li>
+</ul>
+
+<h4>✅ 2.2 - Board-Specific Models and Database Schema (COMPLETE)</h4>
+<ul>
+  <li><strong>Database Migrations</strong>: 4 comprehensive SQL files (001-004) with triggers, functions, indexes</li>
+  <li><strong>Board Models</strong>: BoardView, BoardGroup, BoardCard structs in views/board/models.rs</li>
+  <li><strong>Board Validation</strong>: Comprehensive validation system in board_validation.rs  </li>
+  <li><strong>Request/Response Types</strong>: Complete API structs with validation</li>
+  <li><strong>Simplified Database Layer</strong>: queries<em>simple.rs and service</em>simple.rs for SQLx offline compatibility</li>
+  <li><strong>Position Management</strong>: Fractional indexing utilities for smooth card reordering</li>
+  <li><strong>Business Logic</strong>: Board settings, card movement validation, consistency checks</li>
+</ul>
+
+<strong>🔍 VERIFICATION COMPLETE:</strong></code></pre>bash
+✅ cargo check                    # Compiles with enhanced models
+✅ cargo test                     # All 51 tests passing
+✅ sqlx migrations (simplified)   # Schema-ready implementation
+✅ Field validation               # All 8 field types validated
+✅ Board operations              # Card movement, positioning working
+</code>`<code>
+
+<strong>🚀 Technical Achievements:</strong>
+<ul>
+  <li><strong>SQLx Offline Compatibility</strong>: Simplified query implementations avoid compilation issues</li>
+  <li><strong>Comprehensive Validation</strong>: Field-specific validation for all data types</li>
+  <li><strong>Fractional Positioning</strong>: Smooth card reordering with position management</li>
+  <li><strong>Extensible Architecture</strong>: Board models support future view types</li>
+  <li><strong>Production Models</strong>: Complete request/response structures for API layer</li>
+</ul>
+
+<strong>📝 Implementation Notes and Lessons Learned:</strong>
+
+<em>Key Solutions Implemented:</em>
+<ol>
+  <li><strong>SQLx Offline Challenge</strong>: Created queries<em>simple.rs and service</em>simple.rs to handle SQLX_OFFLINE=true compilation without cached data</li>
+  <li><strong>Validator Syntax</strong>: Fixed custom validation from </code>#[validate(custom = &quot;function&quot;)]<code> to </code>#[validate(custom(function = &quot;function&quot;))]`</li>
+  <li><strong>Field Type Flexibility</strong>: Status field accepts both single string and array values for maximum compatibility</li>
+  <li><strong>Fractional Positioning</strong>: Implemented needs_rebalancing detection with 0.001 threshold for position management</li>
+  <li><strong>Comprehensive Models</strong>: All 8 field types with specific validation rules and error handling</li>
+</ol>
+
+<em>Development Approach:</em>
+<ul>
+  <li><strong>Simplified Database Layer</strong>: Focus on model completeness over complex query optimization</li>
+  <li><strong>Validation First</strong>: Built comprehensive validation before database integration</li>
+  <li><strong>Test-Driven Development</strong>: 51 tests passing ensures model reliability</li>
+  <li><strong>Progressive Enhancement</strong>: Simple implementations first, then optimize in later phases</li>
+</ul>
+
+<strong>Ready for:</strong>
+<ul>
+  <li><strong>Phase 3 Implementation</strong> with solid model foundation</li>
+  <li><strong>Service Layer Development</strong> building on validated models</li>
+  <li><strong>API Layer Implementation</strong> with complete request/response types</li>
+  <li><strong>Frontend Integration</strong> with comprehensive data structures</li>
+  <li><strong>Advanced Features</strong> built on extensible model architecture</li>
+</ul>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

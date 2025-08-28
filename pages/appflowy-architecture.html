@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppFlowy Desktop Software Architecture Design Document - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>AppFlowy Desktop Software Architecture Design Document</h1>
+
+<h2>Executive Summary</h2>
+
+<p>AppFlowy is an open-source productivity workspace application built with a hybrid Flutter-Rust architecture. It serves as an alternative to Notion, featuring a local-first design with optional cloud synchronization, real-time collaboration, and AI integration capabilities.</p>
+
+<h2>Architecture Overview</h2>
+
+<h3>Technology Stack</h3>
+
+<p><table><tr><td> Layer </td><td> Technology </td><td> Purpose </td></tr></table>
+<table><tr><td>-------</td><td>------------</td><td>---------</td></tr></table>
+<table><tr><td> <strong>Frontend</strong> </td><td> Flutter (Dart) </td><td> Cross-platform UI and user interactions </td></tr></table>
+<table><tr><td> <strong>Core Logic</strong> </td><td> Rust </td><td> Business logic, data processing, and system services </td></tr></table>
+<table><tr><td> <strong>Database</strong> </td><td> SQLite + Diesel ORM </td><td> Local data persistence </td></tr></table>
+<table><tr><td> <strong>Collaboration</strong> </td><td> Yrs (CRDT) </td><td> Real-time collaborative editing </td></tr></table>
+<table><tr><td> <strong>Communication</strong> </td><td> FFI + Protobuf </td><td> Flutter-Rust interoperability </td></tr></table>
+<table><tr><td> <strong>State Management</strong> </td><td> BLoC Pattern </td><td> UI state management </td></tr></table></p>
+
+<h3>High-Level Architecture</h3>
+
+<pre><code class="language-">┌─────────────────────────────────────────────────────────────┐
+│                    Flutter Frontend Layer                   │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │   Features  │  │   Plugins   │  │     UI      │          │
+│  │   (BLoC)    │  │  (Modular)  │  │  Components │          │
+│  └─────────────┘  └─────────────┘  └─────────────┘          │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ FFI Bridge (dart-ffi)
+┌──────────────────────┴──────────────────────────────────────┐
+│                      Rust Core Layer                        │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │   Managers  │  │   Services  │  │    Events   │          │
+│  │  (Business) │  │   (Domain)  │  │  Dispatcher │          │
+│  └─────────────┘  └─────────────┘  └─────────────┘          │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+┌──────────────────────┴──────────────────────────────────────┐
+│                    Infrastructure Layer                     │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │   SQLite    │  │ File System │  │   Network   │          │
+│  │  Database   │  │   Storage   │  │   (Cloud)   │          │
+│  └─────────────┘  └─────────────┘  └─────────────┘          │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+
+<h2>Core Architectural Patterns</h2>
+
+<h3>1. Plugin-Based Modular Architecture</h3>
+
+<p>AppFlowy implements a plugin system where each major feature domain is encapsulated as a plugin:</p>
+
+<ul>
+  <li><strong>User Plugin</strong>: Authentication and user management</li>
+  <li><strong>Folder Plugin</strong>: Workspace hierarchy and navigation</li>
+  <li><strong>Document Plugin</strong>: Rich text editing capabilities</li>
+  <li><strong>Database Plugin</strong>: Grid, Board, and Calendar views</li>
+  <li><strong>AI Plugin</strong>: AI-powered features and chat interface</li>
+  <li><strong>Search Plugin</strong>: Full-text search functionality</li>
+  <li><strong>Storage Plugin</strong>: File and media management</li>
+</ul>
+
+<p>Each plugin follows a consistent structure:
+<pre><code class="language-">plugin/
+├── application/     # Business logic (BLoC)
+├── data/           # Data models and repositories
+├── domain/         # Domain entities and services
+└── presentation/   # UI widgets and screens</code></pre></p>
+
+<h3>2. Event-Driven Communication</h3>
+
+<p>The system uses an event-driven architecture for communication between layers:</p>
+
+<ul>
+  <li><strong>Event Dispatcher</strong>: Central hub for routing events between Flutter and Rust</li>
+  <li><strong>Type-Safe Events</strong>: Protobuf-defined event schemas</li>
+  <li><strong>Asynchronous Processing</strong>: Non-blocking event handling</li>
+  <li><strong>Bidirectional Communication</strong>: Events flow both from Flutter→Rust and Rust→Flutter</li>
+</ul>
+
+<h3>3. Clean Architecture Layers</h3>
+
+<p>The application follows clean architecture principles with clear separation of concerns:</p>
+
+<ol>
+  <li><strong>Presentation Layer</strong> (Flutter)</li>
+<ul>
+  <li>UI components and widgets</li>
+</ol>
+  <li>User interaction handling</li>
+  <li>Visual state management</li>
+</ul>
+
+<ol>
+  <li><strong>Application Layer</strong> (Flutter BLoC)</li>
+<ul>
+  <li>Business logic orchestration</li>
+</ol>
+  <li>Use case implementation</li>
+  <li>State transformation</li>
+</ul>
+
+<ol>
+  <li><strong>Domain Layer</strong> (Rust)</li>
+<ul>
+  <li>Core business rules</li>
+</ol>
+  <li>Domain entities</li>
+  <li>Service interfaces</li>
+</ul>
+
+<ol>
+  <li><strong>Infrastructure Layer</strong> (Rust)</li>
+<ul>
+  <li>Data persistence</li>
+</ol>
+  <li>External service integration</li>
+  <li>Platform-specific implementations</li>
+</ul>
+
+<h2>Key Components</h2>
+
+<h3>Flutter Frontend Components</h3>
+
+<h4>Application Initialization</h4>
+The application follows a task-based initialization pattern:
+
+<pre><code class="language-">main.dart → FlowyRunner → Task System → Application Ready</code></pre>
+
+<p>Key initialization tasks:
+<ul>
+  <li>Platform setup</li>
+  <li>Localization loading</li>
+  <li>Window initialization</li>
+  <li>Rust SDK initialization</li>
+  <li>Plugin registration</li>
+  <li>Service configuration</li>
+</ul></p>
+
+<h4>State Management</h4>
+<ul>
+  <li><strong>BLoC Pattern</strong>: Used consistently across all features</li>
+  <li><strong>GetIt</strong>: Service locator for dependency injection</li>
+  <li><strong>Provider</strong>: Widget tree dependency propagation</li>
+</ul>
+
+<h3>Rust Core Components</h3>
+
+<h4>Manager Architecture</h4>
+Each domain has a dedicated manager in the Rust core:
+
+<pre><code class="language-rust">AppFlowyCore {
+    user_manager: UserManager,
+    document_manager: DocumentManager,
+    folder_manager: FolderManager,
+    database_manager: DatabaseManager,
+    ai_manager: AIManager,
+    search_manager: SearchManager,
+    storage_manager: StorageManager,
+}</code></pre>
+
+<h4>Data Persistence</h4>
+<ul>
+  <li><strong>Local Storage</strong>: SQLite database with Diesel ORM</li>
+  <li><strong>Migration System</strong>: Versioned database schema migrations</li>
+  <li><strong>Caching</strong>: Multi-layer caching strategy</li>
+  <li><strong>File Storage</strong>: Platform-specific file system access</li>
+</ul>
+
+<h2>Collaboration Architecture</h2>
+
+<h3>CRDT-Based Synchronization</h3>
+<ul>
+  <li><strong>Yrs Library</strong>: Y.js port for Rust implementing CRDTs</li>
+  <li><strong>Conflict Resolution</strong>: Automatic merge of concurrent edits</li>
+  <li><strong>Offline Support</strong>: Changes synced when connection restored</li>
+  <li><strong>Real-time Updates</strong>: WebSocket-based live collaboration</li>
+</ul>
+
+<h3>Cloud Integration</h3>
+<ul>
+  <li><strong>Optional Cloud Sync</strong>: Can operate fully offline</li>
+  <li><strong>AppFlowy Cloud</strong>: Official cloud backend</li>
+  <li><strong>Self-Hosting</strong>: Supports custom backend deployment</li>
+</ul>
+
+<h2>Cross-Platform Considerations</h2>
+
+<h3>Platform Support Matrix</h3>
+<table><tr><td> Platform </td><td> Support Level </td><td> Specific Features </td></tr></table>
+<table><tr><td>----------</td><td>--------------</td><td>-------------------</td></tr></table>
+<table><tr><td> Windows </td><td> Full </td><td> Native window management </td></tr></table>
+<table><tr><td> macOS </td><td> Full </td><td> Native menu integration </td></tr></table>
+<table><tr><td> Linux </td><td> Full </td><td> X11/Wayland support </td></tr></table>
+<table><tr><td> iOS </td><td> Partial </td><td> Mobile-optimized UI </td></tr></table>
+<table><tr><td> Android </td><td> Partial </td><td> Touch-optimized interface </td></tr></table>
+<table><tr><td> Web </td><td> Limited </td><td> Basic functionality </td></tr></table>
+
+<h3>Platform Abstraction</h3>
+<ul>
+  <li><strong>Flutter</strong>: Handles most platform differences</li>
+  <li><strong>Rust FFI</strong>: Platform-specific implementations</li>
+  <li><strong>Conditional Compilation</strong>: Platform-specific code paths</li>
+</ul>
+
+<h2>Performance Optimization Strategies</h2>
+
+<h3>Memory Management</h3>
+<ul>
+  <li><strong>Rust Ownership</strong>: Zero-cost memory safety</li>
+  <li><strong>Weak References</strong>: Prevents circular dependencies</li>
+  <li><strong>Lazy Loading</strong>: On-demand resource initialization</li>
+</ul>
+
+<h3>Rendering Performance</h3>
+<ul>
+  <li><strong>Flutter Optimization</strong>: 60fps rendering target</li>
+  <li><strong>Virtual Scrolling</strong>: Efficient large list handling</li>
+  <li><strong>Widget Recycling</strong>: Reusable component pools</li>
+</ul>
+
+<h3>Data Performance</h3>
+<ul>
+  <li><strong>Incremental Sync</strong>: Minimal data transfer</li>
+  <li><strong>Batch Operations</strong>: Grouped database transactions</li>
+  <li><strong>Index Optimization</strong>: Strategic database indexing</li>
+</ul>
+
+<h2>Security Architecture</h2>
+
+<h3>Data Security</h3>
+<ul>
+  <li><strong>Local Encryption</strong>: Optional database encryption</li>
+  <li><strong>Secure Storage</strong>: Platform keychain integration</li>
+  <li><strong>Memory Protection</strong>: Sensitive data handling</li>
+</ul>
+
+<h3>Authentication</h3>
+<ul>
+  <li><strong>Local Authentication</strong>: Self-contained user system</li>
+  <li><strong>Cloud Authentication</strong>: OAuth2/JWT for cloud features</li>
+  <li><strong>Session Management</strong>: Secure token handling</li>
+</ul>
+
+<h2>Extensibility</h2>
+
+<h3>Plugin Development</h3>
+<ul>
+  <li><strong>Plugin API</strong>: Well-defined interfaces</li>
+  <li><strong>Event Registration</strong>: Dynamic event handler registration</li>
+  <li><strong>Resource Access</strong>: Controlled access to core services</li>
+</ul>
+
+<h3>Customization Points</h3>
+<ul>
+  <li><strong>Themes</strong>: Customizable UI themes</li>
+  <li><strong>Translations</strong>: i18n support (20+ languages)</li>
+  <li><strong>Shortcuts</strong>: Configurable keyboard shortcuts</li>
+</ul>
+
+<h2>Future Architecture Considerations</h2>
+
+<h3>Scalability</h3>
+<ul>
+  <li><strong>Horizontal Scaling</strong>: Plugin system allows feature addition</li>
+  <li><strong>Performance Scaling</strong>: Rust core handles intensive operations</li>
+  <li><strong>Data Scaling</strong>: Pagination and lazy loading for large datasets</li>
+</ul>
+
+<h3>Maintainability</h3>
+<ul>
+  <li><strong>Modular Design</strong>: Clear boundaries between components</li>
+  <li><strong>Type Safety</strong>: Rust and Dart type systems</li>
+  <li><strong>Testing</strong>: Unit, integration, and e2e test support</li>
+</ul>
+
+<h3>Evolution</h3>
+<ul>
+  <li><strong>API Versioning</strong>: Backward compatibility support</li>
+  <li><strong>Migration Paths</strong>: Data and feature migration systems</li>
+  <li><strong>Deprecation Strategy</strong>: Gradual feature retirement</li>
+</ul>
+
+<h2>Conclusion</h2>
+
+<p>AppFlowy&#x27;s architecture demonstrates a well-thought-out design that balances performance, extensibility, and maintainability. The hybrid Flutter-Rust approach leverages the strengths of both technologies: Flutter&#x27;s cross-platform UI capabilities and Rust&#x27;s performance and safety guarantees. The plugin-based architecture ensures the system remains modular and extensible while maintaining clear boundaries between different functional domains.</p>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

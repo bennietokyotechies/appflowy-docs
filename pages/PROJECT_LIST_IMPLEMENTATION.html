@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project List Implementation - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Project List Implementation</h1>
+
+<h2>Overview</h2>
+Implemented a complete Project List feature that allows users to view all project spaces from the backend database in a card-based interface.
+
+<h2>Components Created</h2>
+
+<h3>1. ✅ ProjectListMenuItem (<code>src/components/app/view-actions/ProjectListMenuItem.tsx</code>)</h3>
+<ul>
+  <li><strong>Purpose</strong>: Sidebar menu item to navigate to project list</li>
+  <li><strong>Features</strong>:</li>
+  <li>Active state indication when on project list page</li>
+  <li>Consistent styling with other sidebar items</li>
+  <li>Navigation to <code>/app/projects</code> route</li>
+</ul>
+
+<h3>2. ✅ ProjectSpaceCard (<code>src/components/app/projects/ProjectSpaceCard.tsx</code>)</h3>
+<ul>
+  <li><strong>Purpose</strong>: Individual project space card component</li>
+  <li><strong>Features</strong>:</li>
+  <li><strong>Visual Design</strong>: Clean card layout with hover effects</li>
+  <li><strong>Project Info</strong>: Icon, name, description, creation date</li>
+  <li><strong>Space Type Badge</strong>: Color-coded chip showing space type (Project/Team/Wiki)</li>
+  <li><strong>Settings Preview</strong>: Shows enabled project settings as chips</li>
+  <li><strong>Actions Menu</strong>: </li>
+  <li>Open Project (navigates to board)</li>
+  <li>Edit Settings (placeholder for future implementation)</li>
+  <li>Delete Project (with confirmation dialog)</li>
+  <li><strong>Interactive</strong>: Click card to open project, right-click menu for actions</li>
+</ul>
+
+<h3>3. ✅ ProjectListPage (<code>src/pages/ProjectListPage.tsx</code>)</h3>
+<ul>
+  <li><strong>Purpose</strong>: Main page displaying all project spaces</li>
+  <li><strong>Features</strong>:</li>
+  <li><strong>Header</strong>: Title, subtitle, and &quot;Create Project&quot; button</li>
+  <li><strong>Search &amp; Filter Bar</strong>:</li>
+  <li>Real-time search by name and description</li>
+  <li>Sort options: Newest, Recently Updated, Name A-Z</li>
+  <li>Filter chips: All, Project, Team, Wiki (dynamically generated)</li>
+  <li><strong>Statistics</strong>: Shows filtered count vs total count</li>
+  <li><strong>Grid Layout</strong>: Responsive 3-column grid on desktop, adapts to mobile</li>
+  <li><strong>Loading States</strong>: Skeleton loaders while fetching data</li>
+  <li><strong>Empty States</strong>: Different messages for no projects vs no search results</li>
+  <li><strong>Error Handling</strong>: Error display with retry functionality</li>
+</ul>
+
+<h2>Integration Points</h2>
+
+<h3>4. ✅ Sidebar Integration (<code>src/components/app/SideBar.tsx</code>)</h3>
+<ul>
+  <li>Added ProjectListMenuItem between new project actions and project spaces</li>
+  <li>Proper spacing and styling consistency</li>
+</ul>
+
+<h3>5. ✅ Routing Integration (<code>src/components/app/AppRouter.tsx</code>)</h3>
+<ul>
+  <li>Added <code>/app/projects</code> route pointing to ProjectListPage</li>
+  <li>Integrated with existing AuthLayout structure</li>
+</ul>
+
+<h3>6. ✅ Backend Integration</h3>
+<ul>
+  <li>Uses existing <code>useProjectSpaces</code> hook to fetch real data</li>
+  <li>Integrates with <code>useDeleteProjectSpace</code> for delete functionality</li>
+  <li>Displays actual project spaces from backend database</li>
+</ul>
+
+<h2>Key Features</h2>
+
+<h3>Data Management</h3>
+<ul>
+  <li><strong>Real-time Data</strong>: Fetches actual project spaces from backend</li>
+  <li><strong>Live Updates</strong>: Automatically refreshes after project deletion</li>
+  <li><strong>Error Recovery</strong>: Retry mechanism if API calls fail</li>
+</ul>
+
+<h3>User Experience</h3>
+<ul>
+  <li><strong>Search &amp; Filter</strong>: Fast client-side filtering and search</li>
+  <li><strong>Visual Feedback</strong>: Hover effects, active states, loading indicators</li>
+  <li><strong>Responsive Design</strong>: Works on desktop and mobile</li>
+  <li><strong>Accessible</strong>: Proper ARIA labels and keyboard navigation</li>
+</ul>
+
+<h3>Actions Available</h3>
+<ul>
+  <li><strong>View Projects</strong>: Navigate to individual project boards</li>
+  <li><strong>Create Projects</strong>: Quick access to project creation modal</li>
+  <li><strong>Delete Projects</strong>: With confirmation dialog for safety</li>
+  <li><strong>Edit Projects</strong>: Placeholder for future settings editing</li>
+</ul>
+
+<h2>User Flow</h2>
+
+<ol>
+  <li><strong>Access</strong>: User clicks &quot;Project List&quot; in sidebar</li>
+  <li><strong>Browse</strong>: Sees all project spaces as cards with rich information</li>
+  <li><strong>Search</strong>: Can search by name or description</li>
+  <li><strong>Filter</strong>: Can filter by space type (Project/Team/Wiki)</li>
+  <li><strong>Sort</strong>: Can sort by name, creation date, or last updated</li>
+  <li><strong>Interact</strong>: </li>
+<ul>
+  <li>Click card or &quot;Open&quot; button to navigate to project board</li>
+</ol>
+  <li>Use menu for additional actions (edit/delete)</li>
+  <li>Click &quot;Create Project&quot; to add new project spaces</li>
+</ul>
+
+<h2>Technical Implementation</h2>
+
+<h3>State Management</h3>
+<ul>
+  <li>Uses custom React hooks (<code>useProjectSpaces</code>, <code>useDeleteProjectSpace</code>)</li>
+  <li>Local state for search, sort, and filter preferences</li>
+  <li>Proper loading and error states</li>
+</ul>
+
+<h3>Performance</h3>
+<ul>
+  <li>Client-side filtering for instant feedback</li>
+  <li>Memoized computed values to prevent unnecessary re-renders</li>
+  <li>Skeleton loading for better perceived performance</li>
+</ul>
+
+<h3>Styling</h3>
+<ul>
+  <li>Material-UI components for consistency</li>
+  <li>Custom hover effects and transitions</li>
+  <li>Responsive grid layout</li>
+  <li>Consistent color scheme with project types</li>
+</ul>
+
+<h2>Future Enhancements</h2>
+
+<ol>
+  <li><strong>Edit Project Settings</strong>: Full modal for editing project configuration</li>
+  <li><strong>Bulk Actions</strong>: Select multiple projects for batch operations</li>
+  <li><strong>Advanced Filters</strong>: Filter by creation date, creator, settings</li>
+  <li><strong>Project Templates</strong>: Quick creation from templates</li>
+  <li><strong>Favorite Projects</strong>: Mark and filter favorite projects</li>
+  <li><strong>Project Analytics</strong>: Show usage statistics and activity</li>
+</ol>
+
+<p>The Project List feature is now fully functional and ready for use!</p>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

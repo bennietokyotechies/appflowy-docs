@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Icon Import Fixes - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Icon Import Fixes</h1>
+
+<h2>Issue</h2>
+Several icon imports were referencing non-existent SVG files in the assets folder.
+
+<h2>Fixed Icon Imports</h2>
+
+<h3>1. ProjectListPage.tsx</h3>
+<ul>
+  <li><strong>Before</strong>: <code>@/assets/icons/filter_list.svg</code> ❌</li>
+  <li><strong>After</strong>: <code>@/assets/icons/filter.svg</code> ✅</li>
+</ul>
+
+<h3>2. ProjectSpaceCard.tsx</h3>
+<ul>
+  <li><strong>Before</strong>: <code>@/assets/icons/more_horiz.svg</code> ❌</li>
+  <li><strong>After</strong>: <code>@/assets/icons/more.svg</code> ✅</li>
+</ul>
+
+<ul>
+  <li><strong>Before</strong>: <code>@/assets/icons/launch.svg</code> ❌</li>
+  <li><strong>After</strong>: <code>@/assets/icons/open.svg</code> ✅</li>
+</ul>
+
+<h3>3. ProjectListMenuItem.tsx</h3>
+<ul>
+  <li><strong>Before</strong>: <code>@/assets/icons/apps.svg</code> ❌</li>
+  <li><strong>After</strong>: <code>@/assets/icons/grid.svg</code> ✅</li>
+</ul>
+
+<h2>Available Icons Used</h2>
+
+<p>All replacements use existing icons from the AppFlowy icon set:
+<ul>
+  <li>✅ <code>filter.svg</code> - For filter functionality</li>
+  <li>✅ <code>more.svg</code> - For more actions menu</li>
+  <li>✅ <code>open.svg</code> - For opening projects</li>
+  <li>✅ <code>grid.svg</code> - For project list menu item</li>
+  <li>✅ <code>edit.svg</code> - For edit actions (already correct)</li>
+  <li>✅ <code>delete.svg</code> - For delete actions (already correct)</li>
+  <li>✅ <code>search.svg</code> - For search functionality (already correct)</li>
+  <li>✅ <code>plus.svg</code> - For add actions (already correct)</li>
+</ul></p>
+
+<h2>Visual Impact</h2>
+The functionality remains identical, with appropriate icons that match AppFlowy&#x27;s existing design system. The icons provide clear visual cues for their respective actions.
+
+<p>All import errors should now be resolved!</p>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

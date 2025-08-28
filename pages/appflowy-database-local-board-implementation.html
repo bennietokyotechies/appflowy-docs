@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppFlowy Database Backend - Local Board View Implementation Plan - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>AppFlowy Database Backend - Local Board View Implementation Plan</h1>
+
+<h2>Executive Summary</h2>
+
+<strong>Modified Optimistic Scenario for Local Testing Environment</strong>  
+<strong>Total Time: 45-55 hours</strong>  
+<strong>Focus</strong>: Board (Kanban) view implementation with database concept for local development and testing only.
+
+<h2>Scope Adjustments for Local Environment</h2>
+
+<h3>What&#x27;s Simplified:</h3>
+<ul>
+  <li>No production deployment configuration</li>
+  <li>Basic error handling (detailed logging for debugging)</li>
+  <li>No advanced security (basic auth only for testing)</li>
+  <li>No performance optimization (works for &lt; 1000 rows)</li>
+  <li>Simple file-based configuration</li>
+  <li>SQLite option for easier local setup</li>
+  <li>No monitoring or metrics</li>
+  <li>Simplified API authentication</li>
+</ul>
+
+<h3>What&#x27;s Emphasized:</h3>
+<ul>
+  <li>Board view with full drag-and-drop capability</li>
+  <li>Easy local setup with docker-compose</li>
+  <li>Comprehensive logging for debugging</li>
+  <li>API testing tools included</li>
+  <li>Sample data generators</li>
+  <li>Development-friendly features</li>
+</ul>
+
+<h2>Implementation Plan for Board View</h2>
+
+<strong>Total Time: 45-55 hours</strong>
+
+<h3>Phase 1: Quick Local Setup (3 hours)</h3>
+
+<pre><code class="language-bash"><h1>Simple project structure for local development</h1>
+appflowy-database-board/
+├── Cargo.toml
+├── src/
+│   ├── main.rs
+│   ├── models/
+│   ├── handlers/
+│   ├── services/
+│   └── db/
+├── docker-compose.yml      # One-command local setup
+├── .env.example           # Simple configuration
+├── scripts/
+│   ├── setup.sh          # Database setup
+│   └── seed.sh           # Sample data
+└── README.md             # Quick start guide</code></pre>
+
+<strong>Docker Compose for Local Dev:</strong>
+<pre><code class="language-yaml">version: &#x27;3.8&#x27;
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: localdev
+      POSTGRES<em>DB: appflowy</em>board
+    ports:
+<ul>
+  <li>&quot;5432:5432&quot;</li>
+</ul>
+    volumes:
+<ul>
+  <li>./init.sql:/docker-entrypoint-initdb.d/init.sql</li>
+</ul>
+
+<p>  app:
+    build: .
+    environment:
+      DATABASE<em>URL: postgresql://postgres:localdev@postgres/appflowy</em>board
+      RUST_LOG: debug
+    ports:
+<ul>
+  <li>&quot;8080:8080&quot;</li>
+</ul>
+    depends_on:
+<ul>
+  <li>postgres</code></pre></li>
+</ul></p>
+
+<strong>Simplified Schema for Board View:</strong>
+<pre><code class="language-sql">-- Focus on board-specific needs
+CREATE TABLE databases (
+    id UUID PRIMARY KEY DEFAULT gen<em>random</em>uuid(),
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+<p>CREATE TABLE fields (
+    id UUID PRIMARY KEY DEFAULT gen<em>random</em>uuid(),
+    database_id UUID REFERENCES databases(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    field_type VARCHAR(50) NOT NULL,
+    options JSONB DEFAULT &#x27;{}&#x27;,
+    position INT NOT NULL
+);</p>
+
+-- Board view specific
+CREATE TABLE board_views (
+    id UUID PRIMARY KEY DEFAULT gen<em>random</em>uuid(),
+    database_id UUID REFERENCES databases(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    group<em>by</em>field_id UUID REFERENCES fields(id),
+    settings JSONB DEFAULT &#x27;{}&#x27;
+);
+
+<p>-- Simplified rows for board
+CREATE TABLE rows (
+    id UUID PRIMARY KEY DEFAULT gen<em>random</em>uuid(),
+    database_id UUID REFERENCES databases(id) ON DELETE CASCADE,
+    cells JSONB NOT NULL,
+    position INT NOT NULL, -- Position within group
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);</p>
+
+-- Board groups (kanban columns)
+CREATE TABLE board_groups (
+    id UUID PRIMARY KEY DEFAULT gen<em>random</em>uuid(),
+    view<em>id UUID REFERENCES board</em>views(id) ON DELETE CASCADE,
+    group_value VARCHAR(255) NOT NULL,
+    position INT NOT NULL,
+    color VARCHAR(7), -- Hex color
+    UNIQUE(view<em>id, group</em>value)
+);</code></pre>
+
+<h3>Phase 2: Board-Focused Models (5 hours)</h3>
+
+<pre><code class="language-rust">// Simplified models focused on board functionality
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+use chrono::{DateTime, Utc};
+
+<p>#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Database {
+    pub id: Uuid,
+    pub name: String,
+    pub created_at: DateTime&lt;Utc&gt;,
+}</p>
+
+// Board-relevant field types only
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = &quot;type&quot;)]
+pub enum FieldType {
+    Text,
+    SingleSelect { options: Vec&lt;SelectOption&gt; },
+    Status { options: Vec&lt;SelectOption&gt; }, // Special select for board grouping
+    Number,
+    Date,
+}
+
+<p>#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SelectOption {
+    pub id: String,
+    pub name: String,
+    pub color: String, // Hex color for board groups
+}</p>
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BoardView {
+    pub id: Uuid,
+    pub database_id: Uuid,
+    pub name: String,
+    pub group<em>by</em>field_id: Uuid, // Must be SingleSelect or Status field
+    pub groups: Vec&lt;BoardGroup&gt;,
+    pub hide<em>empty</em>groups: bool,
+    pub default<em>group</em>id: Option&lt;String&gt;,
+}
+
+<p>#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BoardGroup {
+    pub id: String, // Matches SelectOption id
+    pub name: String,
+    pub color: String,
+    pub position: i32,
+    pub cards: Vec&lt;BoardCard&gt;, // Computed during fetch
+}</p>
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BoardCard {
+    pub row_id: Uuid,
+    pub title: String, // From primary field
+    pub position: i32, // Position within group
+    pub cells: serde_json::Value, // All cell data for display
+}
+
+<p>// Simplified cell values for board
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CellValue {
+    Text(String),
+    Number(f64),
+    Date(String), // ISO date string
+    Select(String), // Option ID
+    Empty,
+}</code></pre></p>
+
+<h3>Phase 3: Board Service Implementation (8 hours)</h3>
+
+<pre><code class="language-rust">use std::sync::Arc;
+use sqlx::PgPool;
+use anyhow::Result;
+
+<p>pub struct BoardService {
+    db: Arc&lt;PgPool&gt;,
+}</p>
+
+impl BoardService {
+    // Create a board view for a database
+    pub async fn create<em>board</em>view(
+        &amp;self,
+        database_id: Uuid,
+        name: String,
+        group<em>by</em>field_id: Uuid,
+    ) -&gt; Result&lt;BoardView&gt; {
+        // Verify field is groupable (SingleSelect or Status)
+        let field = self.get<em>field(group</em>by<em>field</em>id).await?;
+        
+        match &amp;field.field_type {
+            FieldType::SingleSelect { options } | FieldType::Status { options } =&gt; {
+                // Create board view
+                let view<em>id = Uuid::new</em>v4();
+                
+                // Create groups from select options
+                for (position, option) in options.iter().enumerate() {
+                    self.create<em>board</em>group(
+                        view_id,
+                        &amp;option.id,
+                        &amp;option.name,
+                        &amp;option.color,
+                        position as i32,
+                    ).await?;
+                }
+                
+                // Return created view
+                self.get<em>board</em>view(view_id).await
+            }
+            _ =&gt; Err(anyhow::anyhow!(&quot;Field must be SingleSelect or Status type&quot;))
+        }
+    }
+    
+    // Get board data with all cards grouped
+    pub async fn get<em>board</em>data(&amp;self, view_id: Uuid) -&gt; Result&lt;BoardData&gt; {
+        let view = self.get<em>board</em>view(view_id).await?;
+        let groups = self.get<em>board</em>groups(view_id).await?;
+        
+        let mut board_data = BoardData {
+            view: view.clone(),
+            groups: vec![],
+        };
+        
+        // Load cards for each group
+        for group in groups {
+            let cards = self.get<em>cards</em>for_group(&amp;view, &amp;group.id).await?;
+            board_data.groups.push(BoardGroup {
+                id: group.id,
+                name: group.name,
+                color: group.color,
+                position: group.position,
+                cards,
+            });
+        }
+        
+        Ok(board_data)
+    }
+    
+    // Move card between groups (drag &amp; drop)
+    pub async fn move_card(
+        &amp;self,
+        row_id: Uuid,
+        from_group: String,
+        to_group: String,
+        new_position: i32,
+    ) -&gt; Result&lt;()&gt; {
+        // Start transaction
+        let mut tx = self.db.begin().await?;
+        
+        // Update the group field value
+        let view = self.get<em>view</em>for<em>row(row</em>id).await?;
+        let group<em>field</em>id = view.group<em>by</em>field_id;
+        
+        // Update cell value to new group
+        sqlx::query!(
+            r#&quot;
+            UPDATE rows 
+            SET cells = jsonb_set(cells, $1, $2)
+            WHERE id = $3
+            &quot;#,
+            &amp;[group<em>field</em>id.to_string()],
+            serde<em>json::json!(to</em>group),
+            row_id
+        )
+        .execute(&amp;mut tx)
+        .await?;
+        
+        // Update positions in target group
+        self.reorder<em>cards</em>in<em>group(&amp;mut tx, &amp;to</em>group, row<em>id, new</em>position).await?;
+        
+        tx.commit().await?;
+        Ok(())
+    }
+    
+    // Add new card to board
+    pub async fn add_card(
+        &amp;self,
+        database_id: Uuid,
+        group_id: String,
+        title: String,
+    ) -&gt; Result&lt;BoardCard&gt; {
+        // Get the group field for this board
+        let view = self.get<em>board</em>view<em>for</em>database(database_id).await?;
+        let group<em>field</em>id = view.group<em>by</em>field_id;
+        
+        // Create row with group field set
+        let mut cells = serde_json::Map::new();
+        cells.insert(group<em>field</em>id.to<em>string(), serde</em>json::json!(group_id));
+        
+        // Set title in primary field
+        let primary<em>field = self.get</em>primary<em>field(database</em>id).await?;
+        cells.insert(primary<em>field.id.to</em>string(), serde_json::json!(title));
+        
+        let row = self.create<em>row(database</em>id, cells.into()).await?;
+        
+        Ok(BoardCard {
+            row_id: row.id,
+            title,
+            position: 0, // Will be updated by reorder
+            cells: row.cells,
+        })
+    }
+}
+
+<p>// Helper methods for board operations
+impl BoardService {
+    async fn get<em>cards</em>for_group(
+        &amp;self,
+        view: &amp;BoardView,
+        group_id: &amp;str,
+    ) -&gt; Result&lt;Vec&lt;BoardCard&gt;&gt; {
+        let rows = sqlx::query!(
+            r#&quot;
+            SELECT id, cells, position
+            FROM rows
+            WHERE database_id = $1
+              AND cells-&gt;&gt;$2 = $3
+            ORDER BY position, created_at
+            &quot;#,
+            view.database_id,
+            view.group<em>by</em>field<em>id.to</em>string(),
+            group_id
+        )
+        .fetch_all(&amp;*self.db)
+        .await?;
+        
+        let primary<em>field = self.get</em>primary<em>field(view.database</em>id).await?;
+        
+        Ok(rows.into_iter().map(<table><tr><td>row</td></tr></table> {
+            let title = row.cells
+                .get(&amp;primary<em>field.id.to</em>string())
+                .and<em>then(<table><tr><td>v</td></tr></table> v.as</em>str())
+                .unwrap_or(&quot;Untitled&quot;)
+                .to_string();
+                
+            BoardCard {
+                row_id: row.id,
+                title,
+                position: row.position,
+                cells: row.cells,
+            }
+        }).collect())
+    }
+    
+    async fn reorder<em>cards</em>in_group(
+        &amp;self,
+        tx: &amp;mut sqlx::Transaction&lt;&#x27;_, sqlx::Postgres&gt;,
+        group_id: &amp;str,
+        moved<em>card</em>id: Uuid,
+        new_position: i32,
+    ) -&gt; Result&lt;()&gt; {
+        // Implementation for updating positions
+        // This would handle the logic for maintaining correct positions
+        // when a card is inserted at a new position
+        Ok(())
+    }
+}</code></pre></p>
+
+<h3>Phase 4: Board-Specific API Endpoints (8 hours)</h3>
+
+<pre><code class="language-rust">use actix_web::{web, HttpResponse, Result};
+use serde::{Deserialize, Serialize};
+
+<p>#[derive(Deserialize)]
+pub struct CreateBoardViewRequest {
+    pub name: String,
+    pub group<em>by</em>field_id: Uuid,
+}</p>
+
+#[derive(Deserialize)]
+pub struct MoveCardRequest {
+    pub from_group: String,
+    pub to_group: String,
+    pub position: i32,
+}
+
+<p>#[derive(Deserialize)]
+pub struct AddCardRequest {
+    pub group_id: String,
+    pub title: String,
+}</p>
+
+pub fn configure<em>board</em>routes(cfg: &amp;mut web::ServiceConfig) {
+    cfg.service(
+        web::scope(&quot;/api/v1&quot;)
+            // Board view endpoints
+            .route(&quot;/databases/{database<em>id}/board&quot;, web::post().to(create</em>board_view))
+            .route(&quot;/board/{view<em>id}&quot;, web::get().to(get</em>board_data))
+            .route(&quot;/board/{view<em>id}/groups&quot;, web::get().to(get</em>board_groups))
+            
+            // Card operations
+            .route(&quot;/board/{view<em>id}/cards&quot;, web::post().to(add</em>card))
+            .route(&quot;/board/cards/{card<em>id}/move&quot;, web::put().to(move</em>card))
+            .route(&quot;/board/cards/{card<em>id}&quot;, web::delete().to(delete</em>card))
+            
+            // Group management
+            .route(&quot;/board/{view<em>id}/groups&quot;, web::post().to(add</em>group))
+            .route(&quot;/board/groups/{group<em>id}&quot;, web::put().to(update</em>group))
+            .route(&quot;/board/groups/{group<em>id}/reorder&quot;, web::put().to(reorder</em>groups))
+    );
+}
+
+<p>// Board view creation
+async fn create<em>board</em>view(
+    path: web::Path&lt;Uuid&gt;,
+    data: web::Json&lt;CreateBoardViewRequest&gt;,
+    service: web::Data&lt;BoardService&gt;,
+) -&gt; Result&lt;HttpResponse&gt; {
+    let database<em>id = path.into</em>inner();
+    
+    let view = service
+        .create<em>board</em>view(database<em>id, data.name.clone(), data.group</em>by<em>field</em>id)
+        .await
+        .map<em>err(<table><tr><td>e</td></tr></table> actix</em>web::error::ErrorBadRequest(e))?;
+        
+    Ok(HttpResponse::Ok().json(view))
+}</p>
+
+// Get full board data
+async fn get<em>board</em>data(
+    path: web::Path&lt;Uuid&gt;,
+    service: web::Data&lt;BoardService&gt;,
+) -&gt; Result&lt;HttpResponse&gt; {
+    let view<em>id = path.into</em>inner();
+    
+    let board_data = service
+        .get<em>board</em>data(view_id)
+        .await
+        .map<em>err(<table><tr><td>e</td></tr></table> actix</em>web::error::ErrorInternalServerError(e))?;
+        
+    Ok(HttpResponse::Ok().json(board_data))
+}
+
+<p>// Move card between groups
+async fn move_card(
+    path: web::Path&lt;Uuid&gt;,
+    data: web::Json&lt;MoveCardRequest&gt;,
+    service: web::Data&lt;BoardService&gt;,
+) -&gt; Result&lt;HttpResponse&gt; {
+    let card<em>id = path.into</em>inner();
+    
+    service
+        .move<em>card(card</em>id, data.from<em>group.clone(), data.to</em>group.clone(), data.position)
+        .await
+        .map<em>err(<table><tr><td>e</td></tr></table> actix</em>web::error::ErrorInternalServerError(e))?;
+        
+    Ok(HttpResponse::Ok().json(serde_json::json!({
+        &quot;success&quot;: true,
+        &quot;card<em>id&quot;: card</em>id,
+        &quot;new<em>group&quot;: data.to</em>group,
+        &quot;new_position&quot;: data.position
+    })))
+}</code></pre></p>
+
+<h3>Phase 5: Local Testing Utilities (6 hours)</h3>
+
+<pre><code class="language-rust">// Test data generator for board testing
+pub mod test_data {
+    use super::*;
+    use fake::{Fake, Faker};
+    
+    pub async fn create<em>sample</em>board(service: &amp;BoardService) -&gt; Result&lt;BoardView&gt; {
+        // Create database
+        let database = service.create_database(&quot;Project Tracker&quot;).await?;
+        
+        // Create status field for grouping
+        let status<em>field = service.create</em>field(
+            database.id,
+            Field {
+                name: &quot;Status&quot;.to_string(),
+                field_type: FieldType::Status {
+                    options: vec![
+                        SelectOption {
+                            id: &quot;todo&quot;.to_string(),
+                            name: &quot;To Do&quot;.to_string(),
+                            color: &quot;#e2e8f0&quot;.to_string(),
+                        },
+                        SelectOption {
+                            id: &quot;in<em>progress&quot;.to</em>string(),
+                            name: &quot;In Progress&quot;.to_string(),
+                            color: &quot;#fbbf24&quot;.to_string(),
+                        },
+                        SelectOption {
+                            id: &quot;done&quot;.to_string(),
+                            name: &quot;Done&quot;.to_string(),
+                            color: &quot;#10b981&quot;.to_string(),
+                        },
+                    ],
+                },
+                ..Default::default()
+            },
+        ).await?;
+        
+        // Create other fields
+        let title<em>field = service.create</em>field(
+            database.id,
+            Field {
+                name: &quot;Title&quot;.to_string(),
+                field_type: FieldType::Text,
+                is_primary: true,
+                ..Default::default()
+            },
+        ).await?;
+        
+        // Create board view
+        let board<em>view = service.create</em>board_view(
+            database.id,
+            &quot;Sprint Board&quot;.to_string(),
+            status_field.id,
+        ).await?;
+        
+        // Generate sample cards
+        for _ in 0..5 {
+            service.add_card(
+                database.id,
+                &quot;todo&quot;.to_string(),
+                Faker.fake::&lt;String&gt;(),
+            ).await?;
+        }
+        
+        for _ in 0..3 {
+            service.add_card(
+                database.id,
+                &quot;in<em>progress&quot;.to</em>string(),
+                Faker.fake::&lt;String&gt;(),
+            ).await?;
+        }
+        
+        for _ in 0..8 {
+            service.add_card(
+                database.id,
+                &quot;done&quot;.to_string(),
+                Faker.fake::&lt;String&gt;(),
+            ).await?;
+        }
+        
+        Ok(board_view)
+    }
+}
+
+<p>// API testing helpers
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{test, App};
+    
+    #[actix_web::test]
+    async fn test<em>board</em>operations() {
+        let service = create<em>test</em>service().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(service.clone()))
+                .configure(configure<em>board</em>routes)
+        ).await;
+        
+        // Create sample board
+        let board = test<em>data::create</em>sample_board(&amp;service).await.unwrap();
+        
+        // Test getting board data
+        let req = test::TestRequest::get()
+            .uri(&amp;format!(&quot;/api/v1/board/{}&quot;, board.id))
+            .to_request();
+        let resp = test::call_service(&amp;app, req).await;
+        assert!(resp.status().is_success());
+        
+        // Test moving a card
+        let board<em>data: BoardData = test::read</em>body_json(resp).await;
+        let card = &amp;board_data.groups[0].cards[0];
+        
+        let req = test::TestRequest::put()
+            .uri(&amp;format!(&quot;/api/v1/board/cards/{}/move&quot;, card.row_id))
+            .set_json(&amp;MoveCardRequest {
+                from<em>group: &quot;todo&quot;.to</em>string(),
+                to<em>group: &quot;in</em>progress&quot;.to_string(),
+                position: 0,
+            })
+            .to_request();
+        let resp = test::call_service(&amp;app, req).await;
+        assert!(resp.status().is_success());
+    }
+}</code></pre></p>
+
+<h3>Phase 6: Development Tools (5 hours)</h3>
+
+<pre><code class="language-bash"><h1>scripts/dev-setup.sh</h1>
+#!/bin/bash
+<h1>One-command local setup</h1>
+docker-compose up -d postgres
+cargo install sqlx-cli
+sqlx database create
+sqlx migrate run
+cargo run --bin seed_data
+
+<h1>scripts/test-board.sh</h1>
+#!/bin/bash
+<h1>Test board operations</h1>
+<h1>Create a board</h1>
+curl -X POST http://localhost:8080/api/v1/databases \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;name&quot;: &quot;Test Project&quot;}&#x27;
+
+<h1>Add cards</h1>
+curl -X POST http://localhost:8080/api/v1/board/$BOARD_ID/cards \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;group_id&quot;: &quot;todo&quot;, &quot;title&quot;: &quot;Test Card&quot;}&#x27;</code></pre>
+
+<strong>Development API Explorer:</strong>
+<pre><code class="language-rust">// Simple HTML page for testing board operations
+pub async fn board_explorer() -&gt; HttpResponse {
+    HttpResponse::Ok().content_type(&quot;text/html&quot;).body(r#&quot;
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;Board API Explorer&lt;/title&gt;
+        &lt;style&gt;
+            .board { display: flex; gap: 20px; }
+            .column { background: #f0f0f0; padding: 10px; min-width: 200px; }
+            .card { background: white; padding: 10px; margin: 5px 0; cursor: move; }
+        &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;h1&gt;Board API Explorer&lt;/h1&gt;
+        &lt;div id=&quot;board&quot; class=&quot;board&quot;&gt;&lt;/div&gt;
+        &lt;script&gt;
+            // Simple drag &amp; drop test interface
+            async function loadBoard(viewId) {
+                const resp = await fetch(<code>/api/v1/board/${viewId}</code>);
+                const data = await resp.json();
+                renderBoard(data);
+            }
+            
+            function renderBoard(data) {
+                const board = document.getElementById(&#x27;board&#x27;);
+                board.innerHTML = data.groups.map(group =&gt; <code>
+                    &lt;div class=&quot;column&quot; data-group=&quot;${group.id}&quot;&gt;
+                        &lt;h3&gt;${group.name}&lt;/h3&gt;
+                        ${group.cards.map(card =&gt; </code>
+                            &lt;div class=&quot;card&quot; draggable=&quot;true&quot; data-id=&quot;${card.row_id}&quot;&gt;
+                                ${card.title}
+                            &lt;/div&gt;
+                        <code>).join(&#x27;&#x27;)}
+                    &lt;/div&gt;
+                </code>).join(&#x27;&#x27;);
+                
+                // Add drag &amp; drop handlers
+                setupDragDrop();
+            }
+        &lt;/script&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;
+    &quot;#)
+}</code></pre>
+
+<h3>Phase 7: Local Testing Suite (6 hours)</h3>
+
+<pre><code class="language-rust">// Integration tests for board functionality
+#[cfg(test)]
+mod board<em>integration</em>tests {
+    use super::*;
+    
+    #[tokio::test]
+    async fn test<em>complete</em>board_workflow() {
+        let service = setup<em>test</em>db().await;
+        
+        // 1. Create database with fields
+        let db = service.create_database(&quot;Test Board&quot;).await.unwrap();
+        
+        // 2. Create status field
+        let status<em>field = create</em>status_field(&amp;service, db.id).await.unwrap();
+        
+        // 3. Create board view
+        let board = service.create<em>board</em>view(
+            db.id,
+            &quot;My Board&quot;.to_string(),
+            status_field.id
+        ).await.unwrap();
+        
+        // 4. Add cards to different groups
+        let card1 = service.add_card(db.id, &quot;todo&quot;, &quot;Task 1&quot;).await.unwrap();
+        let card2 = service.add_card(db.id, &quot;todo&quot;, &quot;Task 2&quot;).await.unwrap();
+        
+        // 5. Move card between groups
+        service.move<em>card(card1.row</em>id, &quot;todo&quot;, &quot;in_progress&quot;, 0).await.unwrap();
+        
+        // 6. Verify board state
+        let board<em>data = service.get</em>board_data(board.id).await.unwrap();
+        assert<em>eq!(board</em>data.groups[0].cards.len(), 1); // 1 in todo
+        assert<em>eq!(board</em>data.groups[1].cards.len(), 1); // 1 in progress
+    }
+    
+    #[tokio::test]
+    async fn test<em>card</em>ordering() {
+        // Test that cards maintain correct order within groups
+    }
+    
+    #[tokio::test]
+    async fn test<em>group</em>management() {
+        // Test adding/removing/reordering groups
+    }
+}</code></pre>
+
+<h3>Phase 8: Documentation and Examples (6 hours)</h3>
+
+<pre><code class="language-markdown"><h1>Board View Local Development Guide</h1>
+
+<h2>Quick Start</h2>
+
+<ol>
+  <li>Clone and setup:</code></pre>bash</li>
+</ol>
+git clone &lt;repo&gt;
+cd appflowy-database-board
+./scripts/dev-setup.sh
+<pre><code class="language-">
+<ol>
+  <li>Run locally:</code></pre>bash</li>
+</ol>
+cargo run
+<h1>API available at http://localhost:8080</h1>
+<h1>Board explorer at http://localhost:8080/explorer</h1>
+<pre><code class="language-">
+<ol>
+  <li>Create a test board:</code></pre>bash</li>
+</ol>
+./scripts/create-test-board.sh
+<pre><code class="language-">
+<h2>API Examples</h2>
+
+<h3>Create a Board View</h3></code></pre>bash
+curl -X POST http://localhost:8080/api/v1/databases/{database_id}/board \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{
+    &quot;name&quot;: &quot;Sprint Board&quot;,
+    &quot;group<em>by</em>field_id&quot;: &quot;status-field-uuid&quot;
+  }&#x27;
+<pre><code class="language-">
+<h3>Get Board Data</h3></code></pre>bash
+curl http://localhost:8080/api/v1/board/{view_id}
+<pre><code class="language-">
+<h3>Move a Card</h3></code></pre>bash
+curl -X PUT http://localhost:8080/api/v1/board/cards/{card_id}/move \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{
+    &quot;from_group&quot;: &quot;todo&quot;,
+    &quot;to<em>group&quot;: &quot;in</em>progress&quot;,
+    &quot;position&quot;: 0
+  }&#x27;
+<pre><code class="language-">
+<h2>Testing</h2>
+
+<p>Run all tests:</code></pre>bash
+cargo test
+<pre><code class="language-">
+Run board-specific tests:</code></pre>bash
+cargo test board_ --nocapture
+<pre><code class="language-">
+<h2>Debugging</h2></p>
+
+Enable debug logging:</code></pre>bash
+RUST_LOG=debug cargo run
+<pre><code class="language-">
+View SQL queries:</code></pre>bash
+RUST_LOG=sqlx=debug cargo run
+<pre><code class="language-">``<code>
+
+<h2>Simplified Deliverables for Local Board Testing</h2>
+
+<h3>What You Get:</h3>
+<ol>
+  <li><strong>Working Board View</strong> with drag &amp; drop capability</li>
+  <li><strong>Simple REST API</strong> for board operations</li>
+  <li><strong>Local Docker setup</strong> - one command to start</li>
+  <li><strong>Test data generators</strong> - quickly create sample boards</li>
+  <li><strong>API explorer</strong> - visual testing interface</li>
+  <li><strong>Comprehensive logging</strong> - easy debugging</li>
+  <li><strong>Integration tests</strong> - verify board functionality</li>
+</ol>
+
+<h3>What&#x27;s Not Included:</h3>
+<ul>
+  <li>Production deployment configuration</li>
+  <li>Advanced security/authentication</li>
+  <li>Performance optimization</li>
+  <li>Monitoring/metrics</li>
+  <li>High availability features</li>
+  <li>Complex error recovery</li>
+  <li>API rate limiting</li>
+</ul>
+
+<h3>Key API Endpoints:</h3></code></pre>yaml
+<h1>Board Management</h1>
+POST   /api/v1/databases/{id}/board     # Create board view
+GET    /api/v1/board/{view_id}          # Get board with all cards
+GET    /api/v1/board/{view_id}/groups   # Get groups only
+
+<h1>Card Operations  </h1>
+POST   /api/v1/board/{view_id}/cards    # Add new card
+PUT    /api/v1/board/cards/{id}/move    # Move card between groups
+DELETE /api/v1/board/cards/{id}         # Delete card
+
+<h1>Group Management</h1>
+POST   /api/v1/board/{view_id}/groups   # Add new group
+PUT    /api/v1/board/groups/{id}        # Update group (name/color)
+
+<h1>Development Tools</h1>
+GET    /explorer                        # Visual board explorer
+GET    /api/health                      # Health check
+</code>``
+
+<p>This plan focuses entirely on getting a functional board view working in a local environment, perfect for testing the concept and enabling frontend development without the complexity of production concerns.</p>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

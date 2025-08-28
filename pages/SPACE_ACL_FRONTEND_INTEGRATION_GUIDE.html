@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space ACL Frontend Integration Guide - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Space ACL Frontend Integration Guide</h1>
+
+<h2>Executive Summary</h2>
+
+<p>The Space ACL backend is <strong>partially ready</strong> for frontend integration. Core functionality works, but API responses lack the detailed data that frontend applications typically need. This guide outlines what&#x27;s ready, what needs fixing, and provides a roadmap for successful integration.</p>
+
+<h2>Integration Readiness Status</h2>
+
+<h3>✅ Ready Components</h3>
+
+<ol>
+  <li><strong>All API endpoints are implemented and functional</strong></li>
+  <li><strong>Database schema is complete with proper triggers</strong></li>
+  <li><strong>Permission system works correctly</strong></li>
+  <li><strong>Role-based access control is enforced</strong></li>
+  <li><strong>Invitation workflow functions end-to-end</strong></li>
+</ol>
+
+<h3>❌ Issues Requiring Fixes</h3>
+
+<ol>
+  <li><strong>API responses return minimal or no data</strong></li>
+  <li><strong>User profile information not included in responses</strong></li>
+  <li><strong>No space discovery endpoint</strong></li>
+  <li><strong>Space metadata (name, icon) not accessible</strong></li>
+  <li><strong>Role IDs returned instead of role names</strong></li>
+</ol>
+
+<h2>Critical Issues for Frontend Integration</h2>
+
+<h3>Issue 1: Empty API Responses</h3>
+
+<strong>Current State</strong>:
+<pre><code class="language-rust">// POST /api/space/{space_id}/members
+pub async fn invite_member(...) -&gt; Result&lt;HttpResponse, AppError&gt; {
+    // Creates invitation successfully
+    Ok(HttpResponse::Ok().finish())  // Empty response!
+}</code></pre>
+
+<strong>Frontend Expects</strong>:
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;550e8400-e29b-41d4-a716-446655440000&quot;,
+  &quot;space_id&quot;: &quot;123e4567-e89b-12d3-a456-426614174000&quot;,
+  &quot;invitee_email&quot;: &quot;user@example.com&quot;,
+  &quot;role&quot;: &quot;member&quot;,
+  &quot;status&quot;: &quot;pending&quot;,
+  &quot;created_at&quot;: &quot;2024-01-20T10:30:00Z&quot;
+}</code></pre>
+
+<strong>Fix Required</strong>:
+<pre><code class="language-rust">pub async fn invite_member(...) -&gt; Result&lt;HttpResponse, AppError&gt; {
+    let invite<em>id = SpaceInvitationDB::create</em>invitation(...).await?;
+    let invitation = SpaceInvitationDB::get<em>invitation</em>details(pool, &amp;invite_id).await?;
+    Ok(HttpResponse::Ok().json(invitation))
+}</code></pre>
+
+<h3>Issue 2: Incomplete Member List Data</h3>
+
+<strong>Current State</strong>:
+<pre><code class="language-rust">// GET /api/space/{space_id}/members
+// Returns: [(1000001, 2), (1000002, 1)]  // Just (uid, role_id) tuples</code></pre>
+
+<strong>Frontend Expects</strong>:
+<pre><code class="language-json">[
+  {
+    &quot;uid&quot;: 1000001,
+    &quot;email&quot;: &quot;john@example.com&quot;,
+    &quot;name&quot;: &quot;John Doe&quot;,
+    &quot;role&quot;: &quot;member&quot;,
+    &quot;avatar_url&quot;: &quot;https://avatars.example.com/john.jpg&quot;,
+    &quot;joined_at&quot;: &quot;2024-01-15T08:00:00Z&quot;
+  }
+]</code></pre>
+
+<strong>Fix Required</strong>:
+<pre><code class="language-sql">SELECT 
+  sm.uid,
+  u.email,
+  u.name,
+  r.name as role,
+  u.metadata-&gt;&gt;&#x27;icon<em>url&#x27; as avatar</em>url,
+  sm.created<em>at as joined</em>at
+FROM af<em>space</em>member sm
+JOIN af_user u ON sm.uid = u.uid
+JOIN af<em>roles r ON sm.role</em>id = r.id
+WHERE sm.space<em>view</em>id = $1</code></pre>
+
+<h3>Issue 3: Missing Space Discovery</h3>
+
+<strong>Problem</strong>: Frontend doesn&#x27;t know which views are spaces or which spaces a user belongs to.
+
+<strong>Required Endpoint</strong>:
+<pre><code class="language-http">GET /api/user/spaces</code></pre>
+
+<strong>Expected Response</strong>:
+<pre><code class="language-json">{
+  &quot;spaces&quot;: [
+    {
+      &quot;space_id&quot;: &quot;123e4567-e89b-12d3-a456-426614174000&quot;,
+      &quot;workspace_id&quot;: &quot;987e6543-e21b-12d3-a456-426614174000&quot;,
+      &quot;name&quot;: &quot;Engineering Team&quot;,
+      &quot;icon&quot;: &quot;👥&quot;,
+      &quot;role&quot;: &quot;owner&quot;,
+      &quot;is_private&quot;: true,
+      &quot;member_count&quot;: 5
+    }
+  ]
+}</code></pre>
+
+<h3>Issue 4: Invitation Details Missing</h3>
+
+<strong>Current State</strong>:
+<pre><code class="language-rust">fn map<em>invitation</em>row(row: PgRow) -&gt; AFSpaceInvitation {
+    AFSpaceInvitation {
+        inviter_email: None,  // Not populated!
+        inviter_name: None,   // Not populated!
+        inviter_icon: None,   // Not populated!
+        member_count: None,   // Not populated!
+        // ...
+    }
+}</code></pre>
+
+<strong>Frontend Needs</strong>: Complete invitation details including inviter information and space context.
+
+<h3>Issue 5: Space Metadata Inaccessible</h3>
+
+<strong>Problem</strong>: Spaces are just view IDs - no way to get space name, icon, or other metadata.
+
+<strong>Solution Needed</strong>: Either:
+<ol>
+  <li>Add space metadata to all responses</li>
+  <li>Provide a separate endpoint to fetch space details</li>
+  <li>Include space data from the folder/collab system</li>
+</ol>
+
+<h2>Minimum Viable Fixes for Integration</h2>
+
+<h3>Quick Fix 1: Add Response Data</h3>
+<pre><code class="language-rust">// In invite_member
+Ok(HttpResponse::Ok().json(json!({
+    &quot;id&quot;: invite<em>id.to</em>string(),
+    &quot;status&quot;: &quot;pending&quot;
+})))</code></pre>
+
+<h3>Quick Fix 2: Map Role IDs to Names</h3>
+<pre><code class="language-rust">fn role<em>id</em>to<em>string(role</em>id: i32) -&gt; &amp;&#x27;static str {
+    match role_id {
+        1 =&gt; &quot;owner&quot;,
+        2 =&gt; &quot;member&quot;,
+        3 =&gt; &quot;guest&quot;,
+        _ =&gt; &quot;unknown&quot;
+    }
+}</code></pre>
+
+<h3>Quick Fix 3: Basic Member Info</h3>
+<pre><code class="language-rust">// Add email to member responses
+let members<em>with</em>email = sqlx::query!(
+    &quot;SELECT sm.uid, u.email, sm.role_id 
+     FROM af<em>space</em>member sm 
+     JOIN af_user u ON sm.uid = u.uid 
+     WHERE sm.space<em>view</em>id = $1&quot;,
+    space<em>view</em>id
+).fetch_all(pool).await?;</code></pre>
+
+<h2>Complete Integration Requirements</h2>
+
+<h3>1. Enhanced Data Models</h3>
+
+<p>Create proper response DTOs:</p>
+
+<pre><code class="language-rust">#[derive(Serialize, Deserialize)]
+pub struct SpaceMemberResponse {
+    pub uid: i64,
+    pub email: String,
+    pub name: String,
+    pub role: String,
+    pub avatar_url: Option&lt;String&gt;,
+    pub joined_at: DateTime&lt;Utc&gt;,
+}
+
+<p>#[derive(Serialize, Deserialize)]
+pub struct SpaceInvitationResponse {
+    pub id: Uuid,
+    pub space_id: Uuid,
+    pub invitee_email: String,
+    pub role: String,
+    pub status: String,
+    pub inviter: InviterInfo,
+    pub created_at: DateTime&lt;Utc&gt;,
+}</p>
+
+#[derive(Serialize, Deserialize)]
+pub struct SpaceDetailsResponse {
+    pub id: Uuid,
+    pub name: String,
+    pub icon: Option&lt;String&gt;,
+    pub is_private: bool,
+    pub member_count: i64,
+    pub user_role: String,
+}</code></pre>
+
+<h3>2. Required SQL Queries</h3>
+
+<strong>Get Members with Details</strong>:
+<pre><code class="language-sql">SELECT 
+  sm.uid,
+  u.email,
+  u.name,
+  u.metadata-&gt;&gt;&#x27;icon<em>url&#x27; as avatar</em>url,
+  r.name as role_name,
+  sm.created<em>at as joined</em>at
+FROM af<em>space</em>member sm
+JOIN af_user u ON sm.uid = u.uid
+JOIN af<em>roles r ON sm.role</em>id = r.id
+WHERE sm.workspace<em>id = $1 AND sm.space</em>view_id = $2
+ORDER BY sm.created_at ASC</code></pre>
+
+<strong>Get Invitations with Details</strong>:
+<pre><code class="language-sql">SELECT 
+  i.id,
+  i.space<em>view</em>id,
+  i.invitee_email,
+  i.status,
+  i.created_at,
+  r.name as role_name,
+  u.email as inviter_email,
+  u.name as inviter_name,
+  u.metadata-&gt;&gt;&#x27;icon<em>url&#x27; as inviter</em>avatar
+FROM af<em>space</em>invitation i
+JOIN af_user u ON i.inviter = u.uid
+JOIN af<em>roles r ON i.role</em>id = r.id
+WHERE i.workspace<em>id = $1 AND i.space</em>view_id = $2
+ORDER BY i.created_at DESC</code></pre>
+
+<h3>3. New Required Endpoints</h3>
+
+<strong>Space Discovery</strong>:
+<pre><code class="language-http">GET /api/user/spaces
+Authorization: Bearer {token}</code></pre>
+
+<strong>Space Details</strong>:
+<pre><code class="language-http">GET /api/space/{space_id}/details
+Authorization: Bearer {token}</code></pre>
+
+<strong>Batch Operations</strong> (optional but helpful):
+<pre><code class="language-http">POST /api/space/{space_id}/members/batch
+{
+  &quot;invitations&quot;: [
+    {&quot;email&quot;: &quot;user1@example.com&quot;, &quot;role&quot;: &quot;member&quot;},
+    {&quot;email&quot;: &quot;user2@example.com&quot;, &quot;role&quot;: &quot;guest&quot;}
+  ]
+}</code></pre>
+
+<h2>Frontend Integration Checklist</h2>
+
+<h3>Pre-Integration Tasks</h3>
+<ul>
+  <li>[ ] Fix API responses to return complete data</li>
+  <li>[ ] Add user profile joins to all queries</li>
+  <li>[ ] Create DTOs for all response types</li>
+  <li>[ ] Implement space discovery endpoint</li>
+  <li>[ ] Add role name mapping</li>
+  <li>[ ] Document all request/response formats</li>
+</ul>
+
+<h3>Integration Steps</h3>
+<ol>
+  <li>[ ] Test authentication flow</li>
+  <li>[ ] Implement space discovery UI</li>
+  <li>[ ] Build member list component</li>
+  <li>[ ] Create invitation flow</li>
+  <li>[ ] Add role management UI</li>
+  <li>[ ] Implement error handling</li>
+  <li>[ ] Add loading states</li>
+  <li>[ ] Test permission scenarios</li>
+</ol>
+
+<h3>Post-Integration</h3>
+<ul>
+  <li>[ ] Performance testing with many members</li>
+  <li>[ ] Error recovery testing</li>
+  <li>[ ] Permission edge case testing</li>
+  <li>[ ] UI/UX review</li>
+  <li>[ ] Security audit</li>
+</ul>
+
+<h2>API Response Formats (Proposed)</h2>
+
+<h3>Member List Response</h3>
+<pre><code class="language-json">{
+  &quot;members&quot;: [
+    {
+      &quot;uid&quot;: 1000001,
+      &quot;email&quot;: &quot;owner@example.com&quot;,
+      &quot;name&quot;: &quot;Space Owner&quot;,
+      &quot;role&quot;: &quot;owner&quot;,
+      &quot;avatar_url&quot;: &quot;https://...&quot;,
+      &quot;joined_at&quot;: &quot;2024-01-01T00:00:00Z&quot;
+    }
+  ],
+  &quot;total&quot;: 1
+}</code></pre>
+
+<h3>Invitation Response</h3>
+<pre><code class="language-json">{
+  &quot;invitation&quot;: {
+    &quot;id&quot;: &quot;uuid&quot;,
+    &quot;space_id&quot;: &quot;space-uuid&quot;,
+    &quot;invitee_email&quot;: &quot;new@example.com&quot;,
+    &quot;role&quot;: &quot;member&quot;,
+    &quot;status&quot;: &quot;pending&quot;,
+    &quot;inviter&quot;: {
+      &quot;uid&quot;: 1000001,
+      &quot;name&quot;: &quot;John Doe&quot;,
+      &quot;email&quot;: &quot;john@example.com&quot;,
+      &quot;avatar_url&quot;: &quot;https://...&quot;
+    },
+    &quot;created_at&quot;: &quot;2024-01-20T10:00:00Z&quot;,
+    &quot;expires_at&quot;: null
+  }
+}</code></pre>
+
+<h3>Error Response Format</h3>
+<pre><code class="language-json">{
+  &quot;error&quot;: {
+    &quot;code&quot;: &quot;PERMISSION_DENIED&quot;,
+    &quot;message&quot;: &quot;Only space owners can invite members&quot;,
+    &quot;details&quot;: {
+      &quot;required_role&quot;: &quot;owner&quot;,
+      &quot;current_role&quot;: &quot;member&quot;
+    }
+  }
+}</code></pre>
+
+<h2>Testing Recommendations</h2>
+
+<h3>Test Scenarios</h3>
+<ol>
+  <li><strong>Permission Tests</strong></li>
+<ul>
+  <li>Non-owner trying to invite</li>
+</ol>
+  <li>Member trying to remove owner</li>
+  <li>Guest trying to write</li>
+</ul>
+
+<ol>
+  <li><strong>Edge Cases</strong></li>
+<ul>
+  <li>Invite existing member</li>
+</ol>
+  <li>Self-invitation</li>
+  <li>Invalid email formats</li>
+  <li>Non-existent space IDs</li>
+</ul>
+
+<ol>
+  <li><strong>Workflow Tests</strong></li>
+<ul>
+  <li>Complete invitation flow</li>
+</ol>
+  <li>Role changes</li>
+  <li>Member removal</li>
+  <li>Space deletion cascades</li>
+</ul>
+
+<h3>Sample Test Data</h3>
+<pre><code class="language-sql">-- Create test space members
+INSERT INTO af<em>space</em>member (workspace<em>id, space</em>view<em>id, uid, role</em>id)
+VALUES 
+  (&#x27;workspace-uuid&#x27;, &#x27;space-uuid&#x27;, 1000001, 1), -- Owner
+  (&#x27;workspace-uuid&#x27;, &#x27;space-uuid&#x27;, 1000002, 2), -- Member
+  (&#x27;workspace-uuid&#x27;, &#x27;space-uuid&#x27;, 1000003, 3); -- Guest
+
+<p>-- Create test invitations
+INSERT INTO af<em>space</em>invitation (workspace<em>id, space</em>view<em>id, inviter, role</em>id, invitee_email)
+VALUES 
+  (&#x27;workspace-uuid&#x27;, &#x27;space-uuid&#x27;, 1000001, 2, &#x27;pending@example.com&#x27;);</code></pre></p>
+
+<h2>Migration Path</h2>
+
+<h3>Phase 1: Minimal Fixes (1-2 days)</h3>
+<ul>
+  <li>Add response data to existing endpoints</li>
+  <li>Map role IDs to names</li>
+  <li>Include basic user info (email)</li>
+</ul>
+
+<h3>Phase 2: Enhanced Responses (3-5 days)</h3>
+<ul>
+  <li>Create proper DTOs</li>
+  <li>Add comprehensive SQL joins</li>
+  <li>Implement space discovery endpoint</li>
+  <li>Add space metadata resolution</li>
+</ul>
+
+<h3>Phase 3: Full Integration (1 week)</h3>
+<ul>
+  <li>Complete frontend implementation</li>
+  <li>Add batch operations</li>
+  <li>Implement caching layer</li>
+  <li>Add real-time updates via WebSocket</li>
+</ul>
+
+<h2>Security Considerations</h2>
+
+<ol>
+  <li><strong>Input Validation</strong></li>
+<ul>
+  <li>Validate email formats</li>
+</ol>
+  <li>Sanitize space IDs (must be valid UUIDs)</li>
+  <li>Check member IDs are integers</li>
+</ul>
+
+<ol>
+  <li><strong>Permission Checks</strong></li>
+<ul>
+  <li>Verify space ownership for management operations</li>
+</ol>
+  <li>Check workspace membership for public spaces</li>
+  <li>Validate invitation ownership</li>
+</ul>
+
+<ol>
+  <li><strong>Rate Limiting</strong></li>
+<ul>
+  <li>Limit invitation creation per user</li>
+</ol>
+  <li>Throttle member list requests</li>
+  <li>Prevent invitation spam</li>
+</ul>
+
+<ol>
+  <li><strong>Data Privacy</strong></li>
+<ul>
+  <li>Don&#x27;t expose full member list to non-members</li>
+</ol>
+  <li>Hide email addresses from guests</li>
+  <li>Mask invitation details from non-participants</li>
+</ul>
+
+<h2>Conclusion</h2>
+
+<p>The Space ACL backend has solid foundations but needs data enrichment before frontend integration. The core functionality works correctly - the gap is in providing the rich data that modern frontends expect. With the fixes outlined in this guide, the system will be fully ready for production use.</p>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

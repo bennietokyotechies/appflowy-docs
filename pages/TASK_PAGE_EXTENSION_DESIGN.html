@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task as Page Extension - Database Design Proposal - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Task as Page Extension - Database Design Proposal</h1>
+
+<h2>Overview</h2>
+This design allows tasks to inherit all page capabilities (rich text content, collaborative editing, comments, etc.) while adding task-specific properties like assignee, due date, and status. This creates a unified experience where tasks feel like enhanced pages.
+
+<h2>Design Approach: Hybrid Model</h2>
+
+<h3>Core Concept</h3>
+Tasks are stored as regular pages (Documents) with additional metadata stored in a separate table. This allows:
+<ul>
+  <li>Full page UI/UX for tasks (rich text editor, formatting, embeds, etc.)</li>
+  <li>Task-specific properties without modifying the core page structure</li>
+  <li>Backward compatibility with existing page features</li>
+  <li>Efficient querying of task-specific data</li>
+</ul>
+
+<h2>Database Schema</h2>
+
+<h3>1. New Table: <code>af<em>task</em>metadata</code></h3>
+<pre><code class="language-sql">CREATE TABLE af<em>task</em>metadata (
+    task<em>id UUID PRIMARY KEY,  -- Also the page</em>id in af_collab
+    workspace<em>id UUID NOT NULL REFERENCES af</em>workspace(workspace_id) ON DELETE CASCADE,
+    project<em>id UUID REFERENCES af</em>project<em>metadata(project</em>id) ON DELETE CASCADE,
+    
+    -- Task-specific fields
+    status VARCHAR(50) NOT NULL DEFAULT &#x27;todo&#x27;,  -- todo, in_progress, done, etc.
+    priority VARCHAR(20) DEFAULT &#x27;medium&#x27;,  -- low, medium, high, urgent
+    due_date TIMESTAMP WITH TIME ZONE,
+    start_date TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    
+    -- Assignment
+    assignee<em>uid BIGINT REFERENCES af</em>user(uid),
+    assigned<em>by BIGINT REFERENCES af</em>user(uid),
+    assigned_at TIMESTAMP WITH TIME ZONE,
+    
+    -- Task relationships
+    parent<em>task</em>id UUID REFERENCES af<em>task</em>metadata(task_id),
+    depends<em>on UUID[],  -- Array of task</em>ids this task depends on
+    blocks UUID[],      -- Array of task_ids this task blocks
+    
+    -- Task properties
+    estimated_hours DECIMAL(5,2),
+    actual_hours DECIMAL(5,2),
+    task_type VARCHAR(50) DEFAULT &#x27;task&#x27;,  -- task, bug, feature, epic
+    
+    -- Labels and categorization
+    labels TEXT[],
+    sprint_id UUID,
+    milestone_id UUID,
+    
+    -- Custom fields (extensible)
+    custom_fields JSONB DEFAULT &#x27;{}&#x27;,
+    
+    -- Metadata
+    created<em>at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT</em>TIMESTAMP,
+    updated<em>at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT</em>TIMESTAMP,
+    created<em>by BIGINT NOT NULL REFERENCES af</em>user(uid)
+);
+
+<p>-- Indexes for performance
+CREATE INDEX idx<em>task</em>workspace<em>id ON af</em>task<em>metadata(workspace</em>id);
+CREATE INDEX idx<em>task</em>project<em>id ON af</em>task<em>metadata(project</em>id);
+CREATE INDEX idx<em>task</em>assignee ON af<em>task</em>metadata(assignee_uid);
+CREATE INDEX idx<em>task</em>status ON af<em>task</em>metadata(status);
+CREATE INDEX idx<em>task</em>due<em>date ON af</em>task<em>metadata(due</em>date);
+CREATE INDEX idx<em>task</em>parent ON af<em>task</em>metadata(parent<em>task</em>id);</p>
+
+-- Update trigger
+CREATE TRIGGER trigger<em>update</em>af<em>task</em>metadata<em>updated</em>at
+    BEFORE UPDATE ON af<em>task</em>metadata
+    FOR EACH ROW
+    EXECUTE FUNCTION update<em>af</em>task<em>metadata</em>updated_at();</code></pre>
+
+<h3>2. Update to <code>af_collab</code> Usage</h3>
+Tasks will be stored in <code>af_collab</code> with:
+<ul>
+  <li><code>partition_key = 0</code> (Document partition, same as pages)</li>
+  <li>A special view layout <code>ViewLayout::Task = 5</code> to identify tasks in the folder</li>
+</ul>
+
+<h3>3. View Layout Extension</h3>
+<pre><code class="language-rust">pub enum ViewLayout {
+    Document = 0,
+    Grid = 1,
+    Board = 2,
+    Calendar = 3,
+    Chat = 4,
+    Task = 5,  // NEW: Task pages
+}</code></pre>
+
+<h2>Implementation Strategy</h2>
+
+<h3>1. Task Creation Flow</h3>
+<pre><code class="language-rust">async fn create_task(
+    state: &amp;AppState,
+    user: &amp;RealtimeUser,
+    workspace_id: Uuid,
+    project_id: Uuid,
+    task_data: CreateTaskRequest,
+) -&gt; Result&lt;TaskView, AppError&gt; {
+    // 1. Create a regular page with ViewLayout::Task
+    let page = create_page(
+        state,
+        user,
+        workspace_id,
+        parent<em>view</em>id,
+        &amp;task_data.title,
+        &amp;ViewLayout::Task,  // New task layout
+    ).await?;
+    
+    // 2. Insert task metadata
+    insert<em>task</em>metadata(
+        &amp;state.pg_pool,
+        page.id,
+        workspace_id,
+        project_id,
+        task_data,
+    ).await?;
+    
+    // 3. Return combined view
+    Ok(TaskView {
+        page,
+        task_metadata,
+    })
+}</code></pre>
+
+<h3>2. Task Query Structure</h3>
+<pre><code class="language-rust">pub struct TaskView {
+    // All page properties
+    pub id: Uuid,
+    pub name: String,
+    pub content: Document,  // Rich text content
+    pub created_at: DateTime&lt;Utc&gt;,
+    pub last<em>edited</em>time: DateTime&lt;Utc&gt;,
+    
+    // Task-specific properties
+    pub status: TaskStatus,
+    pub assignee: Option&lt;UserProfile&gt;,
+    pub due_date: Option&lt;DateTime&lt;Utc&gt;&gt;,
+    pub priority: TaskPriority,
+    pub labels: Vec&lt;String&gt;,
+    // ... other task fields
+}</code></pre>
+
+<h3>3. Database Views for Efficient Querying</h3>
+<pre><code class="language-sql">CREATE VIEW af<em>task</em>view AS
+SELECT 
+    c.oid as task_id,
+    c.workspace_id,
+    tm.*,
+    f.name as task_title,
+    f.created<em>at as page</em>created_at,
+    f.last<em>edited</em>time,
+    u.name as assignee_name,
+    u.email as assignee_email
+FROM af_collab c
+JOIN af<em>task</em>metadata tm ON tm.task_id = c.oid::uuid
+JOIN af<em>folder</em>view f ON f.id = c.oid
+LEFT JOIN af<em>user u ON u.uid = tm.assignee</em>uid
+WHERE c.partition_key = 0;  -- Document partition</code></pre>
+
+<h2>Benefits of This Approach</h2>
+
+<h3>1. <strong>Full Page Capabilities for Tasks</strong></h3>
+<ul>
+  <li>Rich text editing with all formatting options</li>
+  <li>Embedded images, tables, code blocks</li>
+  <li>Comments and mentions</li>
+  <li>Version history</li>
+  <li>Real-time collaboration</li>
+</ul>
+
+<h3>2. <strong>Efficient Task-Specific Operations</strong></h3>
+<ul>
+  <li>Fast filtering by status, assignee, due date</li>
+  <li>Task board views without loading full page content</li>
+  <li>Bulk operations on task metadata</li>
+</ul>
+
+<h3>3. <strong>Flexibility</strong></h3>
+<ul>
+  <li>Easy to add new task properties without schema changes (JSONB)</li>
+  <li>Can progressively enhance pages to become tasks</li>
+  <li>Support for different task types (bugs, features, epics)</li>
+</ul>
+
+<h3>4. <strong>Performance</strong></h3>
+<ul>
+  <li>Page content and task metadata can be loaded separately</li>
+  <li>Indexed task properties for fast queries</li>
+  <li>Board/list views don&#x27;t need to parse document content</li>
+</ul>
+
+<h3>5. <strong>Migration Path</strong></h3>
+<ul>
+  <li>Existing pages can be converted to tasks by adding metadata</li>
+  <li>Tasks can be downgraded to regular pages by removing metadata</li>
+  <li>No changes to existing page infrastructure</li>
+</ul>
+
+<h2>UI/UX Implications</h2>
+
+<h3>Task Page Layout</h3>
+<pre><code class="language-">┌─────────────────────────────────────────┐
+│ Task Title                    [Status ▼]│
+├─────────────────────────────────────────┤
+│ Assignee: @john  Due: Dec 25  Priority:⚡│
+│ Labels: [frontend] [urgent] [bug]       │
+├─────────────────────────────────────────┤
+│                                         │
+│ Rich Text Content Area                  │
+│ - Full page editor capabilities         │
+│ - Images, tables, code blocks           │
+│ - Mentions, comments                    │
+│                                         │
+├─────────────────────────────────────────┤
+│ Subtasks:                               │
+│ □ Subtask 1                            │
+│ ☑ Subtask 2                            │
+└─────────────────────────────────────────┘</code></pre>
+
+<h3>Board View Optimization</h3>
+When displaying tasks in a board, only load:
+<ul>
+  <li>Task metadata (status, assignee, due date)</li>
+  <li>First N characters of content as preview</li>
+  <li>Full content loaded on demand when task is opened</li>
+</ul>
+
+<h2>Migration Strategy</h2>
+
+<h3>Phase 1: Schema Creation</h3>
+<ol>
+  <li>Create <code>af<em>task</em>metadata</code> table</li>
+  <li>Add <code>ViewLayout::Task</code> enum value</li>
+  <li>Update folder view handlers</li>
+</ol>
+
+<h3>Phase 2: API Implementation</h3>
+<ol>
+  <li>Create task CRUD endpoints</li>
+  <li>Implement task-specific queries</li>
+  <li>Add task filtering/sorting</li>
+</ol>
+
+<h3>Phase 3: UI Integration</h3>
+<ol>
+  <li>Create task page template</li>
+  <li>Add task property panel</li>
+  <li>Implement board/list views for tasks</li>
+</ol>
+
+<h3>Phase 4: Migration Tools</h3>
+<ol>
+  <li>Tool to convert existing pages to tasks</li>
+  <li>Bulk import from external task systems</li>
+  <li>Export capabilities</li>
+</ol>
+
+<h2>Alternative Approaches Considered</h2>
+
+<h3>1. <strong>Separate Task Table</strong> ❌</h3>
+<ul>
+  <li>Would duplicate page functionality</li>
+  <li>Lose collaborative editing capabilities</li>
+  <li>Complex to maintain two systems</li>
+</ul>
+
+<h3>2. <strong>Extend af_collab with Task Fields</strong> ❌</h3>
+<ul>
+  <li>Would pollute the core collaboration table</li>
+  <li>Not all documents need task fields</li>
+  <li>Performance impact on non-task queries</li>
+</ul>
+
+<h3>3. <strong>Store Everything in JSONB</strong> ❌</h3>
+<ul>
+  <li>Poor query performance for task-specific filters</li>
+  <li>No referential integrity</li>
+  <li>Difficult to index properly</li>
+</ul>
+
+<h2>Conclusion</h2>
+
+<p>This hybrid approach provides the best of both worlds:
+<ul>
+  <li>Tasks are first-class pages with all page capabilities</li>
+  <li>Task-specific data is efficiently stored and queried</li>
+  <li>Clean separation of concerns</li>
+  <li>Easy migration path</li>
+  <li>Extensible for future task management features</li>
+</ul></p>
+
+The design ensures tasks feel like natural extensions of pages in the UI while maintaining efficient task management operations in the backend.
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

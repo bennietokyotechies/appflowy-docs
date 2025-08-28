@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Access Control (Space-ACL) Implementation Analysis - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Space Access Control (Space-ACL) Implementation Analysis</h1>
+
+<h2>Overview</h2>
+
+<p>AppFlowy has implemented a comprehensive <strong>Space-level Access Control System</strong> that provides fine-grained permissions management for individual spaces within workspaces. This system operates independently from workspace-level permissions, enabling granular control over space-specific resources and collaboration.</p>
+
+<h2>Architecture Components</h2>
+
+<h3>1. Database Schema</h3>
+
+<h4>New Tables Added</h4>
+
+<strong><code>af<em>space</em>member</code></strong> - Space Membership and Roles
+<pre><code class="language-sql">CREATE TABLE af<em>space</em>member (
+  workspace<em>id   UUID   NOT NULL REFERENCES af</em>workspace(workspace_id) ON DELETE CASCADE,
+  space<em>view</em>id  UUID   NOT NULL,
+  uid            BIGINT NOT NULL REFERENCES af_user(uid) ON DELETE CASCADE,
+  role<em>id        INT    NOT NULL REFERENCES af</em>roles(id),
+  created<em>at     TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT</em>TIMESTAMP,
+  updated<em>at     TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT</em>TIMESTAMP,
+  PRIMARY KEY (space<em>view</em>id, uid)
+);</code></pre>
+
+<strong><code>af<em>space</em>invitation</code></strong> - Space-Specific Invitations
+<pre><code class="language-sql">CREATE TABLE af<em>space</em>invitation (
+    id UUID PRIMARY KEY DEFAULT uuid<em>generate</em>v4(),
+    workspace_id UUID NOT NULL,
+    space<em>view</em>id UUID NOT NULL,
+    inviter BIGINT NOT NULL,
+    role_id INT NOT NULL,
+    status SMALLINT NOT NULL DEFAULT 0, -- 0: pending, 1: accepted, 2: rejected
+    invitee_email TEXT NOT NULL,
+    updated<em>at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT</em>TIMESTAMP NOT NULL,
+    created<em>at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT</em>TIMESTAMP NOT NULL
+);</code></pre>
+
+<h4>Database Triggers</h4>
+
+<strong>Auto-Assignment Trigger</strong>: Accepted invitations automatically create <code>af<em>space</em>member</code> records
+<strong>Audit Triggers</strong>: Track status changes in invitations
+
+<h3>2. Access Control Framework</h3>
+
+<strong>Location</strong>: <code>libs/access-control/src/space.rs</code>
+
+<h4>SpaceAccessControl Trait</h4>
+<pre><code class="language-rust">#[async_trait]
+pub trait SpaceAccessControl: Send + Sync + &#x27;static {
+  // Role enforcement (strong vs weak validation)
+  async fn enforce<em>role</em>strong(&amp;self, uid: &amp;i64, workspace<em>id: &amp;Uuid, space</em>view_id: &amp;Uuid, role: AFRole) -&gt; Result&lt;(), AppError&gt;;
+  async fn enforce<em>role</em>weak(&amp;self, uid: &amp;i64, workspace<em>id: &amp;Uuid, space</em>view_id: &amp;Uuid, role: AFRole) -&gt; Result&lt;(), AppError&gt;;
+  
+  // Action-based enforcement
+  async fn enforce<em>action(&amp;self, uid: &amp;i64, workspace</em>id: &amp;Uuid, space<em>view</em>id: &amp;Uuid, action: Action) -&gt; Result&lt;(), AppError&gt;;
+  
+  // Membership management
+  async fn insert<em>role(&amp;self, uid: &amp;i64, workspace</em>id: &amp;Uuid, space<em>view</em>id: &amp;Uuid, role: AFRole) -&gt; Result&lt;(), AppError&gt;;
+  async fn remove<em>user</em>from<em>space(&amp;self, uid: &amp;i64, workspace</em>id: &amp;Uuid, space<em>view</em>id: &amp;Uuid) -&gt; Result&lt;(), AppError&gt;;
+  async fn get<em>space</em>role(&amp;self, uid: i64, workspace<em>id: Uuid, space</em>view_id: Uuid) -&gt; Result&lt;Option&lt;AFRole&gt;, AppError&gt;;
+}</code></pre>
+
+<h4>Permission Model</h4>
+
+<p><table><tr><td> Role </td><td> Delete </td><td> Write </td><td> Read </td><td> Invite Members </td><td> Manage Roles </td></tr></table>
+<table><tr><td>------</td><td>--------</td><td>-------</td><td>------</td><td>----------------</td><td>--------------</td></tr></table>
+<table><tr><td> <strong>Owner</strong> </td><td> ✅ </td><td> ✅ </td><td> ✅ </td><td> ✅ </td><td> ✅ </td></tr></table>
+<table><tr><td> <strong>Member</strong> </td><td> ❌ </td><td> ✅ </td><td> ✅ </td><td> ❌ </td><td> ❌ </td></tr></table>
+<table><tr><td> <strong>Guest</strong> </td><td> ❌ </td><td> ❌ </td><td> ✅ </td><td> ❌ </td><td> ❌ </td></tr></table></p>
+
+<h4>Action-to-Role Mapping</h4>
+<pre><code class="language-rust">fn required<em>role</em>for_action(action: &amp;Action) -&gt; AFRole {
+  match action {
+    Action::Delete =&gt; AFRole::Owner,
+    Action::Write =&gt; AFRole::Member,
+    Action::Read =&gt; AFRole::Guest,
+  }
+}</code></pre>
+
+<h3>3. API Endpoints</h3>
+
+<strong>Base Path</strong>: <code>/api/space/</code>
+<strong>Feature Gate</strong>: <code>#[cfg(feature = &quot;space_acl&quot;)]</code>
+<strong>Runtime Gate</strong>: <code>SPACE<em>ACL</em>ENABLED=true</code>
+
+<h4>Space Member Management</h4>
+<pre><code class="language-http">POST   /api/space/{space_id}/members           # Invite member
+GET    /api/space/{space_id}/members           # List members
+PATCH  /api/space/{space<em>id}/members/{member</em>id}  # Update member role
+DELETE /api/space/{space<em>id}/members/{member</em>id}  # Remove member</code></pre>
+
+<h4>Space Invitations</h4>
+<pre><code class="language-http">GET    /api/space/{space_id}/invitations       # List invitations
+POST   /api/space/{space_id}/invitations       # Accept invitation
+DELETE /api/space/{space<em>id}/invitations/{invite</em>id}  # Decline invitation</code></pre>
+
+<h4>Health Check</h4>
+<pre><code class="language-http">GET    /api/space/health                       # Feature status check</code></pre>
+
+<h3>4. Auto-Assignment System</h3>
+
+<h4>Space Creator Ownership</h4>
+<ul>
+  <li><strong>Trigger</strong>: Space creation automatically assigns creator as Owner</li>
+  <li><strong>Implementation</strong>: Business logic hook in space creation flow</li>
+  <li><strong>Location</strong>: <code>src/biz/workspace/page_view.rs</code></li>
+</ul>
+
+<h4>Auto-Assignment Logic</h4>
+<pre><code class="language-rust">if app<em>state.config.addon.space</em>acl_enabled {
+    #[cfg(feature = &quot;space_acl&quot;)]
+    {
+        use database::space::SpaceMemberDB;
+        if let Err(e) = SpaceMemberDB::ensure<em>owner(&amp;app</em>state.pg<em>pool, &amp;workspace</em>id, &amp;space<em>view</em>id, creator<em>user</em>id).await {
+            tracing::warn!(%workspace<em>id, %space</em>view<em>id, creator</em>user_id, error=?e, &quot;failed to auto-assign owner for space&quot;);
+        } else {
+            tracing::debug!(%workspace<em>id, %space</em>view<em>id, creator</em>user_id, &quot;auto-assigned creator as owner for space&quot;);
+        }
+    }
+}</code></pre>
+
+<h2>Configuration</h2>
+
+<h3>Compile-Time Feature Flag</h3>
+<pre><code class="language-toml">[features]
+space_acl = []</code></pre>
+
+<h3>Runtime Environment Variable</h3>
+<pre><code class="language-bash">SPACE<em>ACL</em>ENABLED=true</code></pre>
+
+<h3>Feature Detection</h3>
+<pre><code class="language-bash"><h1>Check if Space ACL is enabled</h1>
+curl http://localhost:8000/api/space/health
+
+<h1>Response if enabled:</h1>
+200 OK: &quot;Space api registered successfully&quot;
+
+<h1>Response if disabled:</h1>
+404 Not Found: &quot;Space ACL is disabled (SPACE<em>ACL</em>ENABLED=false)&quot;</code></pre>
+
+<h2>Database Helpers</h2>
+
+<strong>Location</strong>: <code>libs/database/src/space.rs</code>
+
+<h3>SpaceMemberDB Operations</h3>
+<pre><code class="language-rust">impl SpaceMemberDB {
+  pub async fn is<em>member(pool: &amp;PgPool, workspace</em>id: &amp;Uuid, space<em>view</em>id: &amp;Uuid, uid: i64) -&gt; sqlx::Result&lt;bool&gt;;
+  pub async fn get<em>member(pool: &amp;PgPool, workspace</em>id: &amp;Uuid, space<em>view</em>id: &amp;Uuid, uid: i64) -&gt; sqlx::Result&lt;Option&lt;SpaceMemberModel&gt;&gt;;
+  pub async fn get<em>members(pool: &amp;PgPool, workspace</em>id: &amp;Uuid, space<em>view</em>id: &amp;Uuid) -&gt; sqlx::Result&lt;Vec&lt;SpaceMemberModel&gt;&gt;;
+  pub async fn upsert<em>member</em>role(pool: &amp;PgPool, workspace<em>id: &amp;Uuid, space</em>view<em>id: &amp;Uuid, uid: i64, role</em>id: i32) -&gt; sqlx::Result&lt;()&gt;;
+  pub async fn delete<em>member(pool: &amp;PgPool, workspace</em>id: &amp;Uuid, space<em>view</em>id: &amp;Uuid, uid: i64) -&gt; sqlx::Result&lt;()&gt;;
+  pub async fn is<em>space</em>owner(pool: &amp;PgPool, workspace<em>id: &amp;Uuid, space</em>view_id: &amp;Uuid, uid: i64) -&gt; sqlx::Result&lt;bool&gt;;
+  pub async fn ensure<em>owner(pool: &amp;PgPool, workspace</em>id: &amp;Uuid, space<em>view</em>id: &amp;Uuid, uid: i64) -&gt; sqlx::Result&lt;()&gt;;
+}</code></pre>
+
+<h3>SpaceInvitationDB Operations</h3>
+<pre><code class="language-rust">impl SpaceInvitationDB {
+  pub async fn find<em>by</em>space<em>and</em>email(pool: &amp;PgPool, workspace<em>id: &amp;Uuid, space</em>view_id: &amp;Uuid, email: &amp;str) -&gt; sqlx::Result&lt;Option&lt;SpaceInvitationModel&gt;&gt;;
+  pub async fn create_invitation(pool: &amp;PgPool, invitation: &amp;SpaceInvitationCreateParams) -&gt; sqlx::Result&lt;SpaceInvitationModel&gt;;
+  pub async fn get<em>invitation(pool: &amp;PgPool, invite</em>id: &amp;Uuid) -&gt; sqlx::Result&lt;Option&lt;SpaceInvitationModel&gt;&gt;;
+  pub async fn accept<em>invitation(pool: &amp;PgPool, invite</em>id: &amp;Uuid) -&gt; sqlx::Result&lt;()&gt;;
+  pub async fn delete<em>invitation(pool: &amp;PgPool, invite</em>id: &amp;Uuid) -&gt; sqlx::Result&lt;()&gt;;
+  pub async fn get<em>invitations(pool: &amp;PgPool, workspace</em>id: &amp;Uuid, space<em>view</em>id: &amp;Uuid) -&gt; sqlx::Result&lt;Vec&lt;SpaceInvitationModel&gt;&gt;;
+}</code></pre>
+
+<h2>Implementation Timeline</h2>
+
+<h3>Completed Implementation ✅</h3>
+
+<ol>
+  <li><strong>Database Migrations</strong> (Aug 19, 2025)</li>
+<ul>
+  <li><code>20250814112956<em>af</em>space_member.sql</code></li>
+</ol>
+  <li><code>20250814181500<em>af</em>space_invitation.sql</code></li>
+</ul>
+
+<ol>
+  <li><strong>Core Access Control</strong> (Aug 19, 2025)</li>
+<ul>
+  <li><code>SpaceAccessControl</code> trait and implementation</li>
+</ol>
+  <li>Role enforcement mechanisms</li>
+  <li>Database helper functions</li>
+</ul>
+
+<ol>
+  <li><strong>API Endpoints</strong> (Aug 19, 2025)</li>
+<ul>
+  <li>Complete REST API for space members and invitations</li>
+</ol>
+  <li>Feature-gated and runtime-configurable</li>
+</ul>
+
+<ol>
+  <li><strong>Auto-Assignment</strong> (Aug 19, 2025)</li>
+<ul>
+  <li>Space creator auto-ownership system</li>
+</ol>
+  <li>Business logic integration</li>
+</ul>
+
+<ol>
+  <li><strong>Documentation</strong> (Aug 19, 2025)</li>
+<ul>
+  <li>Implementation guides and TODOs</li>
+</ol>
+  <li>API documentation and examples</li>
+</ul>
+
+<h3>Remaining Work 🚧</h3>
+
+<ol>
+  <li><strong>Client Implementation</strong></li>
+<ul>
+  <li>HTTP client methods in <code>libs/client-api/src/http_member.rs</code></li>
+</ol>
+  <li>Replace current stub implementations</li>
+</ul>
+
+<ol>
+  <li><strong>SQLx Metadata</strong></li>
+<ul>
+  <li>Regenerate with space_acl features</li>
+</ol>
+  <li>Ensure offline compilation support</li>
+</ul>
+
+<ol>
+  <li><strong>Testing</strong></li>
+<ul>
+  <li>Integration tests for space ACL workflows</li>
+</ol>
+  <li>Permission enforcement validation</li>
+</ul>
+
+<h2>Benefits and Use Cases</h2>
+
+<h3>1. Granular Access Control</h3>
+<ul>
+  <li><strong>Problem</strong>: Workspace permissions too broad</li>
+  <li><strong>Solution</strong>: Per-space role assignment independent of workspace access</li>
+</ul>
+
+<h3>2. Secure Collaboration</h3>
+<ul>
+  <li><strong>Problem</strong>: Sensitive spaces accessible to all workspace members</li>
+  <li><strong>Solution</strong>: Space-specific invitation and membership control</li>
+</ul>
+
+<h3>3. Scalable Organization</h3>
+<ul>
+  <li><strong>Problem</strong>: Complex permission requirements across multiple spaces</li>
+  <li><strong>Solution</strong>: Fine-grained role hierarchy with clear action mappings</li>
+</ul>
+
+<h3>4. Flexible Sharing</h3>
+<ul>
+  <li><strong>Problem</strong>: External collaboration requires workspace access</li>
+  <li><strong>Solution</strong>: Space-level guest access without workspace membership</li>
+</ul>
+
+<h2>Security Considerations</h2>
+
+<h3>Access Control Enforcement</h3>
+<ul>
+  <li><strong>Multiple validation layers</strong>: Strong and weak role enforcement</li>
+  <li><strong>Action-based permissions</strong>: Explicit action-to-role mapping</li>
+  <li><strong>Database constraints</strong>: Foreign key integrity and cascading deletes</li>
+</ul>
+
+<h3>Audit Trail</h3>
+<ul>
+  <li><strong>Invitation tracking</strong>: Full lifecycle from creation to acceptance/rejection</li>
+  <li><strong>Membership changes</strong>: Timestamped updates with trigger-based automation</li>
+  <li><strong>Permission logs</strong>: Tracing for access control enforcement</li>
+</ul>
+
+<h2>Performance Considerations</h2>
+
+<h3>Database Optimization</h3>
+<ul>
+  <li><strong>Strategic indexing</strong>: Workspace+space, UID-based lookups</li>
+  <li><strong>Query efficiency</strong>: Optimized member and invitation retrieval</li>
+  <li><strong>Constraint enforcement</strong>: Database-level integrity checks</li>
+</ul>
+
+<h3>Caching Strategy</h3>
+<ul>
+  <li><strong>Role caching</strong>: Space access control integrates with existing caching</li>
+  <li><strong>Membership lookups</strong>: Optimized for frequent permission checks</li>
+</ul>
+
+<h2>Migration and Rollout</h2>
+
+<h3>Safe Deployment</h3>
+<ul>
+  <li><strong>Feature flags</strong>: Compile-time and runtime configuration</li>
+  <li><strong>Backwards compatibility</strong>: Existing workspace permissions unaffected</li>
+  <li><strong>Incremental rollout</strong>: Per-environment enablement</li>
+</ul>
+
+<h3>Data Integrity</h3>
+<ul>
+  <li><strong>Automatic triggers</strong>: Invitation acceptance → membership creation</li>
+  <li><strong>Idempotent operations</strong>: Safe retry mechanisms for membership operations</li>
+  <li><strong>Constraint validation</strong>: Database-enforced referential integrity</li>
+</ul>
+
+<p>---</p>
+
+<strong>Implementation Date</strong>: August 19, 2025  
+<strong>Status</strong>: Feature-complete with remaining client implementation  
+<strong>Feature Flag</strong>: <code>space<em>acl</code> + <code>SPACE</em>ACL_ENABLED=true</code>  
+<strong>Documentation</strong>: Complete with guides and API reference
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

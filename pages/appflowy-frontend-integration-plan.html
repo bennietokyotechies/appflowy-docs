@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frontend Integration Test Plan for AppFlowy Database Backend - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Frontend Integration Test Plan for AppFlowy Database Backend</h1>
+
+<strong>Target</strong>: Gradual UI development to verify backend API functionality  
+<strong>Backend</strong>: <code>appflowy-backend/databases/</code> service  
+<strong>Frontend</strong>: <code>appflowy-frontend/</code> React/TypeScript application  
+<strong>Estimated Time</strong>: 8-12 hours total development
+
+<p>---</p>
+
+<h2>Step-by-Step UI Development &amp; API Verification</h2>
+
+<h3><strong>Phase 1: Basic API Connection Testing</strong></h3>
+
+<h4>Step 1: Test Health Check</h4>
+<strong>Prompt</strong>: &quot;Test the backend health endpoint and display the response&quot;
+<pre><code class="language-typescript">// Expected API call
+GET http://localhost:8000/health
+
+<p>// Expected response
+{
+  &quot;status&quot;: &quot;ok&quot;, 
+  &quot;service&quot;: &quot;databases&quot;
+}</code></pre>
+<strong>UI Output</strong>: Simple status indicator showing &quot;Backend Connected ✅&quot; or &quot;Backend Offline ❌&quot;</p>
+
+<h4>Step 2: Test Root Endpoint  </h4>
+<strong>Prompt</strong>: &quot;Fetch and display the available API endpoints from the root&quot;
+<pre><code class="language-typescript">// Expected API call  
+GET http://localhost:8000/
+
+<p>// Expected response
+{
+  &quot;service&quot;: &quot;AppFlowy Database Service&quot;,
+  &quot;version&quot;: &quot;0.1.0&quot;, 
+  &quot;endpoints&quot;: [&quot;GET /health&quot;, &quot;POST /api/v1/boards&quot;, ...]
+}</code></pre>
+<strong>UI Output</strong>: List of available endpoints in a simple card layout</p>
+
+---
+
+<h3><strong>Phase 2: Board Management</strong></h3>
+
+<h4>Step 3: Create Simple Board</h4>
+<strong>Prompt</strong>: &quot;Add a form to create a new board with just a name input&quot;
+<pre><code class="language-typescript">// Expected API call
+POST http://localhost:8000/api/v1/boards
+{ &quot;name&quot;: &quot;My Test Board&quot; }
+
+<p>// Expected response  
+{
+  &quot;data&quot;: {
+    &quot;view&quot;: { &quot;id&quot;: &quot;uuid&quot;, &quot;name&quot;: &quot;My Test Board&quot;, ... },
+    &quot;groups&quot;: [
+      { &quot;id&quot;: &quot;todo&quot;, &quot;name&quot;: &quot;To Do&quot;, &quot;color&quot;: &quot;#e2e8f0&quot;, &quot;cards&quot;: [] },
+      { &quot;id&quot;: &quot;in_progress&quot;, &quot;name&quot;: &quot;In Progress&quot;, &quot;color&quot;: &quot;#3b82f6&quot;, &quot;cards&quot;: [] },
+      { &quot;id&quot;: &quot;done&quot;, &quot;name&quot;: &quot;Done&quot;, &quot;color&quot;: &quot;#10b981&quot;, &quot;cards&quot;: [] }
+    ]
+  }
+}</code></pre>
+<strong>UI Output</strong>: Form with text input + &quot;Create Board&quot; button, success message showing board ID</p>
+
+<h4>Step 4: Display Board Data</h4>
+<strong>Prompt</strong>: &quot;Fetch and display the created board with its groups&quot;
+<pre><code class="language-typescript">// Expected API call
+GET http://localhost:8000/api/v1/views/board/{view_id}
+
+<p>// Expected response
+// Same structure as Step 3 response</code></pre>
+<strong>UI Output</strong>: Three columns (To Do, In Progress, Done) with proper colors, empty state</p>
+
+---
+
+<h3><strong>Phase 3: Card Operations</strong></h3>
+
+<h4>Step 5: Add Card Form</h4>
+<strong>Prompt</strong>: &quot;Create a form to add cards to specific groups&quot;
+<pre><code class="language-typescript">// Expected API call
+POST http://localhost:8000/api/v1/views/board/{view_id}/cards
+{
+  &quot;title&quot;: &quot;Test Card&quot;,
+  &quot;group_id&quot;: &quot;todo&quot;, 
+  &quot;properties&quot;: {}
+}
+
+<p>// Expected response
+{
+  &quot;data&quot;: &quot;card-uuid&quot;,
+  &quot;correlation_id&quot;: &quot;correlation-uuid&quot;
+}</code></pre>
+<strong>UI Output</strong>: Form with title input + group dropdown, &quot;Add Card&quot; button per column</p>
+
+<h4>Step 6: Display Cards in Groups</h4>
+<strong>Prompt</strong>: &quot;Refresh board data and show cards in their respective columns&quot;
+<pre><code class="language-typescript">// Expected API call  
+GET http://localhost:8000/api/v1/views/board/{view_id}
+
+<p>// Expected response
+{
+  &quot;data&quot;: {
+    &quot;groups&quot;: [
+      {
+        &quot;id&quot;: &quot;todo&quot;,
+        &quot;name&quot;: &quot;To Do&quot;, 
+        &quot;cards&quot;: [
+          {
+            &quot;id&quot;: &quot;card-uuid&quot;,
+            &quot;title&quot;: &quot;Test Card&quot;,
+            &quot;group_id&quot;: &quot;todo&quot;,
+            &quot;position&quot;: 1000.0
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+<strong>UI Output</strong>: Cards displayed as small boxes within columns, showing title</p>
+
+---
+
+<h3><strong>Phase 4: Card Movement</strong></h3>
+
+<h4>Step 7: Basic Card Move</h4>
+<strong>Prompt</strong>: &quot;Add buttons to move cards between groups (Previous/Next column)&quot;
+<pre><code class="language-typescript">// Expected API call
+PUT http://localhost:8000/api/v1/views/board/cards/{card_id}/move
+{
+  &quot;target<em>group</em>id&quot;: &quot;in_progress&quot;
+}
+
+<p>// Expected response
+{
+  &quot;data&quot;: {
+    &quot;card_id&quot;: &quot;card-uuid&quot;,
+    &quot;new_position&quot;: 1500.0,
+    &quot;moved_at&quot;: &quot;2025-08-16T...&quot;
+  }
+}</code></pre>
+<strong>UI Output</strong>: &quot;Move Left&quot; / &quot;Move Right&quot; buttons on each card, visual feedback on move</p>
+
+<h4>Step 8: Drag &amp; Drop (Advanced)</h4>
+<strong>Prompt</strong>: &quot;Implement drag and drop between columns using react-beautiful-dnd&quot;
+<pre><code class="language-typescript">// Same API call as Step 7, but triggered by drag events
+// Calculate target<em>group</em>id from drop zone
+// Optional: Calculate position based on drop index</code></pre>
+<strong>UI Output</strong>: Smooth drag and drop experience, cards snap to new positions
+
+<p>---</p>
+
+<h3><strong>Phase 5: Card Management</strong></h3>
+
+<h4>Step 9: Edit Card Title</h4>
+<strong>Prompt</strong>: &quot;Add inline editing for card titles&quot;
+<pre><code class="language-typescript">// Expected API call
+PUT http://localhost:8000/api/v1/views/board/cards/{card_id}
+{
+  &quot;title&quot;: &quot;Updated Card Title&quot;
+}
+
+<p>// Expected response (currently returns 501 Not Implemented)
+// This will help identify which endpoints need implementation</code></pre>
+<strong>UI Output</strong>: Click-to-edit card titles, handle 501 errors gracefully</p>
+
+<h4>Step 10: Delete Cards</h4>
+<strong>Prompt</strong>: &quot;Add delete button to cards&quot;
+<pre><code class="language-typescript">// Expected API call
+DELETE http://localhost:8000/api/v1/views/board/cards/{card_id}
+
+<p>// Expected response
+// 204 No Content (successful deletion)</code></pre>
+<strong>UI Output</strong>: Delete button (X) on card hover, confirmation dialog</p>
+
+---
+
+<h3><strong>Phase 6: Error Handling &amp; Polish</strong></h3>
+
+<h4>Step 11: Error Boundaries</h4>
+<strong>Prompt</strong>: &quot;Add proper error handling for all API calls&quot;
+<pre><code class="language-typescript">// Handle common error responses
+{
+  &quot;error&quot;: {
+    &quot;code&quot;: 404,
+    &quot;message&quot;: &quot;Board view not found&quot;,
+    &quot;correlation_id&quot;: &quot;uuid&quot;
+  }
+}</code></pre>
+<strong>UI Output</strong>: Toast notifications for errors, loading states, retry buttons
+
+<h4>Step 12: Loading States</h4>
+<strong>Prompt</strong>: &quot;Add loading spinners and skeleton UI for all async operations&quot;
+<strong>UI Output</strong>: Skeleton cards while loading, spinner during API calls, disabled states
+
+<p>---</p>
+
+<h3><strong>Phase 7: Advanced Features</strong></h3>
+
+<h4>Step 13: Multiple Boards</h4>
+<strong>Prompt</strong>: &quot;Add board selection/switching functionality&quot;
+<strong>UI Output</strong>: Board dropdown/tabs, ability to create and switch between boards
+
+<h4>Step 14: Real-time Updates (Future)</h4>
+<strong>Prompt</strong>: &quot;Poll for board updates every 5 seconds to simulate real-time&quot;
+<strong>UI Output</strong>: Automatic refresh of board data, visual indicators for updates
+
+<p>---</p>
+
+<h2>Implementation Order Priority</h2>
+
+<h3>Critical Path (Core Functionality)</h3>
+<ol>
+  <li><strong>Steps 1-2</strong>: Backend connectivity verification</li>
+  <li><strong>Steps 3-4</strong>: Board creation and display  </li>
+  <li><strong>Steps 5-6</strong>: Card creation and listing</li>
+  <li><strong>Steps 7-8</strong>: Card movement (core kanban functionality)</li>
+</ol>
+
+<h3>Production Ready</h3>
+<ol>
+  <li><strong>Steps 9-10</strong>: CRUD completion</li>
+  <li><strong>Steps 11-12</strong>: Error handling and polish</li>
+</ol>
+
+<h3>Enhanced Features  </h3>
+<ol>
+  <li><strong>Steps 13-14</strong>: Multi-board and real-time features</li>
+</ol>
+
+<h2>Expected Development Timeline</h2>
+
+<p><table><tr><td> Phase </td><td> Time Estimate </td><td> Deliverable </td></tr></table>
+<table><tr><td>-------</td><td>--------------</td><td>-------------</td></tr></table>
+<table><tr><td> <strong>Phase 1-2</strong> </td><td> 1-2 hours </td><td> Basic connectivity + board creation </td></tr></table>
+<table><tr><td> <strong>Phase 3</strong> </td><td> 2-3 hours </td><td> Core board UI with card creation </td></tr></table>
+<table><tr><td> <strong>Phase 4</strong> </td><td> 3-4 hours </td><td> Drag &amp; drop functionality </td></tr></table>
+<table><tr><td> <strong>Phase 5-6</strong> </td><td> 2-3 hours </td><td> Production polish and error handling </td></tr></table>
+<table><tr><td> <strong>Phase 7</strong> </td><td> 2-3 hours </td><td> Advanced features (optional) </td></tr></table>
+<table><tr><td> <strong>Total</strong> </td><td> <strong>8-12 hours</strong> </td><td> Complete kanban board integration </td></tr></table></p>
+
+<h2>Technical Implementation Notes</h2>
+
+<h3>Existing Frontend Components</h3>
+Already available in <code>appflowy-frontend/src/</code>:
+<ul>
+  <li><code>api/BoardAPIClient.ts</code> - HTTP client wrapper</li>
+  <li><code>hooks/useBoardAPI.ts</code> - React hooks for state management  </li>
+  <li><code>pages/BoardTestPage.tsx</code> - Test page component</li>
+</ul>
+
+<h3>Required Dependencies</h3>
+<pre><code class="language-json">{
+  &quot;react-beautiful-dnd&quot;: &quot;^13.1.1&quot;,  // Drag &amp; drop
+  &quot;react-toast-notifications&quot;: &quot;^2.5.1&quot;,  // Error notifications
+  &quot;@types/uuid&quot;: &quot;^9.0.0&quot;  // TypeScript UUID support
+}</code></pre>
+
+<h3>API Base Configuration</h3>
+<pre><code class="language-typescript">const API<em>BASE</em>URL = &#x27;http://localhost:8000&#x27;;
+const API_VERSION = &#x27;/api/v1&#x27;;</code></pre>
+
+<h3>Error Handling Pattern</h3>
+<pre><code class="language-typescript">interface ApiError {
+  error: {
+    code: number;
+    message: string;
+    correlation_id: string;
+  }
+}</code></pre>
+
+<h2>Testing Strategy</h2>
+
+<h3>Manual Testing Checklist</h3>
+<ul>
+  <li>[ ] Backend health check passes</li>
+  <li>[ ] Board creation works</li>
+  <li>[ ] Cards can be added to groups</li>
+  <li>[ ] Cards move between groups correctly</li>
+  <li>[ ] Card deletion works</li>
+  <li>[ ] Error states display properly</li>
+  <li>[ ] Loading states show appropriately</li>
+</ul>
+
+<h3>Automated Testing (Future)</h3>
+<ul>
+  <li>API integration tests using Jest + MSW</li>
+  <li>E2E tests using Cypress or Playwright</li>
+  <li>Component testing with React Testing Library</li>
+</ul>
+
+<h2>Success Criteria</h2>
+
+<h3>MVP (Minimum Viable Product)</h3>
+<ul>
+  <li>✅ Connect to backend API</li>
+  <li>✅ Create and display boards</li>
+  <li>✅ Add cards to columns</li>
+  <li>✅ Move cards between columns</li>
+  <li>✅ Basic error handling</li>
+</ul>
+
+<h3>Production Ready</h3>
+<ul>
+  <li>✅ All CRUD operations working</li>
+  <li>✅ Proper loading and error states</li>
+  <li>✅ Responsive design</li>
+  <li>✅ Input validation</li>
+</ul>
+
+<h3>Enhanced Experience</h3>
+<ul>
+  <li>✅ Drag &amp; drop interface</li>
+  <li>✅ Multiple board support</li>
+  <li>✅ Real-time updates</li>
+  <li>✅ Keyboard shortcuts</li>
+</ul>
+
+<p>---</p>
+
+<h2>Getting Started</h2>
+
+<h3>Prerequisites</h3>
+<ol>
+  <li>Backend running: <code>./script/start<em>simple</em>backend.sh --reset</code></li>
+  <li>Frontend setup: <code>cd appflowy-frontend &amp;&amp; npm install</code></li>
+  <li>API accessible at: <code>http://localhost:8000</code></li>
+</ol>
+
+<h3>First Steps</h3>
+<ol>
+  <li>Open <code>appflowy-frontend/src/pages/BoardTestPage.tsx</code></li>
+  <li>Start with Step 1: Health check implementation</li>
+  <li>Build incrementally following the phase progression</li>
+  <li>Test each step before moving to the next</li>
+</ol>
+
+<p>This progressive approach ensures immediate feedback and validates backend functionality at each stage of development.</p>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

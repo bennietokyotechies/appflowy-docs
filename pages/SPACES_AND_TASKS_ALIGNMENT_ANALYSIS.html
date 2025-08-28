@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spaces and Task-as-Page Design Alignment Analysis - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Spaces and Task-as-Page Design Alignment Analysis</h1>
+
+<h2>Current Space Implementation</h2>
+
+<p>Based on the existing migrations, AppFlowy already has a space-based access control system:</p>
+
+<ol>
+  <li><strong><code>af<em>space</em>member</code></strong> table - Tracks user access to spaces with roles</li>
+  <li><strong><code>af<em>space</em>template</code></strong> - Defines different space types (default, project, wiki, team)</li>
+  <li><strong>Space Types</strong> include &quot;project&quot; spaces with kanban/scrum boards</li>
+</ol>
+
+<h2>Alignment Analysis: ✅ <strong>PERFECTLY ALIGNED</strong></h2>
+
+<p>The task-as-extended-page design <strong>strongly aligns</strong> with the space-based access control requirement. Here&#x27;s why:</p>
+
+<h3>1. Unified Access Control Model</h3>
+
+<p>Since tasks are stored as pages (documents) in the same <code>af_collab</code> table:
+<ul>
+  <li><strong>Same permission system</strong> applies to both pages and tasks</li>
+  <li><strong>Space membership</strong> automatically controls access to both content types</li>
+  <li><strong>No duplicate access control logic</strong> needed</li>
+</ul></p>
+
+<pre><code class="language-">Space
+├── Pages (ViewLayout::Document)
+│   └── Controlled by space membership
+└── Tasks (ViewLayout::Task)
+    └── Controlled by same space membership</code></pre>
+
+<h3>2. Hierarchical Organization</h3>
+
+<p>Both pages and tasks exist as views in the folder structure:
+<pre><code class="language-">Project Space (space<em>view</em>id: xxx)
+├── 📄 Project Overview (page)
+├── 📋 Sprint Planning (page)
+├── ✅ Task: Implement Auth (task-page)
+├── ✅ Task: Design UI (task-page)
+└── 📁 Documentation (folder)
+    ├── 📄 API Docs (page)
+    └── ✅ Task: Update Docs (task-page)</code></pre></p>
+
+<h3>3. Role-Based Access Works Seamlessly</h3>
+
+<p>With the current <code>af<em>space</em>member</code> structure:
+<pre><code class="language-sql">-- User access to a space controls access to ALL its contents
+SELECT * FROM af<em>space</em>member 
+WHERE space<em>view</em>id = &#x27;project-space-uuid&#x27; 
+  AND uid = 123;</p>
+
+-- This single check covers:
+-- ✓ Pages in the space
+-- ✓ Tasks in the space  
+-- ✓ Subfolders in the space</code></pre>
+
+<h2>Enhanced Design for Space-Aware Tasks</h2>
+
+<h3>1. Update Task Metadata Table</h3>
+<pre><code class="language-sql">CREATE TABLE af<em>task</em>metadata (
+    task_id UUID PRIMARY KEY,
+    workspace_id UUID NOT NULL,
+    project_id UUID,
+    
+    -- NEW: Space awareness
+    space<em>view</em>id UUID NOT NULL,  -- The space this task belongs to
+    
+    -- Rest of task fields...
+    status VARCHAR(50) NOT NULL DEFAULT &#x27;todo&#x27;,
+    assignee_uid BIGINT,
+    due_date TIMESTAMP WITH TIME ZONE,
+    -- ...
+    
+    FOREIGN KEY (space<em>view</em>id, assignee_uid) 
+        REFERENCES af<em>space</em>member(space<em>view</em>id, uid)
+        -- Ensures assignee has access to the space
+);</code></pre>
+
+<h3>2. Space-Scoped Task Queries</h3>
+<pre><code class="language-sql">-- Get all tasks in a space (respecting access)
+CREATE VIEW af<em>space</em>tasks AS
+SELECT t.*, sm.role<em>id as viewer</em>role
+FROM af<em>task</em>metadata t
+JOIN af<em>space</em>member sm ON sm.space<em>view</em>id = t.space<em>view</em>id
+WHERE sm.uid = current<em>user</em>id();
+
+<p>-- Get tasks across all spaces user has access to
+SELECT DISTINCT t.*
+FROM af<em>task</em>metadata t
+WHERE t.space<em>view</em>id IN (
+    SELECT space<em>view</em>id 
+    FROM af<em>space</em>member 
+    WHERE uid = current<em>user</em>id()
+);</code></pre></p>
+
+<h3>3. Cross-Space Task Views</h3>
+For aggregated views (e.g., &quot;My Tasks&quot; across all spaces):
+<pre><code class="language-sql">-- User&#x27;s tasks across all accessible spaces
+CREATE VIEW af<em>my</em>tasks AS
+SELECT 
+    t.*,
+    s.name as space_name,
+    s.icon as space_icon,
+    sm.role<em>id as my</em>role<em>in</em>space
+FROM af<em>task</em>metadata t
+JOIN af<em>collab c ON c.oid = t.task</em>id::text
+JOIN af<em>folder</em>view s ON s.id = t.space<em>view</em>id
+JOIN af<em>space</em>member sm ON sm.space<em>view</em>id = t.space<em>view</em>id
+WHERE t.assignee<em>uid = current</em>user_id()
+  AND sm.uid = current<em>user</em>id();  -- Only from spaces I can access</code></pre>
+
+<h2>Benefits of Alignment</h2>
+
+<h3>1. <strong>Consistent Permission Model</strong></h3>
+<ul>
+  <li>One access control system for all content</li>
+  <li>Space membership = access to everything in the space</li>
+  <li>No special cases for tasks vs pages</li>
+</ul>
+
+<h3>2. <strong>Natural Task Organization</strong></h3>
+<ul>
+  <li>Tasks live alongside related pages</li>
+  <li>Project spaces contain both documentation and tasks</li>
+  <li>Wiki spaces can have maintenance tasks</li>
+</ul>
+
+<h3>3. <strong>Flexible Task Visibility</strong></h3>
+<pre><code class="language-rust">enum TaskVisibility {
+    SpaceOnly,      // Only visible within the space
+    WorkspaceWide,  // Visible to all workspace members
+    CrossSpace,     // Visible based on custom rules
+}</code></pre>
+
+<h3>4. <strong>Role-Based Task Operations</strong></h3>
+Space roles can define task permissions:
+<ul>
+  <li><strong>Viewer</strong>: Can see tasks but not modify</li>
+  <li><strong>Editor</strong>: Can create/edit tasks, change status</li>
+  <li><strong>Admin</strong>: Can delete tasks, manage assignees</li>
+</ul>
+
+<h2>Implementation Recommendations</h2>
+
+<h3>1. Space-Aware Task Creation</h3>
+<pre><code class="language-rust">async fn create<em>task</em>in_space(
+    space<em>view</em>id: Uuid,
+    task_data: CreateTaskRequest,
+) -&gt; Result&lt;Task&gt; {
+    // 1. Verify user has Editor+ role in space
+    verify<em>space</em>permission(user<em>id, space</em>view_id, MinRole::Editor)?;
+    
+    // 2. Create task page within the space
+    let parent<em>view</em>id = space<em>view</em>id; // or specific folder in space
+    let task<em>page = create</em>page<em>in</em>space(space<em>view</em>id, ViewLayout::Task)?;
+    
+    // 3. Add task metadata with space reference
+    create<em>task</em>metadata(task<em>page.id, space</em>view<em>id, task</em>data)?;
+}</code></pre>
+
+<h3>2. Task Assignment Validation</h3>
+<pre><code class="language-rust">// Only allow assigning to users who have access to the space
+async fn assign_task(
+    task_id: Uuid,
+    assignee_uid: i64,
+) -&gt; Result&lt;()&gt; {
+    let task = get<em>task</em>metadata(task_id)?;
+    
+    // Verify assignee has access to the task&#x27;s space
+    verify<em>space</em>membership(assignee<em>uid, task.space</em>view_id)?;
+    
+    update<em>task</em>assignee(task<em>id, assignee</em>uid)?;
+}</code></pre>
+
+<h3>3. Migration Path for Existing Boards</h3>
+Existing kanban boards in project spaces can be progressively enhanced:
+<ol>
+  <li>Keep boards for task overview/management</li>
+  <li>Individual cards become full task-pages when opened</li>
+  <li>Board shows task metadata, full page shows rich content</li>
+</ol>
+
+<h2>Potential Enhancements</h2>
+
+<h3>1. Task Templates per Space Type</h3>
+<pre><code class="language-sql">-- Different task templates for different space types
+CREATE TABLE af<em>space</em>task_template (
+    space_type VARCHAR(50),
+    template_name VARCHAR(100),
+    template_content JSONB,
+    custom_fields JSONB
+);</code></pre>
+
+<h3>2. Space-Level Task Settings</h3>
+<pre><code class="language-sql">-- In space metadata or settings
+{
+    &quot;task_settings&quot;: {
+        &quot;default<em>assignee&quot;: &quot;space</em>owner&quot;,
+        &quot;required<em>fields&quot;: [&quot;due</em>date&quot;, &quot;priority&quot;],
+        &quot;auto<em>assign</em>on_create&quot;: true,
+        &quot;task<em>number</em>prefix&quot;: &quot;PROJ-&quot;
+    }
+}</code></pre>
+
+<h3>3. Cross-Space Task Dependencies</h3>
+With proper permission checks:
+<pre><code class="language-sql">-- Task can depend on tasks from other spaces if user has access
+CREATE OR REPLACE FUNCTION validate<em>task</em>dependency(
+    task_id UUID,
+    depends<em>on</em>task_id UUID,
+    user_id BIGINT
+) RETURNS BOOLEAN AS $$
+DECLARE
+    source<em>space</em>id UUID;
+    target<em>space</em>id UUID;
+BEGIN
+    -- Get space IDs for both tasks
+    SELECT space<em>view</em>id INTO source<em>space</em>id 
+    FROM af<em>task</em>metadata WHERE task<em>id = task</em>id;
+    
+    SELECT space<em>view</em>id INTO target<em>space</em>id 
+    FROM af<em>task</em>metadata WHERE task<em>id = depends</em>on<em>task</em>id;
+    
+    -- User must have access to both spaces
+    RETURN EXISTS (
+        SELECT 1 FROM af<em>space</em>member 
+        WHERE uid = user_id 
+        AND space<em>view</em>id IN (source<em>space</em>id, target<em>space</em>id)
+        GROUP BY uid 
+        HAVING COUNT(DISTINCT space<em>view</em>id) = 2
+    );
+END;
+$$ LANGUAGE plpgsql;</code></pre>
+
+<h2>Conclusion</h2>
+
+<p>The task-as-extended-page design not only aligns with space-based access control—it&#x27;s actually the <strong>optimal approach</strong> because:</p>
+
+<ol>
+  <li><strong>Unified Storage</strong>: Tasks and pages in same table → same permission system</li>
+  <li><strong>Natural Hierarchy</strong>: Tasks organized within spaces like any other content</li>
+  <li><strong>Consistent UX</strong>: Users don&#x27;t need to learn different permission models</li>
+  <li><strong>Efficient Queries</strong>: Space membership check covers all content types</li>
+  <li><strong>Future-Proof</strong>: Easy to add new content types following same pattern</li>
+</ol>
+
+<p>The space system provides the perfect organizational and permission boundary for both pages and tasks, making the implementation cleaner and more maintainable.</p>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

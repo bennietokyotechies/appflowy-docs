@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frontend Project Space Integration Guide - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      
+      <nav id="docs-nav" class="docs-nav">
+        <!-- Navigation will be inserted here by JavaScript -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb">
+          <!-- Breadcrumb will be inserted here by JavaScript -->
+        </div>
+      </header>
+
+      <article class="docs-content">
+<h1>Frontend Project Space Integration Guide</h1>
+
+<h2>Overview</h2>
+This document outlines the frontend changes needed to allow users to create and view project spaces in AppFlowy.
+
+<h2>What Has Been Implemented</h2>
+
+<h3>1. ✅ API Client (<code>src/api/ProjectSpaceClient.ts</code>)</h3>
+Complete API client with:
+<ul>
+  <li>Project space CRUD operations</li>
+  <li>Template management</li>
+  <li>Helper methods for Kanban and Scrum projects</li>
+  <li>Full TypeScript type safety</li>
+  <li>JWT authentication integration</li>
+</ul>
+
+<h3>2. ✅ Type Definitions (<code>src/api/types/ProjectSpaceTypes.ts</code>)</h3>
+<ul>
+  <li><code>ProjectSpace</code> - Main project space entity</li>
+  <li><code>SpaceTemplate</code> - Template configurations</li>
+  <li>Request/response types for all operations</li>
+  <li>Validation helpers</li>
+  <li>Default template configurations</li>
+</ul>
+
+<h3>3. ✅ React Hooks (<code>src/hooks/useProjectSpace.ts</code>)</h3>
+Complete set of hooks using React Query:
+<ul>
+  <li><code>useProjectSpaces()</code> - List spaces in a workspace</li>
+  <li><code>useCreateProjectSpace()</code> - Create new spaces</li>
+  <li><code>useUpdateProjectSpace()</code> - Update space settings</li>
+  <li><code>useDeleteProjectSpace()</code> - Delete spaces</li>
+  <li><code>useTemplatesByType()</code> - Get templates</li>
+  <li>Helper hooks for Kanban/Scrum creation</li>
+</ul>
+
+<h3>4. ✅ UI Components</h3>
+
+<h4>NewProjectSpace Component (<code>src/components/app/view-actions/NewProjectSpace.tsx</code>)</h4>
+<ul>
+  <li>Modern modal dialog for creating project spaces</li>
+  <li>Project name and description fields</li>
+  <li>Emoji picker for project icon</li>
+  <li>Template selection (Kanban/Scrum)</li>
+  <li>Visual template feature comparison</li>
+  <li>Loading states and error handling</li>
+</ul>
+
+<h4>ProjectSpaces Component (<code>src/components/app/projects/ProjectSpaces.tsx</code>)</h4>
+<ul>
+  <li>Collapsible section in sidebar</li>
+  <li>Lists all project spaces</li>
+  <li>Click to navigate to project board</li>
+  <li>Shows project icon and type</li>
+  <li>Empty state handling</li>
+  <li>Real-time updates on creation</li>
+</ul>
+
+<h3>5. ✅ Integration Points</h3>
+<ul>
+  <li>Added to SideBar (<code>src/components/app/SideBar.tsx</code>)</li>
+  <li>&quot;New project space&quot; button in action menu</li>
+  <li>Project Spaces section above existing Projects</li>
+</ul>
+
+<h2>How It Works</h2>
+
+<h3>Creating a Project Space</h3>
+<ol>
+  <li>User clicks &quot;New project space&quot; in sidebar</li>
+  <li>Modal opens with:</li>
+<ul>
+  <li>Name field (required, max 100 chars)</li>
+</ol>
+  <li>Description field (optional, max 500 chars)</li>
+  <li>Icon selector (emoji picker)</li>
+  <li>Template choice (Kanban or Scrum)</li>
+</ul>
+<ol>
+  <li>On submit:</li>
+<ul>
+  <li>Calls backend API to create space</li>
+</ol>
+  <li>Creates default board based on template</li>
+  <li>Navigates to the new board</li>
+  <li>Updates sidebar list</li>
+</ul>
+
+<h3>Viewing Project Spaces</h3>
+<ol>
+  <li>Project Spaces section in sidebar shows all spaces</li>
+  <li>Each space displays:</li>
+<ul>
+  <li>Icon and name</li>
+</ol>
+  <li>Space type badge</li>
+  <li>Click to navigate to primary board</li>
+</ul>
+<ol>
+  <li>Collapsible section with persistence</li>
+</ol>
+
+<h2>Technical Architecture</h2>
+
+<h3>Data Flow</h3>
+<pre><code class="language-">User Action → Component → Hook → API Client → Backend
+                ↓                      ↓
+            React Query ← Response ← Database
+                ↓
+            UI Update</code></pre>
+
+<h3>Key Features</h3>
+<ul>
+  <li><strong>Real-time Updates</strong>: Using React Query for caching and synchronization</li>
+  <li><strong>Optimistic Updates</strong>: Immediate UI feedback</li>
+  <li><strong>Error Handling</strong>: User-friendly error messages</li>
+  <li><strong>Loading States</strong>: Skeleton loaders and progress indicators</li>
+  <li><strong>Type Safety</strong>: Full TypeScript coverage</li>
+</ul>
+
+<h2>Testing the Integration</h2>
+
+<ol>
+  <li><strong>Start the backend</strong> with project space API:</li>
+</ol>
+   ``<code>bash
+   cd appflowy-backend
+   SQLX<em>OFFLINE=true cargo run --bin appflowy</em>cloud
+   </code>`<code>
+
+<ol>
+  <li><strong>Start the frontend</strong>:</li>
+</ol>
+   </code>`<code>bash
+   cd appflowy-frontend
+   pnpm dev
+   </code>``
+
+<ol>
+  <li><strong>Test flow</strong>:</li>
+<ul>
+  <li>Click &quot;New project space&quot; in sidebar</li>
+</ol>
+  <li>Fill in project details</li>
+  <li>Select a template</li>
+  <li>Create the project</li>
+  <li>Verify it appears in sidebar</li>
+  <li>Click to navigate to board</li>
+</ul>
+
+<h2>Future Enhancements</h2>
+
+<h3>1. Project Space Settings</h3>
+<ul>
+  <li>Edit project name/description</li>
+  <li>Change project icon</li>
+  <li>Modify project settings</li>
+  <li>Archive/unarchive projects</li>
+</ul>
+
+<h3>2. Advanced Templates</h3>
+<ul>
+  <li>Custom field configuration</li>
+  <li>More template options (Marketing, Product, etc.)</li>
+  <li>Template marketplace</li>
+</ul>
+
+<h3>3. Project Space Features</h3>
+<ul>
+  <li>Project overview dashboard</li>
+  <li>Activity timeline</li>
+  <li>Team member management</li>
+  <li>Project-level permissions</li>
+</ul>
+
+<h3>4. Integration with Existing Features</h3>
+<ul>
+  <li>Link documents to projects</li>
+  <li>Project-scoped search</li>
+  <li>Project templates from existing boards</li>
+  <li>Bulk import/export</li>
+</ul>
+
+<h2>Migration Path</h2>
+
+<p>For existing users:
+<ol>
+  <li>Existing boards remain unchanged</li>
+  <li>Option to &quot;Convert to Project Space&quot;</li>
+  <li>Automatic template detection</li>
+  <li>Preserve all data and settings</li>
+</ol></p>
+
+<h2>Summary</h2>
+
+<p>The frontend is now ready to:
+✅ Create project spaces with templates
+✅ Display project spaces in navigation
+✅ Navigate to project boards
+✅ Handle real-time updates
+✅ Provide excellent UX with loading/error states</p>
+
+The implementation follows AppFlowy&#x27;s existing patterns and integrates seamlessly with the current architecture.
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

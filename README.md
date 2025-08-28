@@ -10,9 +10,9 @@ appflowy-docs/
 │   ├── docs-style.css  # Common styles for all pages
 │   └── docs-script.js  # Navigation and breadcrumb logic
 ├── pages/              # All documentation pages (except index)
-│   ├── template.html   # Template for new pages
 │   └── *.html          # Individual documentation pages
-└── index.html          # Documentation homepage
+├── index.html          # Documentation homepage
+└── template.html       # Template for new pages
 ```
 
 

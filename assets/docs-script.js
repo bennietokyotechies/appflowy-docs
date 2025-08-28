@@ -6,7 +6,7 @@ const navigation = [
     title: 'Getting Started',
     items: [
       { name: 'Overview', path: 'index.html' },
-      { name: 'First-time Setup', path: 'environment-setup.html' },
+      { name: 'First-time Setup', path: 'pages/environment-setup.html' },
       { name: 'Backend Configuration', path: 'backend-configuration.html' },
       { name: 'Frontend Configuration', path: 'frontend-configuration.html' },
     ]

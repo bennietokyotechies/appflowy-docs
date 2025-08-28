@@ -33,219 +33,109 @@
       </header>
 
       <article class="docs-content">
-        <h1>Environment Setup</h1>
-        
-        <p>Complete guide for setting up both Backend and Frontend environments for local development.</p>
+        <h1>🚀 Environment Setup</h1>
+        <p>This page covers first-time setup for both Backend and Frontend, and a troubleshooting section. For full configuration references, see <a href="../backend-configuration.html">Backend Configuration</a> and <a href="../frontend-configuration.html">Frontend Configuration</a>.</p>
 
-        <h2>Table of Contents</h2>
-        <ul>
-          <li><a href="#prerequisites">Prerequisites</a></li>
-          <li><a href="#backend-setup">Backend Setup</a>
-            <ul>
-              <li><a href="#environment-configuration">Environment Configuration</a></li>
-              <li><a href="#google-oauth-setup">Google OAuth Setup</a></li>
-              <li><a href="#start-backend-services">Start Backend Services</a></li>
-            </ul>
-          </li>
-          <li><a href="#frontend-setup">Frontend Setup</a>
-            <ul>
-              <li><a href="#quick-start">Quick Start</a></li>
-              <li><a href="#manual-setup">Manual Setup</a></li>
-              <li><a href="#available-scripts">Available Scripts</a></li>
-            </ul>
-          </li>
-          <li><a href="#troubleshooting">Troubleshooting</a></li>
-          <li><a href="#configuration-reference">Configuration Reference</a></li>
-        </ul>
+        <div class="card">
+          <h2>🧭 First-time Setup Overview</h2>
+          <ul>
+            <li><strong>Backend</strong>: generate <code>.env</code>, configure Google OAuth for SSO, enable default plugins, and start services with Docker Compose.</li>
+            <li><strong>Frontend</strong>: clone repo, run <code>./setup.sh</code>, start dev server with <code>pnpm run dev</code>, and connect to the backend.</li>
+          </ul>
+        </div>
 
-        <h2 id="prerequisites">Prerequisites</h2>
-        
-        <p><strong>Backend Requirements:</strong></p>
-        <ul>
-          <li>Docker & Docker Compose</li>
-          <li>Rust (if building manually)</li>
-          <li>PostgreSQL access</li>
-        </ul>
+        <div class="card">
+          <h2>🛠️ Backend — First-time Setup (Local)</h2>
 
-        <p><strong>Frontend Requirements:</strong></p>
-        <ul>
-          <li>Node.js 18.20.0 or higher</li>
-          <li>pnpm (auto-installed by setup)</li>
-          <li>Modern browser</li>
-        </ul>
+          <h3>1) Set up environment</h3>
+          <p>Clone the backend repo and generate your active <code>.env</code>:</p>
+          <pre class="code-block"><code># Clone backend repository
+git clone https://github.com/bennietokyotechies/appflowy-backend
+cd appflowy-backend
 
-        <h2 id="backend-setup">Backend Setup</h2>
-
-        <h3 id="environment-configuration">Environment Configuration</h3>
-        
-        <p>Generate your active <code>.env</code> file using the interactive script:</p>
-        
-        <pre><code>cd appflowy-backend
+# Generate .env interactively
 ./script/generate_env.sh</code></pre>
-
-        <p><strong>Environment Files:</strong></p>
-        <ul>
-          <li><code>dev.env</code> - Development template with safe defaults</li>
-          <li><code>deploy.env</code> - Production template</li>
-          <li><code>.env</code> - Active environment file (auto-generated)</li>
-          <li><code>.env.dev.secret</code> - Secret value overrides (optional)</li>
-        </ul>
-
-        <h3 id="google-oauth-setup">Google OAuth Setup</h3>
-        
-        <p>Required for SSO authentication:</p>
-        
-        <ol>
-          <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console → Credentials</a></li>
-          <li>Create OAuth client ID → Web application</li>
-          <li>Add authorized redirect URIs for your domain</li>
-          <li>Copy Client ID and Secret to your <code>.env</code> file</li>
-        </ol>
-
-        <pre><code>GOTRUE_EXTERNAL_GOOGLE_ENABLED=true
-GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID=your_client_id
-GOTRUE_EXTERNAL_GOOGLE_SECRET=your_client_secret
-GOTRUE_SITE_URL=http://localhost:3000</code></pre>
-
-        <h3 id="start-backend-services">Start Backend Services</h3>
-
-        <p><strong>Method 1: Using Script (Recommended)</strong></p>
-        <pre><code>./script/run_local_server.sh</code></pre>
-
-        <p><strong>Method 2: Docker Compose Only</strong></p>
-        <pre><code>docker compose -f docker-compose-dev.yml up -d</code></pre>
-
-        <p><strong>Method 3: Manual Start</strong></p>
-        <pre><code># Start services
-docker compose -f docker-compose-dev.yml up -d
-
-# Run AppFlowy Cloud manually
-SQLX_OFFLINE=true cargo run --bin appflowy_cloud</code></pre>
-
-        <h2 id="frontend-setup">Frontend Setup</h2>
-
-        <h3 id="quick-start">Quick Start (Recommended)</h3>
-        
-        <pre><code># Clone and setup in one command
-git clone https://github.com/AppFlowy-IO/AppFlowy-Web.git
-cd AppFlowy-Web
-./setup.sh
-
-# Start development server
-pnpm run dev</code></pre>
-
-        <h3 id="manual-setup">Manual Setup</h3>
-        
-        <pre><code># Install dependencies
-pnpm install
-
-# Setup environment
-cp dev.env .env.local
-
-# Start development server
-pnpm run dev</code></pre>
-
-        <p><strong>Backend Connection:</strong> Update <code>.env.local</code> with your backend URL:</p>
-        <pre><code>VITE_CLOUD_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000</code></pre>
-
-        <h3 id="available-scripts">Available Scripts</h3>
-        
-        <ul>
-          <li><code>pnpm run dev</code> - Start development server</li>
-          <li><code>pnpm run build</code> - Build for production</li>
-          <li><code>pnpm run test</code> - Run tests</li>
-          <li><code>pnpm run lint</code> - Run ESLint</li>
-          <li><code>pnpm run type-check</code> - Run TypeScript checks</li>
-        </ul>
-
-        <h2 id="troubleshooting">Troubleshooting</h2>
-
-        <h3>Backend Issues</h3>
-        
-        <p><strong>Docker Compose errors:</strong></p>
-        <ul>
-          <li>Make sure ports 5432, 6379, 8000, 9000, 9001 are available</li>
-          <li>Run <code>./script/generate_env.sh</code> to create <code>.env</code> file</li>
-          <li>Check Docker daemon is running</li>
-        </ul>
-
-        <p><strong>Database connection failed:</strong></p>
-        <ul>
-          <li>Verify PostgreSQL is running: <code>docker compose ps</code></li>
-          <li>Check database credentials in <code>.env</code></li>
-          <li>Reset database: <code>docker compose down -v && docker compose up</code></li>
-        </ul>
-
-        <p><strong>GoTrue authentication issues:</strong></p>
-        <ul>
-          <li>Ensure <code>GOTRUE_JWT_SECRET</code> is consistent across services</li>
-          <li>Check Google OAuth client ID and secret are correct</li>
-          <li>Verify redirect URIs in Google Console</li>
-        </ul>
-
-        <h3>Frontend Issues</h3>
-        
-        <p><strong>Build failures:</strong></p>
-        <ul>
-          <li>Delete <code>node_modules</code> and run <code>pnpm install</code></li>
-          <li>Clear pnpm cache: <code>pnpm store prune</code></li>
-          <li>Check Node.js version is 18.20.0 or higher</li>
-        </ul>
-
-        <p><strong>Backend connection errors:</strong></p>
-        <ul>
-          <li>Verify backend is running on <code>http://localhost:8000</code></li>
-          <li>Check <code>VITE_CLOUD_URL</code> in <code>.env.local</code></li>
-          <li>Ensure CORS is enabled in backend configuration</li>
-        </ul>
-
-        <p><strong>Hot reload not working:</strong></p>
-        <ul>
-          <li>Check if files are being watched correctly</li>
-          <li>Try restarting the development server</li>
-          <li>Verify file permissions in the project directory</li>
-        </ul>
-
-        <h2 id="configuration-reference">Configuration Reference</h2>
-
-        <h3>Common Environment Variables</h3>
-        
-        <pre><code># Database
-DATABASE_URL=postgres://postgres:password@localhost:5432/postgres
-
-# Authentication  
-GOTRUE_JWT_SECRET=your-jwt-secret
-GOTRUE_ADMIN_EMAIL=admin@example.com
-GOTRUE_ADMIN_PASSWORD=password
-
-# Storage
-AWS_ACCESS_KEY=minioadmin
-AWS_SECRET=minioadmin
-APPFLOWY_S3_USE_MINIO=true
-APPFLOWY_S3_MINIO_URL=http://localhost:9000
-
-# Features
+          <ul>
+            <li><strong>Google OAuth (Required for SSO)</strong>: Provide your Google OAuth credentials during setup or add them to <code>.env</code> later. Common keys include:
+              <ul>
+                <li><code>GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID</code></li>
+                <li><code>GOTRUE_EXTERNAL_GOOGLE_SECRET</code></li>
+              </ul>
+            </li>
+            <li><strong>Enable default plugins</strong>: add these flags to <code>.env</code> to enable Space and Project ACL features:</li>
+          </ul>
+          <pre class="code-block"><code># Enable Space ACL feature
 SPACE_ACL_ENABLED=true
 PROJECT_ACL_ENABLED=true</code></pre>
 
-        <h3>Quick Commands Reference</h3>
-        
-        <pre><code># Backend
-./script/run_local_server.sh              # Start all services
-docker compose -f docker-compose-dev.yml logs -f  # View logs
-docker compose down                        # Stop services
+          <h3>Google OAuth: create Client ID</h3>
+          <ol>
+            <li>Open <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" rel="noopener noreferrer">OAuth consent screen</a> and configure your app (User type, app name, scopes).</li>
+            <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Credentials</a> → <em>Create Credentials</em> → <strong>OAuth client ID</strong>.</li>
+            <li>Select <em>Web application</em>, then add Authorized redirect URIs that match your GoTrue configuration.</li>
+            <li>Copy the generated Client ID and Client Secret into your backend <code>.env</code> as shown below.</li>
+          </ol>
 
-# Frontend  
-pnpm run dev                              # Development server
-pnpm run build                            # Production build
-pnpm run test                             # Run tests</code></pre>
+          <div class="alert info">
+            <strong>Note:</strong> The exact redirect URI depends on your GoTrue configuration. Check your <code>.env</code> for any redirect-related settings and ensure the Google Console redirect URI matches.
+          </div>
 
-        <p><strong>Need more details?</strong> Check the <a href="pages/database-architecture.html">Database Architecture</a> and <a href="pages/unified-space-project-architecture.html">System Architecture</a> documentation.</p>
+          <h3>GoTrue .env keys (Google)</h3>
+          <pre class="code-block"><code># Google OAuth — required for SSO
+GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID=your_google_client_id
+GOTRUE_EXTERNAL_GOOGLE_SECRET=your_google_client_secret</code></pre>
+
+          <h3>2) Start backend services</h3>
+          <pre class="code-block"><code># Start all services for development
+docker-compose -f docker-compose-dev.yml up -d
+
+# Tail logs
+docker-compose -f docker-compose-dev.yml logs -f</code></pre>
+        </div>
+
+        <div class="card">
+          <h2>🖥️ Frontend — First-time Setup (Local)</h2>
+          <p>Follow the official flow from the frontend README.</p>
+          <h3>1) Quick Start (Recommended)</h3>
+          <pre class="code-block"><code># Clone the repository
+git clone https://github.com/bennietokyotechies/appflowy-frontend
+cd appflowy-frontend
+
+# One-command setup
+./setup.sh
+
+# Start development server
+pnpm run dev
+
+# Open the app
+http://localhost:3000</code></pre>
+          <h3>2) Connect to your backend</h3>
+          <pre class="code-block"><code># In the frontend repo root
+cp dev.env .env
+
+# Edit .env to point to your backend endpoints and auth settings</code></pre>
+          <p>See <code>frontend-configuration.html</code> for the full list of scripts and troubleshooting tips.</p>
+        </div>
+
+        <div class="card">
+          <h2>🐛 Troubleshooting</h2>
+          
+          <h3>Docker Compose Can't Find Environment Variables</h3>
+          <p><strong>Problem:</strong> PostgreSQL authentication errors, missing environment variables</p>
+          <p><strong>Solution:</strong> Generate the <code>.env</code> file using the provided script</p>
+          
+          <h3>Services Won't Start</h3>
+          <p><strong>Problem:</strong> Port conflicts, missing dependencies</p>
+          <p><strong>Solution:</strong> Check that ports 5432, 6379, 9000, 9001, 9999 are available</p>
+          
+          <h3>GoTrue Authentication Issues</h3>
+          <p><strong>Problem:</strong> JWT token validation fails</p>
+          <p><strong>Solution:</strong> Ensure <code>GOTRUE_JWT_SECRET</code> is consistent across all services</p>
+        </div>
       </article>
 
       <footer class="docs-footer">
-        <p>© 2024 Klever. Built with ❤️ for developers.</p>
+        <p>© 2024 AppFlowy. Built with ❤️ for developers.</p>
       </footer>
     </main>
   </div>

@@ -10,6 +10,12 @@ const navigation = [
     ]
   },
   {
+    title: 'Development Flow',
+    items: [
+      { name: 'Development Flow', path: 'pages/development-flow.html' },
+    ]
+  },
+  {
     title: 'Architecture',
     items: [
       { name: 'System Architecture', path: 'pages/unified-space-project-architecture.html' },
@@ -230,6 +236,13 @@ function initializeNavigation() {
     });
     
     nav.appendChild(sectionDiv);
+
+    // Insert a visual separator after the "Testing" section
+    if (section.title === 'Testing') {
+      const separator = document.createElement('div');
+      separator.className = 'nav-separator';
+      nav.appendChild(separator);
+    }
   });
 }
 

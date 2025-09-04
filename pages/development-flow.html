@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Development Flow - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css" />
+</head>
+<body>
+  <div class="docs-container">
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation..." />
+      </div>
+      <nav id="docs-nav" class="docs-nav"></nav>
+    </aside>
+
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb"></div>
+      </header>
+
+      <article class="docs-content">
+        <h1>Development Flow</h1>
+        <p>Unified process for humans and AI coding agents to deliver consistent, high‑quality outcomes. This flow emphasizes clarity, fast iteration, and strong documentation.</p>
+
+        <div class="alert info">
+          <strong>Why this matters</strong>: A shared workflow aligns expectations, speeds up reviews, and makes work traceable across requirements, design, code, and docs.
+        </div>
+
+        <h2>Overview Flow (TL;DR)</h2>
+        <ol>
+          <li>Collect requirements → ask AI to list open questions/edge cases → save as <code>analysis_doc/requirements/&lt;feature&gt;-requirements.md</code> (use repo template at <code>analysis_doc/requirements/requirements-template.md</code>).</li>
+          <li>Draft a technical plan with AI → human review/sign‑off → save as <code>analysis_doc/requirements/&lt;feature&gt;-tech-plan.md</code> (use repo template at <code>analysis_doc/requirements/tech-plan-template.md</code>).</li>
+          <li>Implement in small PRs with tests → keep CI green → use flags for safe rollout.</li>
+          <li>If APIs change, update OpenAPI/Swagger and regenerate docs where needed.</li>
+          <li>Update <code>appflowy-docs/</code> pages; add screenshots/snippets. Optionally record decisions with an ADR at <code>analysis_doc/requirements/adr-template.md</code>.</li>
+        </ol>
+
+        <h2>Principles</h2>
+        <ul>
+          <li>Clarity first: validate requirements and edge cases before writing code.</li>
+          <li>Plan before build: small, checkable technical plans improve throughput.</li>
+          <li>Ship in slices: incremental, verifiable steps reduce risk.</li>
+          <li>Documentation is a deliverable: update docs as part of Done.</li>
+          <li>AI as multiplier: use agents for planning, scaffolding, and documentation—humans retain accountability.</li>
+        </ul>
+
+        <h2>Definition of Ready (DoR)</h2>
+        <ul>
+          <li>Requirements doc exists with scope, acceptance criteria, and non‑goals.</li>
+          <li>Edge cases and constraints clarified (agent prompts can help enumerate).</li>
+          <li>Owner/DRI identified; dependencies and risks called out.</li>
+          <li>For APIs: preliminary OpenAPI sketch present.</li>
+        </ul>
+
+        <h2>Review Gates and Sign‑offs</h2>
+        <ul>
+          <li>Technical plan reviewed and approved; record approver and date in the plan.</li>
+          <li>Security/Privacy review required if data model, scopes, or integrations change.</li>
+        </ul>
+
+        <h2>Branching and PR Hygiene</h2>
+        <ul>
+          <li>Branch naming: <code>feature/&lt;ticket-id&gt;-&lt;short-desc&gt;</code>.</li>
+          <li>Small PRs with a single logical change; linked to requirements/plan.</li>
+          <li>CI gates: lint, types, tests, and API diff (if applicable) must pass.</li>
+        </ul>
+
+        <h2>API Discipline</h2>
+        <ul>
+          <li>Favor backward‑compatible changes; otherwise bump API version.</li>
+          <li>Treat OpenAPI as source of truth; auto‑generate docs/SDKs where possible.</li>
+        </ul>
+
+        <h2>Observability and Rollback <span class="badge badge-info">Optional</span></h2>
+        <ul>
+          <li>Add logs, metrics, and feature flags for controlled rollout.</li>
+          <li>Provide clear rollback steps in PRs for fast recovery.</li>
+        </ul>
+
+        <h2>Data Migrations <span class="badge badge-info">Optional</span></h2>
+        <ul>
+          <li>Provide up/down migrations; consider backfill strategies and safety on large tables.</li>
+          <li>Require review for schema changes touching PII or critical paths.</li>
+        </ul>
+
+        <h2>Accountability and Traceability</h2>
+        <ul>
+          <li>Each task links the requirements doc, tech plan, PRs, API diffs, and docs pages.</li>
+          <li>Record decisions (or link ADRs) for impactful architectural changes.</li>
+        </ul>
+
+        <h2>The Flow</h2>
+        <ol>
+          <li>
+            <strong>Collect requirements</strong>
+            <ul>
+              <li>Gather business goals, scope, success criteria, constraints.</li>
+              <li><em>1.2 Ask AI for clarification prompts</em>: have the agent enumerate missing info, edge cases, data shapes, error states.</li>
+              <li><em>1.3 Produce a requirements file</em>: save to the repo as <code>analysis_doc/requirements/[feature]-requirements.md</code>.</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Make a technical plan</strong>
+            <ul>
+              <li><em>2.1 Ask AI to draft a plan</em>: include data model, API outline, components, risks, test plan, rollout.</li>
+              <li><em>2.2 Review & sign‑off</em>: humans confirm scope, call out gaps, and approve. Save as <code>analysis_doc/requirements/[feature]-tech-plan.md</code>.</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Implement</strong>
+            <ul>
+              <li>Execute in small PRs; keep commits scoped to the plan steps.</li>
+              <li>Write tests alongside code; add logging and metrics.</li>
+              <li>Iterate with the agent to adjust the plan as needed.</li>
+              <li>Ensure CI gates (lint, types, tests) and API diffs (if applicable) pass before merge.</li>
+              <li>Use feature flags for safe rollout; follow branch naming conventions.</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Documentation</strong>
+            <ul>
+              <li><em>4.1 Swagger/OpenAPI</em>: If creating APIs, add/modify the spec and regenerate docs where relevant.</li>
+              <li><em>4.2 AppFlowy docs</em>: Update <code>appflowy-docs/</code> with requirements summary, API references, and how‑tos. Use AI for drafting.</li>
+              <li><em>4.3 Changelog</em>: Summarize user impact and migration notes.</li>
+            </ul>
+          </li>
+        </ol>
+
+        <h2>Deliverables Checklist</h2>
+        <ul>
+          <li><strong>Requirements</strong>: goals, scope, user stories, non‑goals, acceptance criteria.</li>
+          <li><strong>Tech Plan</strong>: architecture, data model, APIs, risks, test plan, rollout/flags.</li>
+          <li><strong>Implementation</strong>: PRs with tests; CI checks pass; feature flag wiring as needed.</li>
+          <li><strong>Docs</strong>: Swagger updated; <code>appflowy-docs/</code> pages added/updated; screenshots if UI.</li>
+          <li><strong>Observability & Rollback</strong> (optional): logs, metrics, flags, and rollback steps provided.</li>
+          <li><strong>Data Migrations</strong> (optional): up/down scripts, backfill plan, safety notes.</li>
+          <li><strong>Sign‑offs</strong>: reviewers/approvers recorded in the plan or PR.</li>
+        </ul>
+
+        <h2>AI Usage Guidelines</h2>
+        <ul>
+          <li>Use the agent to ask clarification questions, propose plans, scaffold code, write tests, and draft docs.</li>
+          <li>Always review generated code for security, data privacy, and architectural alignment.</li>
+          <li>Prefer small, verifiable steps; keep the agent’s context fresh with the latest files.</li>
+          <li>Never commit secrets; parameterize credentials and config.</li>
+          <li>Require human approval for schema changes, migrations, and public APIs.</li>
+        </ul>
+
+        <h2>Templates</h2>
+        <h3>Requirements (.md)</h3>
+        <pre><code>## Overview
+- Goal
+- In scope / Out of scope
+- Stakeholders
+- Success metrics
+
+## User stories
+- As a ..., I want ... so that ...
+
+## Constraints & Assumptions
+
+## Acceptance Criteria
+- [ ] ...
+</code></pre>
+
+        <h3>Technical Plan (.md)</h3>
+        <pre><code>## Summary
+## Architecture
+- Components, data flow diagram
+
+## Data Model / Schema Changes
+
+## API Design (OpenAPI snippets if possible)
+
+## Feature Flags / Rollout
+
+## Testing Strategy
+- Unit, Integration, E2E
+
+## Risks & Mitigations
+</code></pre>
+
+        <h3>PR Checklist (copy into PR description)</h3>
+        <pre><code>- [ ] Requirements doc linked
+- [ ] Tech plan linked
+- [ ] Tests added/updated
+- [ ] OpenAPI/Swagger updated (if API)
+- [ ] appflowy-docs updated
+- [ ] Migration/rollback notes provided
+</code></pre>
+
+        <h2>Definition of Done</h2>
+        <ul>
+          <li>All acceptance criteria pass with tests.</li>
+          <li>Swagger and docs reflect the implemented behavior.</li>
+          <li>Feature flags default safe; monitoring in place.</li>
+          <li>Security and privacy checks completed.</li>
+        </ul>
+
+        <h2>Example Workflow with an AI Agent</h2>
+        <ol>
+          <li>Create <code>analysis_doc/requirements/mentions-requirements.md</code>; ask the agent for missing edge cases.</li>
+          <li>Generate <code>analysis_doc/requirements/mentions-tech-plan.md</code> via the agent; human review and sign‑off.</li>
+          <li>Implement in small PRs; the agent scaffolds code and tests. Humans review.</li>
+          <li>Update OpenAPI; add <code>appflowy-docs/pages/notifications-inapp.html</code> section; attach screenshots.</li>
+        </ol>
+
+        <h2>Mermaid: Flow Diagram</h2>
+        <script type="text/plain" class="mermaid">
+graph LR
+  R[Requirements] --> P[Tech Plan]
+  P --> I[Implementation]
+  I --> D[Documentation]
+  subgraph AI Agent
+    R -.clarify.-> R
+    R -.draft.-> P
+    P -.assist.-> I
+    I -.draft.-> D
+  end
+        </script>
+
+        <h2>References</h2>
+        <ul>
+          <li><code>appflowy-docs/assets/docs-script.js</code></li>
+          <li><code>analysis_doc/</code> (store requirements and tech plans)</li>
+          <li>Notifications Overview: <code>appflowy-docs/pages/notifications-overview.html</code></li>
+        </ul>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2025 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

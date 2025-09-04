@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Space Access Control - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css" />
+</head>
+<body>
+  <div class="docs-container">
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation..." />
+      </div>
+      <nav id="docs-nav" class="docs-nav"></nav>
+    </aside>
+
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb"></div>
+      </header>
+
+      <article class="docs-content">
+        <h1>Space Access Control</h1>
+        <p>Controls visibility and permissions at the Space level. Spaces can be private or shared within a workspace and can contain multiple projects/boards.</p>
+
+        <h2>Overview</h2>
+        <ul>
+          <li><strong>Goal</strong>: Provide controlled sharing of a Space to specific workspace members with role-based capabilities.</li>
+          <li><strong>Visibility</strong>: Spaces can be private (members only) or shared; discovery still requires workspace membership.</li>
+          <li><strong>Roles</strong>: Owner, Member, Guest; define who can read, write, and administer a Space.</li>
+          <li><strong>Invitation model</strong>: Invitations carry an <code>invitation_id</code> (UUID); acceptance requires the authenticated user's email to match.</li>
+          <li><strong>Inheritance</strong>: Space roles may influence Project access; Space is the primary boundary for content grouping.</li>
+          <li><strong>Auditing</strong>: Track invitations, membership changes, and visibility toggles for compliance.</li>
+          <li><strong>Non-goals</strong>: Public (unauthenticated) access to Spaces is not supported.</li>
+        </ul>
+
+        <h2>Requirements</h2>
+        <ul>
+          <li>Visibility: private vs shared, discoverability rules. <em>(TODO: finalize)</em></li>
+          <li>Roles within a Space (owner/admin/member/viewer) and their permissions. <em>(TODO)</em></li>
+          <li>Inheritance or overrides relative to workspace roles.</li>
+          <li>Reference: <code>analysis_doc/access_control_permission_matrix.md</code>, <code>analysis_doc/access_control_flow.md</code></li>
+        </ul>
+
+        <h2>Backend</h2>
+        <h3>Data Model</h3>
+        <ul>
+          <li>Tables: <code>space</code>, <code>space_member</code>, <code>space_role</code>, optional <code>share_link</code>. <em>(TODO: ERD)</em></li>
+          <li>Indexes for permission checks on list/read queries.</li>
+        </ul>
+        <h3>APIs</h3>
+        <ul>
+          <li>Add/list/update/remove members, manage invitations, and list invitations.</li>
+          <li>Server handlers: see <code>appflowy-backend/src/api/space.rs</code> (feature-gated by <code>space_acl</code> and runtime <code>SPACE_ACL_ENABLED=true</code>).</li>
+        </ul>
+        <p><strong>Endpoint inventory</strong> (from <code>src/api/space.rs</code>):</p>
+        <ul>
+          <li>POST <code>/api/space/{space_id}/members</code> — Invite space member</li>
+          <li>GET <code>/api/space/{space_id}/members</code> — List space members</li>
+          <li>PATCH <code>/api/space/{space_id}/members/{member_id}</code> — Update member (e.g., role)</li>
+          <li>DELETE <code>/api/space/{space_id}/members/{member_id}</code> — Remove member</li>
+          <li>GET <code>/api/space/{space_id}/invitations</code> — List invitations (supports query via <code>SpaceInvitationListQuery</code>)</li>
+          <li>POST <code>/api/space/{space_id}/invitations</code> — Accept invitation (body carries invitation <code>id</code>)</li>
+          <li>DELETE <code>/api/space/{space_id}/invitations/{invite_id}</code> — Decline/cancel invitation</li>
+        </ul>
+        <p><strong>DTOs referenced</strong> (see <code>shared_entity::dto::space_dto</code>):
+          <code>SpaceMemberInvitationPayload</code>, <code>SpaceMemberChangeset</code>, <code>SpaceMemberModel</code>, <code>SpaceInvitationModel</code>, <code>SpaceInvitationAcceptPayload</code>, <code>SpaceInvitationListQuery</code>.</p>
+        <p><strong>Example payloads</strong> (illustrative):</p>
+        <pre><code class="language-json">// Invite member
+POST /api/space/{space_id}/members
+{
+  "email": "teammate@example.com",
+  "role": "Member"
+}
+
+// Accept invitation (within workspace/space context)
+POST /api/space/{space_id}/invitations
+{
+  "id": "9d1b0d5a-1b57-4a9e-a2e0-2c9a9f42a111"
+}
+
+// Update member
+PATCH /api/space/{space_id}/members/{member_id}
+{
+  "role": "Owner"
+}
+</code></pre>
+        <p>Responses follow the standard envelope in <code>appflowy-backend/API_ENDPOINTS_DOCUMENTATION.md</code> with <code>code</code>, <code>message</code>, and <code>data</code>.</p>
+        <h3>Enforcement</h3>
+        <ul>
+          <li>Handlers must filter spaces by user permissions for list/read; verify role on write.</li>
+          <li>Row-level constraints and service-level authorization checks.</li>
+        </ul>
+        <p>Related backend docs: 
+          <a href="SPACE_ACL_BACKEND_ANALYSIS.html">Space ACL Backend Analysis</a>, 
+          <a href="SPACE_ACL_IMPLEMENTATION_ANALYSIS.html">Space ACL Implementation Analysis</a>
+        </p>
+
+        <h3>Role vs Action Matrix</h3>
+        <p>Derived from <code>appflowy-backend/src/plugin/space_acl.rs</code> (see <code>InMemorySpaceAccessControl::required_role_for_action</code> and <code>SpaceAclPlugin::enforce_space_access</code>).</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Required Role (baseline)</th>
+              <th>Public Space nuance</th>
+              <th>Private Space nuance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Read</td>
+              <td>Guest</td>
+              <td>Requires workspace membership; non-members cannot read public spaces.</td>
+              <td>Requires any space role (Guest/Member/Owner); non-members cannot read.</td>
+            </tr>
+            <tr>
+              <td>Write</td>
+              <td>Member</td>
+              <td>Must be a space Member or Owner.</td>
+              <td>Must be a space Member or Owner.</td>
+            </tr>
+            <tr>
+              <td>Delete</td>
+              <td>Owner</td>
+              <td>Only space Owner.</td>
+              <td>Only space Owner.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>Roles reference: <code>database_entity::dto::AFRole</code> with ordering <em>Owner &gt; Member &gt; Guest</em>.</p>
+
+        <h2>Frontend</h2>
+        <h3>User Flows</h3>
+        <ul>
+          <li>Share Space (modal), manage members, toggle visibility, view access badge.</li>
+          <li>Permission-aware navigation and empty/error states.</li>
+        </ul>
+        <h3>Components</h3>
+        <ul>
+          <li>Share dialog, member list, access badge/tag, visibility switch.</li>
+          <li>Members & invites UI: <code>appflowy-frontend/src/components/app/view-actions/SpaceMemberSettings.tsx</code></li>
+          <li>Permission guards within component based on current user's space role.</li>
+        </ul>
+        <h3>State & Data</h3>
+        <ul>
+          <li>Caching and invalidation on membership/visibility changes.</li>
+          <li>Optimistic updates and rollback strategy.</li>
+        </ul>
+        <p>Related FE docs: 
+          <a href="SPACE_ACL_FRONTEND_INTEGRATION_GUIDE.html">Space ACL Frontend Integration Guide</a>
+        </p>
+
+        <h2>Diagrams</h2>
+        <h3>Sequence — Invite and Accept (Space)</h3>
+        <script type="text/plain" class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Admin as Space Owner/Member
+  participant FE as Frontend (SpaceMemberSettings)
+  participant API as Backend API
+  participant DB as DB
+  Admin->>FE: Open Share/Member settings
+  FE->>API: POST /api/space/{space_id}/members (email, role)
+  API->>DB: Insert invitation {space_id, email, role, id}
+  API-->>FE: 200 Created (invitation)
+  Note over API,FE: Email service sends magic link with invitation_id
+  actor Guest as Invitee
+  Guest->>FE: Click magic link
+  FE->>API: POST /api/space/{space_id}/invitations (body: {id: invitation_id})
+  API->>DB: Create membership {user_id, space_id, role}
+  API-->>FE: 200 OK (membership)
+  FE-->>Admin: UI updates (member list)
+        </script>
+
+        <h3>ERD — Space Membership (Simplified)</h3>
+        <script type="text/plain" class="mermaid">
+erDiagram
+  SPACE ||--o{ SPACE_MEMBERSHIP : has
+  USER ||--o{ SPACE_MEMBERSHIP : has
+  SPACE ||--o{ SPACE_INVITATION : issues
+  SPACE {
+    uuid id PK
+    text name
+    bool is_public
+  }
+  USER {
+    uuid id PK
+    text email
+  }
+  SPACE_MEMBERSHIP {
+    uuid id PK
+    uuid space_id FK
+    uuid user_id FK
+    enum role
+  }
+  SPACE_INVITATION {
+    uuid id PK
+    uuid space_id FK
+    text email
+    enum role
+    timestamptz expires_at
+  }
+        </script>
+
+        <h2>Testing</h2>
+        <ul>
+          <li>Unit: permission resolver, UI guards, API handling.</li>
+          <li>E2E: share/unshare flow, member add/remove, visibility enforcement on lists and details.</li>
+        </ul>
+
+        <h2>Troubleshooting</h2>
+        <ul>
+          <li>Users can’t see expected spaces: verify visibility and membership; check backend filters/logs.</li>
+          <li>UI states inconsistent after changes: ensure cache invalidation; check websocket/update signals if any.</li>
+        </ul>
+
+        <h2>TODOs</h2>
+        <ul>
+          <li>Add ERD and sequence diagrams for invite/accept/decline flows.</li>
+          <li>Link concrete React components and routes. <em>(TODO)</em></li>
+        </ul>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2025 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

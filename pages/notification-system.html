@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notification System - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css" />
+</head>
+<body>
+  <div class="docs-container">
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation..." />
+      </div>
+      <nav id="docs-nav" class="docs-nav"></nav>
+    </aside>
+
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb"></div>
+      </header>
+
+      <article class="docs-content">
+        <h1>Notification System</h1>
+        <p>This page documents AppFlowy's notification system across backend and frontend, starting with a business-focused overview and then deep-diving into architecture, current implementation (Mail), and future In‑App notifications.</p>
+
+        <h2>Overview</h2>
+        <ul>
+          <li><strong>Business goal</strong>: Keep users informed of relevant events (invites, approvals, mentions, role changes) with reliable delivery and minimal noise.</li>
+          <li><strong>Channels</strong>: Email (implemented), In‑App (planned).</li>
+          <li><strong>Coverage</strong>: Workspace and content events are supported; Space/Project ACL notifications are planned to align with Access Control.</li>
+          <li><strong>Preferences</strong> (planned): Per‑type opt‑in/out, channel selection (email/in‑app), batching frequency, quiet hours.</li>
+          <li><strong>Reliability</strong>: SMTP with retry/logging; future WebSocket delivery with optional persistence for offline users.</li>
+          <li><strong>Security</strong>: Only notify authorized recipients; do not leak private resource metadata.</li>
+          <li><strong>Non‑goals</strong>: Marketing emails; unauthenticated broadcast notifications.</li>
+        </ul>
+
+        <h2>Channels</h2>
+        <ul>
+          <li><strong>Mail notifications</strong>: Implemented via <code>AFCloudMailer</code> using handlebars HTML templates and provider‑agnostic SMTP.</li>
+          <li><strong>In‑app notifications</strong>: Planned over existing WebSocket infrastructure with optional DB persistence and API for read/unread.</li>
+        </ul>
+
+        <h2>AS‑IS: Mail Notifications (Implemented)</h2>
+        <p>Implementation references: <code>appflowy-backend/src/mailer.rs</code>, <code>appflowy-backend/src/config/config.rs</code>, templates under <code>appflowy-backend/assets/mailer_templates/build_production/</code>.</p>
+        <ul>
+          <li><strong>Workspace</strong>:
+            <ul>
+              <li>Workspace Invitations — <code>AFCloudMailer::send_workspace_invite</code> → <code>workspace_invitation.html</code></li>
+              <li>Access Requests — <code>send_workspace_access_request</code> → <code>access_request.html</code></li>
+              <li>Access Request Approved — <code>send_workspace_access_request_approval_notification</code> → <code>access_request_approved_notification.html</code></li>
+            </ul>
+          </li>
+          <li><strong>Content</strong>:
+            <ul>
+              <li>Page Mention Notifications — <code>send_page_mention_notification</code> → <code>page_mention_notification.html</code> (batched by background worker; interval/grace in <code>Config.notification</code>)</li>
+            </ul>
+          </li>
+          <li><strong>Space (behind feature)</strong>:
+            <ul>
+              <li>Space Invitation — <code>send_space_invitation</code> → <code>space_invitation.html</code></li>
+              <li>Space Role Update — <code>send_space_role_update</code> → <code>space_role_update.html</code></li>
+              <li>Space Member Removal — <code>send_space_member_removal</code> → <code>space_member_removal.html</code></li>
+            </ul>
+          </li>
+          <li><strong>Project (behind feature)</strong>:
+            <ul>
+              <li>Project Invitation — <code>send_project_invitation</code> → <code>project_invitation.html</code></li>
+              <li>Project Role Update — <code>send_project_role_update</code> → <code>project_role_update.html</code></li>
+              <li>Project Member Removal — <code>send_project_member_removal</code> → <code>project_member_removal.html</code></li>
+            </ul>
+          </li>
+          <li><strong>Auth (separate service)</strong>:
+            <ul>
+              <li>GoTrue authentication emails (confirmation, recovery, magic link) via GoTrue SMTP.</li>
+            </ul>
+          </li>
+        </ul>
+
+        <h3>Configuration</h3>
+        <ul>
+          <li><strong>AppFlowy mailer</strong>: <code>APPFLOWY_MAILER_SMTP_HOST|PORT|USERNAME|EMAIL|PASSWORD|TLS_KIND</code></li>
+          <li><strong>Notifications</strong>: <code>APPFLOWY_NOTIFICATION_ENABLE_EMAIL</code>, <code>APPFLOWY_NOTIFICATION_EMAIL_INTERVAL_SECS</code>, <code>APPFLOWY_NOTIFICATION_EMAIL_GRACE_PERIOD_SECS</code></li>
+          <li><strong>GoTrue SMTP</strong> (auth emails): <code>GOTRUE_SMTP_HOST|PORT|USER|PASS</code></li>
+          <li><strong>Web URL</strong> (links in emails): <code>APPFLOWY_WEB_URL</code></li>
+        </ul>
+
+        <h3>Local Development</h3>
+        <p>Use Mailpit for local testing. See <code>appflowy-backend/doc/MAIL_NOTIFICATION_SETUP.md</code> for docker-compose, .env, and troubleshooting.</p>
+
+        <h2>TO‑BE: In‑App Notifications (Planned)</h2>
+        <p>References: <code>appflowy-backend/doc/NOTIFICATION_SYSTEM_REQUIREMENTS.md</code>, <code>appflowy-backend/doc/NOTIFICATION_SYSTEM_ANALYSIS.md</code>.</p>
+        <ul>
+          <li><strong>Transport</strong>: WebSocket endpoints (<code>/ws/v1</code>, <code>/ws/v2/{workspace_id}</code>) and PostgreSQL LISTEN/NOTIFY.</li>
+          <li><strong>Persistence</strong>: Optional table <code>af_user_notifications</code> for offline users and read/unread state.</li>
+          <li><strong>APIs</strong> (planned):
+            <ul>
+              <li>GET <code>/api/user/notifications</code> — list notifications</li>
+              <li>PUT <code>/api/user/notifications/{id}/read</code> — mark read</li>
+              <li>PUT <code>/api/user/notifications/read-all</code> — mark all read</li>
+              <li>GET/PUT <code>/api/user/notification-preferences</code> — read/update preferences</li>
+            </ul>
+          </li>
+          <li><strong>Abstraction</strong>: a sender that can deliver via email and/or in‑app based on user preferences.</li>
+        </ul>
+
+        <h2>Architecture</h2>
+        <h3>Component — Notification Delivery</h3>
+        <script type="text/plain" class="mermaid">
+flowchart LR
+  subgraph Backend
+    API[REST APIs]
+    M[AFCloudMailer (SMTP)]
+    WS[WebSocket Server]
+    L[Postgres LISTEN/NOTIFY]
+  end
+  subgraph Templates
+    T1[workspace_invitation.html]
+    T2[access_request.html]
+    T3[access_request_approved_notification.html]
+    T4[page_mention_notification.html]
+  end
+  subgraph Client
+    FE[Frontend App]
+    Toast[Snackbar/Toast]
+  end
+  User((User))
+
+  FE -- actions --> API
+  API -- triggers --> M
+  M -- renders --> T1
+  M -- renders --> T2
+  M -- renders --> T3
+  M -- renders --> T4
+  M -- email --> User
+  L -- events --> WS
+  WS -- push --> FE
+  FE -- show --> Toast
+        </script>
+
+        <h3>Sequence — Batched Page Mention Mail</h3>
+        <script type="text/plain" class="mermaid">
+sequenceDiagram
+  autonumber
+  participant Worker as Email Worker
+  participant DB as DB (mentions)
+  participant Mailer as AFCloudMailer
+  participant SMTP as SMTP
+  loop every interval (Config.notification)
+    Worker->>DB: fetch mentions since last run (respect grace period)
+    Worker->>Mailer: send_page_mention_notification(params)
+    Mailer->>SMTP: send templated email
+  end
+        </script>
+
+        <h2>Frontend</h2>
+        <ul>
+          <li><strong>Toasts/Snackbars</strong>: <code>appflowy-frontend/src/components/_shared/notify/index.ts</code> exposes <code>notify.success|error|info|warning</code>.</li>
+          <li><strong>In‑app notifications</strong>: Planned UI components once APIs and WS messages are available.</li>
+        </ul>
+
+        <h2>Testing</h2>
+        <ul>
+          <li><strong>Unit</strong>: Template rendering, mail parameter validation, config parsing.</li>
+          <li><strong>Integration</strong>: Invite/access/mention flows send the right emails; feature flags gating.</li>
+          <li><strong>End‑to‑end (future)</strong>: In‑app notification delivery over WS, persistence, read/unread.</li>
+        </ul>
+
+        <h2>Troubleshooting</h2>
+        <ul>
+          <li><strong>SMTP connection/auth errors</strong>: Verify <code>APPFLOWY_MAILER_SMTP_*</code>, TLS kind, provider allow‑list.</li>
+          <li><strong>No emails in dev</strong>: Ensure Mailpit is running and env points to localhost:1025.</li>
+          <li><strong>Missing links</strong>: Set <code>APPFLOWY_WEB_URL</code> to generate correct accept URLs.</li>
+        </ul>
+
+        <h2>References</h2>
+        <ul>
+          <li><code>appflowy-backend/doc/NOTIFICATION_SYSTEM_REQUIREMENTS.md</code></li>
+          <li><code>appflowy-backend/doc/NOTIFICATION_SYSTEM_ANALYSIS.md</code></li>
+          <li><code>appflowy-backend/doc/MAIL_NOTIFICATION_SETUP.md</code></li>
+          <li><code>appflowy-backend/src/mailer.rs</code></li>
+          <li><code>appflowy-backend/src/config/config.rs</code></li>
+        </ul>
+
+        <h2>TODOs</h2>
+        <ul>
+          <li>Add template screenshots and example emails. <em>(TODO)</em></li>
+          <li>Document notification preference model and APIs once implemented. <em>(TODO)</em></li>
+          <li>Add in‑app UI component guidelines. <em>(TODO)</em></li>
+        </ul>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2025 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

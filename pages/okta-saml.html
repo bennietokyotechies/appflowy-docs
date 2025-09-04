@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Okta SAML - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css">
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation...">
+      </div>
+      <nav id="docs-nav" class="docs-nav"></nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb"></div>
+      </header>
+
+      <article class="docs-content">
+        <h1>Okta SAML (Single Sign-On)</h1>
+        <p>This guide walks you through integrating Okta SAML with AppFlowy for Single Sign-On. It summarizes the backend guide at <code>appflowy-backend/doc/OKTA_SAML.md</code> and focuses on quick onboarding for developers.</p>
+
+        <div class="callout info">
+          <p><strong>Prerequisites:</strong> You are an Okta admin and have AppFlowy Cloud deployed and reachable from Okta. Ensure GoTrue is accessible at <code>https://&lt;your_host&gt;/gotrue</code>.</p>
+        </div>
+
+        <h2>Key Service Endpoints</h2>
+        <ul>
+          <li><strong>ACS URL (Single sign-on URL):</strong> <code>https://&lt;your_host&gt;/gotrue/sso/saml/acs</code></li>
+          <li><strong>Audience URI (SP Entity ID):</strong> <code>https://&lt;your_host&gt;/gotrue/sso/saml/metadata</code></li>
+        </ul>
+
+        <h2>Part 1 — Okta Configuration</h2>
+        <ol>
+          <li>In Okta dashboard, switch to <strong>Admin</strong> view.</li>
+          <li>Go to <strong>Applications → Applications</strong> and click <strong>Create App Integration</strong>.</li>
+          <li>Select <strong>SAML 2.0</strong> and continue.</li>
+          <li>General settings: set App name to <strong>AppFlowy</strong> and optionally upload a logo.</li>
+          <li>SAML settings:
+            <ul>
+              <li>Single sign-on URL: <code>https://&lt;your_host&gt;/gotrue/sso/saml/acs</code></li>
+              <li>Audience URI (SP Entity ID): <code>https://&lt;your_host&gt;/gotrue/sso/saml/metadata</code></li>
+              <li>Attribute statement (optional): name <code>email</code> → value <code>user.email</code></li>
+            </ul>
+          </li>
+          <li>Feedback: choose "I'm an Okta customer adding an internal app" and mark as an internal app.</li>
+          <li>Finish and save.</li>
+        </ol>
+
+        <h2>Part 2 — AppFlowy Configuration</h2>
+        <ol>
+          <li>Login as an admin at <code>https://&lt;your_host&gt;/web/login</code>.</li>
+          <li>Open the <strong>Admin</strong> panel and go to <strong>SSO</strong>.</li>
+          <li>From Okta, copy the application <strong>Metadata URL</strong> (Applications → AppFlowy → Sign On).</li>
+          <li>In AppFlowy Admin → <strong>Create SSO</strong>, paste the metadata URL and create the SSO entry.</li>
+          <li>Verify under <strong>List SSO</strong> that the SSO configuration appears.</li>
+        </ol>
+
+        <h2>Assigning Access in Okta</h2>
+        <p>To make AppFlowy visible to users in the Okta dashboard:</p>
+        <ul>
+          <li>Go to Okta <strong>Admin → Applications → AppFlowy</strong>.</li>
+          <li>Use the settings to assign the app to relevant users or groups.</li>
+        </ul>
+
+        <h2>Environment and Troubleshooting</h2>
+        <ul>
+          <li>Ensure GoTrue and AppFlowy URLs are publicly reachable by Okta (or via a tunnel/VPN during testing).</li>
+          <li>Check JWT secret consistency between GoTrue and AppFlowy.
+            <pre class="code-block"><code>GOTRUE_JWT_SECRET=your_jwt_secret
+APPFLOWY_GOTRUE_JWT_SECRET=your_jwt_secret</code></pre>
+          </li>
+          <li>Review backend logs if SSO handshakes fail at ACS/metadata endpoints.</li>
+        </ul>
+
+        <h2>References</h2>
+        <ul>
+          <li><code>appflowy-backend/doc/OKTA_SAML.md</code> (screenshots and full step-by-step)</li>
+          <li><a href="authentication.html">OAuth Providers</a> (Google, GitHub, Discord)</li>
+        </ul>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2025 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

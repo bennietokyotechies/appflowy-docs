@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>In-App Notifications - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css" />
+</head>
+<body>
+  <div class="docs-container">
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation..." />
+      </div>
+      <nav id="docs-nav" class="docs-nav"></nav>
+    </aside>
+
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb"></div>
+      </header>
+
+      <article class="docs-content">
+        <h1>In-App Notifications</h1>
+        <p>Real-time notifications delivered within the product UI. This page documents the planned design, APIs, and frontend building blocks.</p>
+
+        <h2>Business Overview</h2>
+        <ul>
+          <li><strong>Purpose</strong>: Inform users immediately during active sessions without relying on email.</li>
+          <li><strong>Scope</strong>: Mentions, invites, role changes, approvals, and system alerts.</li>
+          <li><strong>Preferences</strong> (planned): Per-type/channel toggles, batching, quiet hours.</li>
+        </ul>
+
+        <h2>Status</h2>
+        <ul>
+          <li><strong>Backend transport</strong>: WebSocket infra exists; events fan-out via Postgres LISTEN/NOTIFY.</li>
+          <li><strong>Persistence</strong>: Planned table for durable notifications and read/unread.</li>
+          <li><strong>APIs</strong>: Planned endpoints for fetching and updating read state and preferences.</li>
+          <li><strong>Frontend</strong>: Toast utility exists for ephemeral messages; dedicated in-app UI to be implemented.</li>
+        </ul>
+
+        <h2>Architecture</h2>
+        <h3>Component — In-App Delivery</h3>
+        <script type="text/plain" class="mermaid">
+flowchart LR
+  subgraph Backend
+    API[REST APIs]
+    WS[WebSocket Server]
+    L[Postgres LISTEN/NOTIFY]
+  end
+  subgraph Storage
+    N[(user_notifications)]
+  end
+  subgraph Client
+    FE[Frontend App]
+    Center[Notification Center]
+    Toast[Snackbar/Toast]
+  end
+
+  L -- events --> WS
+  WS -- push --> FE
+  FE -- show ephemeral --> Toast
+  FE -- persist --> N
+  FE -- list/load --> API
+  API -- CRUD --> N
+        </script>
+
+        <h3>Sequence — Real-time Mention</h3>
+        <script type="text/plain" class="mermaid">
+sequenceDiagram
+  autonumber
+  participant Svc as Backend Service
+  participant L as Postgres NOTIFY
+  participant WS as WebSocket
+  participant FE as Frontend
+  participant API as REST API
+  participant DB as user_notifications
+
+  Svc->>L: NOTIFY mention event
+  L-->>WS: event fan-out
+  WS-->>FE: push notification payload
+  FE->>FE: render toast and badge
+  alt user offline or persistence enabled
+    FE->>API: POST /api/user/notifications
+    API->>DB: insert
+  end
+        </script>
+
+        <h2>Planned APIs</h2>
+        <ul>
+          <li>GET <code>/api/user/notifications</code> — list notifications (filter by read/unread, type, since)</li>
+          <li>PUT <code>/api/user/notifications/{id}/read</code> — mark a notification as read</li>
+          <li>PUT <code>/api/user/notifications/read-all</code> — mark all as read</li>
+          <li>GET/PUT <code>/api/user/notification-preferences</code> — get/update channel and per-type preferences</li>
+        </ul>
+
+        <h2>Frontend</h2>
+        <ul>
+          <li><strong>Toast utility</strong>: <code>appflowy-frontend/src/components/_shared/notify/index.ts</code> for ephemeral feedback.</li>
+          <li><strong>Notification Center</strong>: planned page/drawer for listing, filtering, marking read/unread.</li>
+          <li><strong>WebSocket client</strong>: subscribe to workspace/user channels and dispatch UI updates.</li>
+        </ul>
+
+        <h2>Testing</h2>
+        <ul>
+          <li>Contract tests for WS payload structure and type safety.</li>
+          <li>API tests for list and read/unread semantics.</li>
+          <li>UI tests for badge counts, filters, and interaction flows.</li>
+        </ul>
+
+        <h2>Troubleshooting</h2>
+        <ul>
+          <li>WS not connecting: verify endpoint and auth tokens; check server logs.</li>
+          <li>Missing notifications: confirm DB persistence toggles and LISTEN/NOTIFY permissions.</li>
+        </ul>
+
+        <h2>References</h2>
+        <ul>
+          <li><code>appflowy-backend/doc/NOTIFICATION_SYSTEM_REQUIREMENTS.md</code></li>
+          <li><code>appflowy-backend/doc/NOTIFICATION_SYSTEM_ANALYSIS.md</code></li>
+          <li><code>appflowy-frontend/src/components/_shared/notify/index.ts</code></li>
+        </ul>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2025 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

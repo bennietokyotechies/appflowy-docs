@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workspace Access Control - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css" />
+</head>
+<body>
+  <div class="docs-container">
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation..." />
+      </div>
+      <nav id="docs-nav" class="docs-nav"></nav>
+    </aside>
+
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb"></div>
+      </header>
+
+      <article class="docs-content">
+        <h1>Workspace Access Control</h1>
+        <p>Controls membership, invitations, and high-level roles that govern visibility and actions across Spaces and Projects within a workspace.</p>
+
+        <h2>Overview</h2>
+        <ul>
+          <li><strong>Goal</strong>: Ensure only authorized users can access a workspace and perform workspace-level actions.</li>
+          <li><strong>Membership lifecycle</strong>: invite → accept (by invitation_id) → change role → remove/leave → transfer ownership.</li>
+          <li><strong>Roles</strong>: Owner, Admin, Member; define who can manage members, settings, and billing (if applicable).</li>
+          <li><strong>Security</strong>: Invitations are bound to <code>invite_id</code> (UUID). Acceptance requires authenticated user email to match the invite.</li>
+          <li><strong>Discoverability</strong>: Workspaces are private to members; optional invite codes enable controlled self-join.</li>
+          <li><strong>Auditing</strong>: Track invitations, acceptances, role changes, and removals for traceability.</li>
+          <li><strong>Non-goals</strong>: Workspace-wide public read access is not supported.</li>
+        </ul>
+
+        <h2>Requirements</h2>
+        <ul>
+          <li>Roles: Owner, Admin, Member (define exact privileges). <em>(TODO: finalize)</em></li>
+          <li>Membership lifecycle: invite → accept/expire → revoke/leave → transfer ownership.</li>
+          <li>Global workspace actions: manage members, billing (if applicable), workspace settings.</li>
+          <li>Reference: <code>analysis_doc/access_control_permission_matrix.md</code>, <code>analysis_doc/access_control_flow.md</code></li>
+        </ul>
+
+        <h2>Backend</h2>
+        <h3>Data Model</h3>
+        <ul>
+          <li>Tables: <code>workspace</code>, <code>workspace_member</code>, <code>role</code>. <em>(TODO: add diagram)</em></li>
+          <li>Relationships: user → workspace_member (role), ownership transfer constraints.</li>
+        </ul>
+        <h3>APIs</h3>
+        <ul>
+          <li>Invite member, accept invite, list/remove members, change roles.</li>
+          <li>Handlers and flow documented in <code>appflowy-backend/doc/WORKSPACE_INVITATION_FLOW.md</code>.</li>
+        </ul>
+        <p><strong>Endpoint inventory</strong> (see <code>appflowy-backend/API_ENDPOINTS_DOCUMENTATION.md</code> §10–11 and <code>doc/WORKSPACE_INVITATION_FLOW.md</code>):</p>
+        <ul>
+          <li>GET <code>/api/workspace/{workspace_id}/member</code> — List members</li>
+          <li>POST <code>/api/workspace/{workspace_id}/member</code> — Update member (role)</li>
+          <li>DELETE <code>/api/workspace/{workspace_id}/member/{member_id}</code> — Remove member</li>
+          <li>PUT <code>/api/workspace/{workspace_id}/member/{member_id}/role</code> — Update role</li>
+          <li>POST <code>/api/workspace/{workspace_id}/invite</code> — Create invitation</li>
+          <li>GET <code>/api/workspace/{workspace_id}/invitations</code> — List invitations</li>
+          <li>GET <code>/api/workspace/invite</code> — Get my invitations</li>
+          <li>GET <code>/api/workspace/invite/{invite_id}</code> — Get invitation details</li>
+          <li>POST <code>/api/workspace/accept-invite/{invite_id}</code> — Accept invitation</li>
+          <li>POST <code>/api/workspace/join-by-invite-code</code> — Join by invite code</li>
+          <li>GET/POST/DELETE <code>/api/workspace/{workspace_id}/invite-code</code> — Get/Generate/Delete invite code</li>
+        </ul>
+        <p><strong>Example payloads</strong> (illustrative):</p>
+        <pre><code class="language-json">// Invite workspace members (array supported via DTO in flow doc)
+POST /api/workspace/{workspace_id}/invite
+[
+  { "email": "user1@example.com", "role": "Member" },
+  { "email": "user2@example.com", "role": "Guest", "skip_email_send": false }
+]
+
+// Accept invitation
+POST /api/workspace/accept-invite/{invite_id}
+{}
+
+// Change role
+PUT /api/workspace/{workspace_id}/member/{member_id}/role
+{ "role": "Owner" }
+</code></pre>
+        <p>Standard response envelope: see <code>appflowy-backend/API_ENDPOINTS_DOCUMENTATION.md</code>.</p>
+        <h3>Enforcement</h3>
+        <ul>
+          <li>Middleware/guards check membership and role before workspace-scoped actions.</li>
+          <li>Auditing: log invites, role changes, removals.</li>
+        </ul>
+        <p>Related docs: <a href="SPACE_ACL_BACKEND_ANALYSIS.html">Space ACL Backend Analysis</a> (for patterns), <a href="SPACE_ACL_IMPLEMENTATION_ANALYSIS.html">Space ACL Implementation</a></p>
+
+        <h2>Frontend</h2>
+        <h3>User Flows</h3>
+        <ul>
+          <li>Invite member (modal), accept invite (magic link), manage members, change roles.</li>
+          <li>Visibility of workspace-level settings based on role.</li>
+        </ul>
+        <h3>Components</h3>
+        <ul>
+          <li>Members list, role selector, invitation modal, ownership transfer dialog.</li>
+          <li>Workspace members management: <code>appflowy-frontend/src/components/app/settings/MembersSettings.tsx</code></li>
+          <li>Workspace settings container: <code>appflowy-frontend/src/components/app/settings/Settings.tsx</code> (renders <code>MembersSettings</code> for the "Members" tab)</li>
+          <li>Workspace settings panel: <code>appflowy-frontend/src/components/app/settings/WorkspaceSettings.tsx</code></li>
+          <li>Permission guards around settings and actions.</li>
+        </ul>
+        <h3>State & Data</h3>
+        <ul>
+          <li>Fetch policies (cache, invalidate after membership changes).</li>
+          <li>Optimistic updates with rollback on failure.</li>
+        </ul>
+        <p>Related FE docs: <a href="WORKSPACE_INVITATIONS_API_SPEC.html">Workspace Invitations API</a></p>
+
+        <h3>Routes</h3>
+        <ul>
+          <li>Workspace-scoped routing is defined in <code>appflowy-frontend/src/components/app/AppRouter.tsx</code>.</li>
+          <li><code>/:workspaceId/settings</code> — Workspace settings entry (renders Settings shell and tabs)</li>
+          <li>Members tab renders <code>MembersSettings</code> with the current workspace ID.</li>
+        </ul>
+
+        <h2>Diagrams</h2>
+        <h3>Sequence — Invite and Accept (Workspace)</h3>
+        <script type="text/plain" class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Owner as Workspace Owner/Admin
+  participant FE as Frontend (MembersSettings)
+  participant API as Backend API
+  participant DB as DB
+  Owner->>FE: Open Workspace Settings → Members tab
+  FE->>API: POST /api/workspace/{workspace_id}/invite (email, role)
+  API->>DB: Insert invitation {workspace_id, email, role, id}
+  API-->>FE: 200 Created (invitation)
+  Note over API,FE: Email service sends magic link with invite_id (invitation_id)
+  actor Invitee
+  Invitee->>FE: Click magic link
+  FE->>API: POST /api/workspace/accept-invite/{invite_id}
+  API->>DB: Create membership {user_id, workspace_id, role}
+  API-->>FE: 200 OK (membership)
+  FE-->>Owner: UI updates (member list)
+        </script>
+
+        <h3>ERD — Workspace Membership (Simplified)</h3>
+        <script type="text/plain" class="mermaid">
+erDiagram
+  WORKSPACE ||--o{ WORKSPACE_MEMBERSHIP : has
+  USER ||--o{ WORKSPACE_MEMBERSHIP : has
+  WORKSPACE ||--o{ WORKSPACE_INVITATION : issues
+  WORKSPACE {
+    uuid id PK
+    text name
+  }
+  USER {
+    uuid id PK
+    text email
+  }
+  WORKSPACE_MEMBERSHIP {
+    uuid id PK
+    uuid workspace_id FK
+    uuid user_id FK
+    enum role
+  }
+  WORKSPACE_INVITATION {
+    uuid id PK
+    uuid workspace_id FK
+    text email
+    enum role
+    timestamptz expires_at
+  }
+        </script>
+
+        <h2>Testing</h2>
+        <ul>
+          <li>Unit: role resolution, API error handling, guards.</li>
+          <li>E2E: invite/accept, role change enforcement, ownership transfer.</li>
+        </ul>
+
+        <h2>Troubleshooting</h2>
+        <ul>
+          <li>Invite not received: check email provider config, logs. See <code>appflowy-backend/doc/MAIL_NOTIFICATION_SETUP.md</code>.</li>
+          <li>Role change not reflected: verify cache invalidation and server audit logs.</li>
+        </ul>
+
+        <h2>TODOs</h2>
+        <ul>
+          <li>Add ERD for <code>af_workspace_member</code> and <code>af_workspace_invitation</code> (see flow doc for columns).</li>
+          <li>Link concrete components and routes. <em>(TODO)</em></li>
+        </ul>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2025 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

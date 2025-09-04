@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Access Control - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css" />
+</head>
+<body>
+  <div class="docs-container">
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation..." />
+      </div>
+      <nav id="docs-nav" class="docs-nav"></nav>
+    </aside>
+
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb"></div>
+      </header>
+
+      <article class="docs-content">
+        <h1>Project Access Control</h1>
+        <p>Defines who can view and modify specific Projects (boards/tasks) within a Space. Projects may inherit from Space or apply project-specific roles.</p>
+
+        <h2>Overview</h2>
+        <ul>
+          <li><strong>Goal</strong>: Control access to project content (boards, tasks, views) for specified users within a Space.</li>
+          <li><strong>Scope</strong>: Project is a sub-boundary of a Space; project permissions may inherit from or override Space roles.</li>
+          <li><strong>Roles</strong>: Owner, Member, Guest; map to read/write/admin capabilities on project resources.</li>
+          <li><strong>Invitation model</strong>: Invitations use an <code>invitation_id</code> (UUID); acceptance requires authenticated email to match the invite.</li>
+          <li><strong>Security</strong>: Only project members can access project resources even if the Space is shared; stricter actions require higher roles.</li>
+          <li><strong>Auditing</strong>: Track invites, acceptances, role updates, and removals for traceability.</li>
+          <li><strong>Non-goals</strong>: Public (unauthenticated) read access to projects is out of scope.</li>
+        </ul>
+
+        <h2>Requirements</h2>
+        <ul>
+          <li>Roles: owner/admin/contributor/viewer (confirm actual set). <em>(TODO)</em></li>
+          <li>Inheritance: clarify how Space roles influence Project access, and override rules. <em>(TODO)</em></li>
+          <li>Edge cases: archived/locked projects; transfer ownership.</li>
+        </ul>
+
+        <h2>Backend</h2>
+        <h3>Data Model</h3>
+        <ul>
+          <li>Tables: <code>project</code>, <code>project_member</code>, <code>project_role</code>. <em>(TODO: ERD)</em></li>
+          <li>Relationships to Space and permission resolution order.</li>
+        </ul>
+        <h3>APIs</h3>
+        <ul>
+          <li>Add/list/update/remove project members; manage invitations; list invitations.</li>
+          <li>CRUD enforcement for board/list/task ops under Project uses Project ACL thresholds.</li>
+          <li>Feature flags: compile-time <code>project_acl</code>, runtime <code>config.addon.project_acl_enabled</code>.</li>
+        </ul>
+        <p><strong>OpenAPI & responses</strong>:</p>
+        <ul>
+          <li>When <code>project_acl</code> is enabled, Project list/detail responses include <code>user_role</code> for the requester (nullable when disabled).</li>
+          <li>Register DTO schemas and paths in <code>src/openapi.rs</code> guarded by the <code>project_acl</code> feature.</li>
+        </ul>
+        <p><strong>Endpoint inventory</strong> (from <code>appflowy-backend/doc/PROJECT_MEMBER_REQUIREMENTS.md</code>):</p>
+        <ul>
+          <li>POST <code>/api/projects/{project_id}/members</code> — Invite project member</li>
+          <li>GET <code>/api/projects/{project_id}/members</code> — List project members</li>
+          <li>PATCH <code>/api/projects/{project_id}/members/{member_id}</code> — Update member (role)</li>
+          <li>DELETE <code>/api/projects/{project_id}/members/{member_id}</code> — Remove member</li>
+          <li>POST <code>/api/projects/{project_id}/invitations</code> — Accept invitation (body carries invitation <code>id</code>)</li>
+          <li>GET <code>/api/projects/{project_id}/invitations</code> — List invitations</li>
+          <li>DELETE <code>/api/projects/{project_id}/invitations/{invite_id}</code> — Decline invitation</li>
+        </ul>
+        <p><strong>DTOs</strong> (planned; mirror Space): <code>ProjectMemberModel</code>, <code>ProjectMemberInvitationPayload</code>, <code>ProjectMemberChangeset</code>, <code>ProjectInvitationModel</code>, <code>ProjectInvitationAcceptPayload</code>, <code>ProjectInvitationListQuery</code> (see <code>libs/shared-entity/src/dto/project_member_dto.rs</code> in plan).</p>
+        <p><strong>Notifications</strong>:</p>
+        <ul>
+          <li>Project invite email sent on successful invitation (mailer template and registration under <code>src/mailer.rs</code>).</li>
+        </ul>
+        <p><strong>Example payloads</strong> (illustrative):</p>
+        <pre><code class="language-json">// Invite member to project
+POST /api/projects/{project_id}/members
+{
+  "email": "dev@example.com",
+  "role": "Member"
+}
+
+// Accept invitation
+POST /api/projects/{project_id}/invitations
+{ "id": "1f1a9c55-2cc0-4e3b-9a4c-2c1b3e1ad222" }
+
+// Update role
+PATCH /api/projects/{project_id}/members/{member_id}
+{ "role": "Owner" }
+</code></pre>
+        <p>Responses use the standard envelope (<code>code/message/data</code>). When enabled, project list/detail APIs include <code>user_role</code> for the requester.</p>
+        <h3>Enforcement</h3>
+        <ul>
+          <li>Service-level authorization on all Project resources (boards/tasks).</li>
+          <li>Query filters to ensure only permitted projects/items are returned.</li>
+          <li>Project ACL plugin provides role/action threshold enforcement; Owner-only for sensitive operations (invite, role updates, removals), Member+ for listing.</li>
+          <li>Accept invitation: invitee-only; email must match pending invitation; idempotent on repeated accept.</li>
+        </ul>
+        <p>Related backend/analysis: <code>appflowy-backend/doc/PROJECT_MEMBER_REQUIREMENTS.md</code>, Space ACL patterns in <code>src/plugin/space_acl.rs</code>.</p>
+
+        <h3>Performance & Gating</h3>
+        <ul>
+          <li>Bulk role retrieval via Project ACL provider to avoid N+1 in project listing.</li>
+          <li>DB-level LEFT JOIN can emit <code>user_role</code> in list/detail when feature + runtime flag are enabled.</li>
+          <li>Runtime gating: return 404 for project member endpoints when <code>config.addon.project_acl_enabled</code> is false.</li>
+        </ul>
+
+        <h3>Planned Enhancements</h3>
+        <ul>
+          <li>Auto-assign the project creator as <code>Owner</code> on project creation when Project ACL is enabled (feature + runtime flag).</li>
+        </ul>
+
+        <h3>Role vs Action Matrix</h3>
+        <p>Derived from <code>appflowy-backend/src/plugin/project_acl.rs</code> (<code>ProjectAclPlugin::required_role_for_action</code>).</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Required Role</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Read</td>
+              <td>Guest</td>
+              <td>Read-only access to project resources.</td>
+            </tr>
+            <tr>
+              <td>Write</td>
+              <td>Member</td>
+              <td>Create/update items such as tasks, columns, views.</td>
+            </tr>
+            <tr>
+              <td>Delete</td>
+              <td>Owner</td>
+              <td>Delete destructive operations and administrative actions.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>Roles reference: <code>database_entity::dto::AFRole</code> with ordering <em>Owner &gt; Member &gt; Guest</em>.</p>
+
+        <h2>Frontend</h2>
+        <h3>User Flows</h3>
+        <ul>
+          <li>Manage project members & roles; share project; set visibility.</li>
+          <li>Permission-aware UI on boards and tasks (disabled actions, guards).</li>
+        </ul>
+        <h3>Components</h3>
+        <ul>
+          <li>Project member management: <code>appflowy-frontend/src/components/app/projects/ProjectMemberSettings.tsx</code></li>
+          <li>Project invitation acceptance page: <code>appflowy-frontend/src/pages/AcceptProjectInvitationPage.tsx</code></li>
+          <li>Project list and routing shell: <code>appflowy-frontend/src/pages/ProjectListPage.tsx</code>, <code>appflowy-frontend/src/pages/ProjectPage.tsx</code></li>
+          <li>Guarded actions (e.g., edit columns, move tasks) with friendly errors.</li>
+        </ul>
+        <h3>State & Data</h3>
+        <ul>
+          <li>Cache policies for membership/permission; invalidation on updates.</li>
+          <li>Optimistic updates with rollback for role changes.</li>
+        </ul>
+        <p>Related FE docs:
+          <a href="BOARD_API_TEST_README.html">Board API Test Readme</a>,
+          <a href="PROJECT_LIST_IMPLEMENTATION.html">Project List Implementation</a>,
+          <a href="unified-space-project-management-plan.html">Unified Space & Project Management Plan</a>
+        </p>
+
+        <h3>Routes</h3>
+        <ul>
+          <li>Workspace-scoped routes in <code>appflowy-frontend/src/components/app/AppRouter.tsx</code>:</li>
+          <li><code>/:workspaceId/projects</code> — Project list</li>
+          <li><code>/:workspaceId/projects/:projectId</code> — Project page (hosts member settings UI)</li>
+          <li>Legacy board routes redirect to project page via <code>BoardRedirect</code></li>
+        </ul>
+
+        <h2>Diagrams</h2>
+        <h3>Component — Project ACL Plugin Integration</h3>
+        <script type="text/plain" class="mermaid">
+flowchart LR
+  subgraph API[Project API Handlers]
+    A1[Invite/List/Update/Remove Members]
+    A2[Accept/Decline Invitation]
+    A3[Boards/Tasks Operations]
+  end
+  subgraph Plugin[Project ACL Plugin]
+    P1[enforce_project_role]
+    P2[enforce_project_action]
+    P3[get_project_roles (bulk)]
+  end
+  subgraph DB[(Database)]
+    D1[af_project_member]
+    D2[af_project_invitation]
+  end
+
+  A1 --> P1
+  A2 --> P1
+  A3 --> P2
+  P3 --> DBQuery[Single bulk query]
+  DBQuery --> D1
+  A2 --> D2
+  A1 --> D2
+        </script>
+        <h3>Sequence — Invite and Accept (Project)</h3>
+        <script type="text/plain" class="mermaid">
+sequenceDiagram
+  autonumber
+  actor Owner as Project Owner/Member
+  participant FE as Frontend (ProjectMemberSettings)
+  participant API as Backend API
+  participant DB as DB
+  Owner->>FE: Open Project Member settings
+  FE->>API: POST /api/projects/{project_id}/members (email, role)
+  API->>DB: Insert invitation {project_id, email, role, id}
+  API-->>FE: 200 Created (invitation)
+  Note over API,FE: Email service sends magic link with invitation_id
+  actor Invitee
+  Invitee->>FE: Click magic link
+  FE->>API: POST /api/projects/{project_id}/invitations (body: {id: invitation_id})
+  API->>DB: Create membership {user_id, project_id, role}
+  API-->>FE: 200 OK (membership)
+  FE-->>Owner: UI updates (member list)
+        </script>
+
+        <h3>ERD — Project Membership (Simplified)</h3>
+        <script type="text/plain" class="mermaid">
+erDiagram
+  PROJECT ||--o{ PROJECT_MEMBERSHIP : has
+  USER ||--o{ PROJECT_MEMBERSHIP : has
+  PROJECT ||--o{ PROJECT_INVITATION : issues
+  PROJECT {
+    uuid id PK
+    text name
+    uuid workspace_id FK
+  }
+  USER {
+    uuid id PK
+    text email
+  }
+  PROJECT_MEMBERSHIP {
+    uuid id PK
+    uuid project_id FK
+    uuid user_id FK
+    enum role
+  }
+  PROJECT_INVITATION {
+    uuid id PK
+    uuid project_id FK
+    text email
+    enum role
+    timestamptz expires_at
+  }
+        </script>
+
+        <h2>Testing</h2>
+        <ul>
+          <li>Unit: guards and action enablement, API error handling.</li>
+          <li>E2E: member changes, visibility enforcement, CRUD limits on tasks/boards.</li>
+        </ul>
+
+        <h2>Open Questions</h2>
+        <ul>
+          <li>Invitation TTL policy and expired invite handling/copy.</li>
+          <li>Whether Members (not only Owners) should be allowed to invite.</li>
+        </ul>
+
+        <h2>Troubleshooting</h2>
+        <ul>
+          <li>Users see/no see specific boards: verify inheritance and project overrides; check server filters.</li>
+          <li>Conflicts after role updates: ensure cache invalidation and UI refresh flows.</li>
+        </ul>
+
+        <h2>TODOs</h2>
+        <ul>
+          <li>Add ERD, full endpoint inventory, and sample payloads. <em>(TODO)</em></li>
+          <li>Link concrete React components and routes. <em>(TODO)</em></li>
+        </ul>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2025 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

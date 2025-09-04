@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mail Notifications - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css" />
+</head>
+<body>
+  <div class="docs-container">
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation..." />
+      </div>
+      <nav id="docs-nav" class="docs-nav"></nav>
+    </aside>
+
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb"></div>
+      </header>
+
+      <article class="docs-content">
+        <h1>Mail Notifications</h1>
+        <p>Server‑generated emails sent via SMTP with handlebars HTML templates. This page documents the current implementation and operations guidance.</p>
+
+        <h2>Business Overview</h2>
+        <ul>
+          <li><strong>Purpose</strong>: Notify users of critical events even when offline.</li>
+          <li><strong>Scope</strong>: Workspace invites/access requests, content mentions; Space/Project events behind feature flags.</li>
+          <li><strong>Reliability</strong>: SMTP with retries and error logging; batching for high‑volume events (e.g., mentions).</li>
+        </ul>
+
+        <h2>Features</h2>
+        <ul>
+          <li>Templated emails using Handlebars under <code>appflowy-backend/assets/mailer_templates/build_production/</code>.</li>
+          <li>Configurable SMTP via environment variables; provider agnostic.</li>
+          <li>Background worker batching for page mentions; grace period to reduce noise.</li>
+          <li>Links back to Web app using <code>APPFLOWY_WEB_URL</code>.</li>
+        </ul>
+
+        <h2>Implemented Emails</h2>
+        <ul>
+          <li><strong>Workspace</strong>
+            <ul>
+              <li>Invitation — <code>AFCloudMailer::send_workspace_invite</code> → <code>workspace_invitation.html</code></li>
+              <li>Access Request — <code>send_workspace_access_request</code> → <code>access_request.html</code></li>
+              <li>Access Request Approved — <code>send_workspace_access_request_approval_notification</code> → <code>access_request_approved_notification.html</code></li>
+            </ul>
+          </li>
+          <li><strong>Content</strong>
+            <ul>
+              <li>Page Mention — <code>send_page_mention_notification</code> → <code>page_mention_notification.html</code> (batched)</li>
+            </ul>
+          </li>
+          <li><strong>Space</strong> (feature‑gated)
+            <ul>
+              <li>Invitation — <code>send_space_invitation</code> → <code>space_invitation.html</code></li>
+              <li>Role Update — <code>send_space_role_update</code> → <code>space_role_update.html</code></li>
+              <li>Member Removal — <code>send_space_member_removal</code> → <code>space_member_removal.html</code></li>
+            </ul>
+          </li>
+          <li><strong>Project</strong> (feature‑gated)
+            <ul>
+              <li>Invitation — <code>send_project_invitation</code> → <code>project_invitation.html</code></li>
+              <li>Role Update — <code>send_project_role_update</code> → <code>project_role_update.html</code></li>
+              <li>Member Removal — <code>send_project_member_removal</code> → <code>project_member_removal.html</code></li>
+            </ul>
+          </li>
+          <li><strong>Auth</strong> (GoTrue service) — confirmation, recovery, magic link via GoTrue SMTP.</li>
+        </ul>
+
+        <h2>Configuration</h2>
+        <ul>
+          <li><strong>SMTP</strong>: <code>APPFLOWY_MAILER_SMTP_HOST</code>, <code>APPFLOWY_MAILER_SMTP_PORT</code>, <code>APPFLOWY_MAILER_SMTP_USERNAME</code>, <code>APPFLOWY_MAILER_SMTP_EMAIL</code>, <code>APPFLOWY_MAILER_SMTP_PASSWORD</code>, <code>APPFLOWY_MAILER_SMTP_TLS_KIND</code></li>
+          <li><strong>Notifications</strong>: <code>APPFLOWY_NOTIFICATION_ENABLE_EMAIL</code>, <code>APPFLOWY_NOTIFICATION_EMAIL_INTERVAL_SECS</code>, <code>APPFLOWY_NOTIFICATION_EMAIL_GRACE_PERIOD_SECS</code></li>
+          <li><strong>App URL</strong>: <code>APPFLOWY_WEB_URL</code> (for accept/join links)</li>
+        </ul>
+
+        <h2>Local Development</h2>
+        <p>Use Mailpit for local testing. See <code>appflowy-backend/doc/MAIL_NOTIFICATION_SETUP.md</code> for setup, env vars, and troubleshooting.</p>
+
+        <h2>Architecture</h2>
+        <h3>Component — Mail Delivery</h3>
+        <script type="text/plain" class="mermaid">
+graph LR
+  subgraph Backend
+    API[REST APIs]
+    M[AFCloudMailer]
+  end
+  subgraph Templates
+    T1[workspace_invitation.html]
+    T2[access_request.html]
+    T3[access_request_approved_notification.html]
+    T4[page_mention_notification.html]
+  end
+  U((User))
+
+  API --> M
+  M --> T1
+  M --> T2
+  M --> T3
+  M --> T4
+  M --> U
+        </script>
+
+        <h3>Sequence — Batched Page Mention Mail</h3>
+        <script type="text/plain" class="mermaid">
+sequenceDiagram
+  autonumber
+  participant Worker as Email Worker
+  participant Mailer as AFCloudMailer
+  participant SMTP as SMTP
+  loop every interval (interval + grace)
+    Worker->>Mailer: send_page_mention_notification(params)
+    Mailer->>SMTP: submit templated email(s)
+  end
+        </script>
+
+        <h2>Screenshots (Add later)</h2>
+        <p>Drop screenshots into <code>appflowy-docs/assets/images/notifications/</code> then reference them below. Suggested filenames:</p>
+        <ul>
+          <li><code>workspace-invitation.png</code></li>
+          <li><code>access-request.png</code></li>
+          <li><code>access-request-approved.png</code></li>
+          <li><code>page-mention.png</code></li>
+        </ul>
+        <p>Example markup once added:</p>
+        <pre><code>&lt;img src="../assets/images/notifications/workspace-invitation.png" alt="Workspace Invitation Email" /&gt;</code></pre>
+
+        <h2>Testing</h2>
+        <ul>
+          <li>Unit: template rendering, parameter validation, config parsing.</li>
+          <li>Integration: invite/access/mention flows send expected emails; feature flags gating.</li>
+        </ul>
+
+        <h2>Troubleshooting</h2>
+        <ul>
+          <li>SMTP auth/TLS errors: verify <code>APPFLOWY_MAILER_SMTP_*</code> and provider settings.</li>
+          <li>No emails locally: ensure Mailpit is running and env points to localhost:1025.</li>
+          <li>Broken links: set <code>APPFLOWY_WEB_URL</code> correctly.</li>
+        </ul>
+
+        <h2>References</h2>
+        <ul>
+          <li><code>appflowy-backend/src/mailer.rs</code></li>
+          <li><code>appflowy-backend/src/config/config.rs</code></li>
+          <li><code>appflowy-backend/doc/MAIL_NOTIFICATION_SETUP.md</code></li>
+          <li><code>appflowy-backend/doc/NOTIFICATION_SYSTEM_REQUIREMENTS.md</code></li>
+        </ul>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2025 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

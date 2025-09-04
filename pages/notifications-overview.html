@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notifications Overview - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css" />
+</head>
+<body>
+  <div class="docs-container">
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation..." />
+      </div>
+      <nav id="docs-nav" class="docs-nav"></nav>
+    </aside>
+
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb"></div>
+      </header>
+
+      <article class="docs-content">
+        <h1>Notifications — Overview</h1>
+        <p>This page provides a business-focused overview of AppFlowy's notification system and links to detailed pages for each delivery channel.</p>
+
+        <h2>Business Goals</h2>
+        <ul>
+          <li><strong>Keep users informed</strong> about relevant events such as invitations, approvals, mentions, and role changes.</li>
+          <li><strong>Respect user preferences</strong> and reduce noise with batching and opt-in/opt-out controls (planned).</li>
+          <li><strong>Secure by default</strong>: notify only authorized recipients and avoid data leakage.</li>
+        </ul>
+
+        <h2>Channels</h2>
+        <ul>
+          <li><a href="notifications-mail.html">Mail Notifications</a> — Implemented via SMTP using templated emails.</li>
+          <li><a href="notifications-inapp.html">In-App Notifications</a> — Planned: real-time delivery with optional persistence.</li>
+        </ul>
+
+        <h2>Status</h2>
+        <ul>
+          <li><strong>Email</strong>: Implemented for workspace invites/access requests, content mentions; Space/Project events feature-gated.</li>
+          <li><strong>In-App</strong>: WebSocket transport exists; storage/APIs and UI flows planned.</li>
+        </ul>
+
+        <h2>High-Level Architecture</h2>
+        <script type="text/plain" class="mermaid">
+graph LR
+  subgraph Backend
+    API[REST APIs]
+    M[Mailer]
+    WS[WebSocket]
+  end
+  subgraph Client
+    FE[Frontend]
+    Toast[Toast/Badge]
+  end
+  U((User))
+
+  API --> M
+  M --> U
+  WS --> FE
+  FE --> Toast
+        </script>
+
+        <h2>Key References</h2>
+        <ul>
+          <li><code>appflowy-backend/doc/NOTIFICATION_SYSTEM_REQUIREMENTS.md</code></li>
+          <li><code>appflowy-backend/doc/NOTIFICATION_SYSTEM_ANALYSIS.md</code></li>
+          <li><code>appflowy-backend/doc/MAIL_NOTIFICATION_SETUP.md</code></li>
+          <li><code>appflowy-backend/src/mailer.rs</code> · <code>appflowy-backend/src/config/config.rs</code></li>
+          <li><code>appflowy-frontend/src/components/_shared/notify/index.ts</code></li>
+        </ul>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2025 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>

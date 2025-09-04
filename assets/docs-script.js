@@ -10,6 +10,12 @@ const navigation = [
     ]
   },
   {
+    title: 'Development Flow',
+    items: [
+      { name: 'Development Flow', path: 'pages/development-flow.html' },
+    ]
+  },
+  {
     title: 'Architecture',
     items: [
       { name: 'System Architecture', path: 'pages/unified-space-project-architecture.html' },
@@ -30,36 +36,35 @@ const navigation = [
   {
     title: 'Authentication & SSO',
     items: [
-      { name: 'OAuth Providers', path: 'authentication.html' },
-      { name: 'Okta SAML', path: 'okta-saml.html' },
+      { name: 'OAuth Providers', path: 'pages/authentication.html' },
+      { name: 'Okta SAML', path: 'pages/okta-saml.html' },
     ]
   },
   {
-    title: 'Cloud Setup',
+    title: 'Cloud Setup (WIP)',
     items: [
-      { name: 'Cloud Overview', path: 'cloud-guide.html' },
-      { name: 'Deployment', path: 'deployment.html' },
-      { name: 'AWS EC2 Self-Host', path: 'ec2-self-host-guide.html' },
-      { name: 'Local Multi-Arch Build', path: 'local-build-multiarch.html' },
-      { name: 'Backend Project Structure', path: 'project-structure-backend.html' },
+      { name: 'Cloud Overview', path: '#', disabled: true },
+      { name: 'Deployment', path: '#', disabled: true },
+      { name: 'AWS EC2 Self-Host', path: '#', disabled: true },
+      { name: 'Local Multi-Arch Build', path: '#', disabled: true },
+      { name: 'Backend Project Structure', path: '#', disabled: true },
     ]
   },
   {
     title: 'Access Control',
     items: [
-      { name: 'Workspace Invitation Flow', path: 'workspace-invitation-flow.html' },
-      { name: 'Space Permissions Plan', path: 'space-permissions-plan.html' },
-      { name: 'Space Visibility & Enforcement', path: 'space-visibility-enforcement.html' },
-      { name: 'Space ACL API Status', path: 'space-acl-api-todo.html' },
-      { name: 'Per-View Visibility (Draft)', path: 'per-view-visibility.html' },
+      { name: 'Overview', path: 'pages/access-control.html' },
+      { name: 'Workspace Access Control', path: 'pages/access-control-workspace.html' },
+      { name: 'Space Access Control', path: 'pages/access-control-space.html' },
+      { name: 'Project Access Control', path: 'pages/access-control-project.html' },
     ]
   },
   {
-    title: 'Projects',
+    title: 'Notifications',
     items: [
-      { name: 'Project Members — Requirements', path: 'project-member-requirements.html' },
-      { name: 'Project Members — Technical Plan', path: 'project-member-technical-plan.html' },
-      { name: 'Project Plugin Diagrams', path: 'project-plugin-diagrams.html' },
+      { name: 'Overview', path: 'pages/notifications-overview.html' },
+      { name: 'Mail Notifications', path: 'pages/notifications-mail.html' },
+      { name: 'In-App Notifications', path: 'pages/notifications-inapp.html' },
     ]
   },
   {
@@ -147,6 +152,43 @@ function initializeHighlighting() {
     });
 }
 
+// ---------- Mermaid Diagrams ----------
+function initializeMermaid() {
+  // Detect if any Mermaid blocks exist before loading
+  // Convert <script type="text/plain" class="mermaid"> to <div class="mermaid">
+  const mermaidScripts = Array.from(document.querySelectorAll('script.mermaid[type="text/plain"]'));
+  if (mermaidScripts.length > 0) {
+    mermaidScripts.forEach((script) => {
+      const div = document.createElement('div');
+      div.className = 'mermaid';
+      // Preserve raw text; Mermaid will parse it
+      div.textContent = script.textContent || '';
+      script.parentNode.replaceChild(div, script);
+    });
+  }
+
+  const hasMermaid = document.querySelector('.mermaid') !== null;
+  if (!hasMermaid) return;
+
+  const MERMAID_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js';
+
+  function doInit() {
+    if (window.mermaid && typeof window.mermaid.initialize === 'function') {
+      window.mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    }
+  }
+
+  if (window.mermaid) {
+    doInit();
+  } else {
+    loadScript(MERMAID_CDN)
+      .then(doInit)
+      .catch(() => {
+        // Non-fatal; diagrams will render as code blocks
+      });
+  }
+}
+
 // Initialize navigation
 function initializeNavigation() {
   const nav = document.getElementById('docs-nav');
@@ -168,28 +210,39 @@ function initializeNavigation() {
     sectionDiv.appendChild(title);
     
     section.items.forEach(item => {
-      const link = document.createElement('a');
-      // Adjust path based on current location
-      if (isInPages) {
-        if (item.path.startsWith('pages/')) {
-          link.href = '../' + item.path;
+      const disabled = !!item.disabled;
+      const el = document.createElement(disabled ? 'span' : 'a');
+      el.className = 'nav-item' + (disabled ? ' disabled' : '');
+      el.textContent = item.name;
+
+      if (!disabled) {
+        // Adjust path based on current location
+        if (isInPages) {
+          if (item.path.startsWith('pages/')) {
+            el.href = '../' + item.path;
+          } else {
+            el.href = '../' + item.path;
+          }
         } else {
-          link.href = '../' + item.path;
+          el.href = item.path;
+        }
+        if (item.path === currentPath) {
+          el.classList.add('active');
         }
       } else {
-        link.href = item.path;
+        el.title = 'Work in progress';
       }
-      link.className = 'nav-item';
-      link.textContent = item.name;
-      
-      if (item.path === currentPath) {
-        link.classList.add('active');
-      }
-      
-      sectionDiv.appendChild(link);
+      sectionDiv.appendChild(el);
     });
     
     nav.appendChild(sectionDiv);
+
+    // Insert a visual separator after the "Testing" section
+    if (section.title === 'Testing') {
+      const separator = document.createElement('div');
+      separator.className = 'nav-separator';
+      nav.appendChild(separator);
+    }
   });
 }
 
@@ -279,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeSearch();
   initializeMobileMenu();
   initializeHighlighting();
+  initializeMermaid();
 });
 
 // Helper function to create the shared layout HTML

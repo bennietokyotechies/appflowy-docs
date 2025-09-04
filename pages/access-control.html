@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Access Control Overview - AppFlowy Documentation</title>
+  <link rel="stylesheet" href="../assets/docs-style.css" />
+</head>
+<body>
+  <div class="docs-container">
+    <aside class="docs-sidebar">
+      <a href="../index.html" class="docs-logo">
+        <span style="font-size: 32px;">📚</span>
+        <h1>Klever Appflowy</h1>
+      </a>
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search documentation..." />
+      </div>
+      <nav id="docs-nav" class="docs-nav"></nav>
+    </aside>
+
+    <main class="docs-main">
+      <header class="docs-header">
+        <div id="breadcrumb" class="breadcrumb"></div>
+      </header>
+
+      <article class="docs-content">
+        <h1>Access Control — Overview</h1>
+        <p>This section provides the high-level model and pointers for Workspace, Space, and Project access control. Use this as your starting point, then dive into the dedicated pages.</p>
+
+        <h2>Overview</h2>
+        <ul>
+          <li><strong>Business Goal</strong>: Ensure the right users have the right level of access to the right content at the right scope (Workspace → Space → Project).</li>
+          <li><strong>Scopes</strong>: Workspace (org boundary), Space (team/product area), Project (boards/tasks under a Space).</li>
+          <li><strong>Roles</strong>: Each scope defines roles (e.g., Owner, Admin, Member, Guest/Viewer) that govern read/write/admin actions.</li>
+          <li><strong>Invitation model</strong>: Invitations use an <code>invitation_id</code> (UUID) for acceptance; acceptance validates the invitee’s email against the authenticated user.</li>
+          <li><strong>Discoverability</strong>: Content is private to members unless explicitly shared; invite codes may allow controlled self-join at the workspace level.</li>
+          <li><strong>Auditing</strong>: Track invitations, acceptances, role changes, removals for compliance and support.</li>
+          <li><strong>Non-goals</strong>: Unauthenticated public access to Workspace/Space/Project content.</li>
+        </ul>
+
+        <h2>Scope</h2>
+        <ul>
+          <li><a href="access-control-workspace.html">Workspace Access Control</a></li>
+          <li><a href="access-control-space.html">Space Access Control</a></li>
+          <li><a href="access-control-project.html">Project Access Control</a></li>
+        </ul>
+
+        <h2>Permission Matrix</h2>
+        <p>See requirement-level matrices and flows:</p>
+        <ul>
+          <li>Backend analysis: <code>analysis_doc/access_control_permission_matrix.md</code></li>
+          <li>Backend analysis: <code>analysis_doc/access_control_flow.md</code></li>
+        </ul>
+
+        <h2>Architecture Summary</h2>
+        <ul>
+          <li><strong>Identity:</strong> GoTrue issues JWTs; AppFlowy verifies and maps to internal users.</li>
+          <li><strong>Authorization:</strong> Role/permission checks at Workspace, Space, and Project layers; enforced in handlers and reflected in the UI.</li>
+          <li><strong>Inheritance:</strong> Space and Project may derive or override from higher scopes; see each page for details.</li>
+        </ul>
+
+        <h2>Cross-cutting Concerns</h2>
+        <ul>
+          <li><strong>Auditing & Logs:</strong> Record membership changes and access denials.</li>
+          <li><strong>Caching:</strong> Consider permission caching with invalidation on role changes.</li>
+          <li><strong>Feature Flags:</strong> Gate new ACL features; document env toggles.</li>
+        </ul>
+
+        <h2>TODOs</h2>
+        <ul>
+          <li>Embed diagrams for Workspace/Space/Project relationships. <em>(TODO)</em></li>
+          <li>Add sequence diagrams for typical access checks. <em>(TODO)</em></li>
+        </ul>
+      </article>
+
+      <footer class="docs-footer">
+        <p>© 2025 Klever. Built with ❤️ for developers.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="../assets/docs-script.js"></script>
+</body>
+</html>
